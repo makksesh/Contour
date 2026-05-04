@@ -1,5 +1,7 @@
 <!--
-  Sidebar shell widget for authenticated phase 2 layout.
+  Sidebar с навигационными кнопками и подсветкой активной секции.
+  Фаза 4: Projects подключён к ShowProjectsCommand.
+  Проект: DevAssistant / ContourAI.
 -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -13,52 +15,102 @@
           Padding="20">
     <DockPanel LastChildFill="True">
       <StackPanel DockPanel.Dock="Top"
-                  Spacing="18">
+                  Spacing="6">
+
+        <!-- Логотип -->
         <StackPanel Spacing="6"
-                    Margin="0,0,0,16">
+                    Margin="0,0,0,24">
           <TextBlock Text="ContourAI"
-                     FontSize="24"
+                     FontSize="22"
                      FontWeight="SemiBold"
                      Foreground="#F9FAFB" />
           <TextBlock Text="AI workspace"
+                     FontSize="12"
                      Foreground="#94A3B8" />
         </StackPanel>
 
+        <!-- Dashboard -->
         <Button Content="Dashboard"
+                Command="{Binding ShowDashboardCommand}"
+                HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Left"
                 Height="42"
-                Background="#134E4A"
-                Foreground="White" />
+                Padding="12,0"
+                CornerRadius="6"
+                Background="{Binding IsDashboardActive, Converter={x:Static BoolConverters.False}, ConverterParameter=Transparent}"
+                Foreground="{Binding IsDashboardActive, Converter={x:Static BoolConverters.False}, ConverterParameter=#CBD5E1}">
+          <Button.Styles>
+            <Style Selector="Button">
+              <Setter Property="Background" Value="Transparent" />
+              <Setter Property="Foreground" Value="#CBD5E1" />
+            </Style>
+          </Button.Styles>
+        </Button>
+
+        <!-- Projects -->
         <Button Content="Projects"
+                Command="{Binding ShowProjectsCommand}"
+                HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Left"
                 Height="42"
+                Padding="12,0"
+                CornerRadius="6"
                 Background="Transparent"
-                Foreground="#CBD5E1" />
+                Foreground="#CBD5E1">
+          <Button.Styles>
+            <Style Selector="Button">
+              <Setter Property="Background" Value="Transparent" />
+              <Setter Property="Foreground" Value="#CBD5E1" />
+            </Style>
+          </Button.Styles>
+        </Button>
+
+        <!-- Остальные — будут активированы в следующих фазах -->
         <Button Content="Global Chat"
+                HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Left"
                 Height="42"
+                Padding="12,0"
+                CornerRadius="6"
                 Background="Transparent"
-                Foreground="#CBD5E1" />
+                Foreground="#475569"
+                IsEnabled="False" />
         <Button Content="Documents"
+                HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Left"
                 Height="42"
+                Padding="12,0"
+                CornerRadius="6"
                 Background="Transparent"
-                Foreground="#CBD5E1" />
+                Foreground="#475569"
+                IsEnabled="False" />
         <Button Content="Indexing"
+                HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Left"
                 Height="42"
+                Padding="12,0"
+                CornerRadius="6"
                 Background="Transparent"
-                Foreground="#CBD5E1" />
+                Foreground="#475569"
+                IsEnabled="False" />
         <Button Content="RAG Search"
+                HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Left"
                 Height="42"
+                Padding="12,0"
+                CornerRadius="6"
                 Background="Transparent"
-                Foreground="#CBD5E1" />
+                Foreground="#475569"
+                IsEnabled="False" />
         <Button Content="System Monitor"
+                HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Left"
                 Height="42"
+                Padding="12,0"
+                CornerRadius="6"
                 Background="Transparent"
-                Foreground="#CBD5E1" />
+                Foreground="#475569"
+                IsEnabled="False" />
       </StackPanel>
 
       <StackPanel DockPanel.Dock="Bottom"
@@ -68,6 +120,7 @@
                    FontSize="12"
                    Foreground="#94A3B8" />
         <TextBlock Text="{Binding ServerIpDisplay}"
+                   FontSize="13"
                    Foreground="#5EEAD4" />
       </StackPanel>
     </DockPanel>
