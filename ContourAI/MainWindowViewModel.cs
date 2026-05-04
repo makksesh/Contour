@@ -1,6 +1,8 @@
 /// <summary>
 /// Главная ViewModel окна приложения.
-/// Управляет переходами между Login, Register и авторизованным shell в рамках первых двух фаз UI.
+/// Управляет переходами между Login, Register и авторизованным shell.
+/// Подписывается на SessionExpired из SessionAuthService —
+/// при  401/403 автоматически перенаправляет на login.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -16,22 +18,28 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly LoginViewModel _loginViewModel;
     private readonly RegisterViewModel _registerViewModel;
     private readonly AuthenticatedShellViewModel _authenticatedShellViewModel;
+    private readonly SessionAuthService _sessionAuthService;
     private object? _currentViewModel;
 
     public MainWindowViewModel(
         LoginViewModel loginViewModel,
         RegisterViewModel registerViewModel,
-        AuthenticatedShellViewModel authenticatedShellViewModel)
+        AuthenticatedShellViewModel authenticatedShellViewModel,
+        SessionAuthService sessionAuthService)
     {
         _loginViewModel = loginViewModel;
         _registerViewModel = registerViewModel;
         _authenticatedShellViewModel = authenticatedShellViewModel;
+        _sessionAuthService = sessionAuthService;
 
         _loginViewModel.RegisterRequested += ShowRegister;
         _registerViewModel.LoginRequested += ShowLogin;
         _loginViewModel.LoginSucceeded += authToken => _ = OnLoginSucceededAsync(authToken);
         _registerViewModel.RegisterSucceeded += authToken => _ = OnRegisterSucceededAsync(authToken);
         _authenticatedShellViewModel.LogoutRequested += ShowLogin;
+
+        // При истечении сессии (401/403) автоматически возвращаемся на login
+        _sessionAuthService.SessionExpired += ShowLogin;
 
         CurrentViewModel = _loginViewModel;
     }

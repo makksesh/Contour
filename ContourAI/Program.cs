@@ -1,6 +1,6 @@
 /// <summary>
 /// Главная точка входа Avalonia 12.x приложения.
-/// Регистрирует контейнер зависимостей для Auth shell и запускает UI-клиент ContourAI.
+/// Регистрирует DI-контейнер с поддержкой session-слоя Фазы 3.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 using System;
@@ -38,14 +38,26 @@ internal static class Program
     {
         var services = new ServiceCollection();
 
+        // Инфраструктура
         services.AddSingleton<ConnectionSettingsStore>();
+
+        // Фаза 3: session-слой
+        services.AddSingleton<AuthSessionStore>();
+        services.AddSingleton<AuthorizedHttpClientFactory>();
+        services.AddSingleton<SessionAuthService>();
+
+        // API-сервисы
         services.AddSingleton<AuthService>();
         services.AddSingleton<DashboardService>();
+
+        // ViewModels
         services.AddTransient<LoginViewModel>();
         services.AddTransient<RegisterViewModel>();
         services.AddSingleton<DashboardViewModel>();
         services.AddSingleton<AuthenticatedShellViewModel>();
         services.AddSingleton<MainWindowViewModel>();
+
+        // Window
         services.AddSingleton<MainWindow>();
 
         return services.BuildServiceProvider();

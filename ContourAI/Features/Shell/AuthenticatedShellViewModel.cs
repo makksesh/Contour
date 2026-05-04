@@ -1,6 +1,7 @@
 /// <summary>
 /// ViewModel авторизованного shell-экрана.
-/// Хранит текущего пользователя, состояние dashboard и команду выхода.
+/// Использует AuthSessionStore вместо прямого хранения токена.
+/// Логаут идёт через SessionAuthService, который очищает сессию и вызывает backend logout.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -19,21 +20,37 @@ namespace ContourAI.Features.Shell;
 public sealed class AuthenticatedShellViewModel : ViewModelBase
 {
     private readonly ConnectionSettingsStore _connectionSettingsStore;
-    private AuthTokenDto? _authToken;
-    private string _username = "User";
+    private readonly AuthSessionStore _sessionStore;
+    private readonly SessionAuthService _sessionAuthService;
 
-    public AuthenticatedShellViewModel(ConnectionSettingsStore connectionSettingsStore, DashboardViewModel dashboardViewModel)
+    public AuthenticatedShellViewModel(
+        ConnectionSettingsStore connectionSettingsStore,
+        AuthSessionStore sessionStore,
+        SessionAuthService sessionAuthService,
+        DashboardViewModel dashboardViewModel)
     {
         _connectionSettingsStore = connectionSettingsStore;
+        _sessionStore = sessionStore;
+        _sessionAuthService = sessionAuthService;
         Dashboard = dashboardViewModel;
-        LogoutCommand = new RelayCommand(Logout);
+
+        // Команда logout запускает async-поток
+        LogoutCommand = new RelayCommand(() => _ = LogoutAsync());
 
         _connectionSettingsStore.PropertyChanged += (_, args) =>
         {
-            if (args.PropertyName is nameof(ConnectionSettingsStore.ServerIp) or nameof(ConnectionSettingsStore.ServerIpDisplay))
+            if (args.PropertyName is nameof(ConnectionSettingsStore.ServerIp)
+                or nameof(ConnectionSettingsStore.ServerIpDisplay))
             {
                 RaisePropertyChanged(nameof(ServerIpDisplay));
             }
+        };
+
+        // Отслеживаем смену username из store
+        _sessionStore.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(AuthSessionStore.CurrentUsername))
+                RaisePropertyChanged(nameof(Username));
         };
     }
 
@@ -43,25 +60,27 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
 
     public ICommand LogoutCommand { get; }
 
-    public string Username
-    {
-        get => _username;
-        private set => SetProperty(ref _username, value);
-    }
+    /// <summary>Username берётся из AuthSessionStore, не хранится локально.</summary>
+    public string Username => _sessionStore.CurrentUsername;
 
     public string ServerIpDisplay => _connectionSettingsStore.ServerIpDisplay;
 
+    /// <summary>
+    /// Применяет token в AuthSessionStore и загружает dashboard.
+    /// </summary>
     public async Task ApplyAuthAsync(AuthTokenDto authToken, CancellationToken cancellationToken = default)
     {
-        _authToken = authToken;
-        Username = authToken.Username;
+        _sessionStore.Apply(authToken);
         await Dashboard.LoadAsync(authToken.AccessToken, cancellationToken);
     }
 
-    private void Logout()
+    /// <summary>
+    /// Выполняет logout через SessionAuthService.
+    /// Очищает сессию и поднимает LogoutRequested.
+    /// </summary>
+    private async Task LogoutAsync()
     {
-        _authToken = null;
-        Username = "User";
+        await _sessionAuthService.LogoutAsync();
         Dashboard.Clear();
         LogoutRequested?.Invoke();
     }
