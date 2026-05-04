@@ -1,0 +1,47 @@
+<!--
+  Topbar shell widget for phase 2 authenticated layout.
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:shell="clr-namespace:ContourAI.Features.Shell"
+             x:DataType="shell:AuthenticatedShellViewModel"
+             mc:Ignorable="d"
+             x:Class="ContourAI.Widgets.Shell.TopbarView">
+  <Border Background="#111827"
+          Padding="20,16"
+          BorderBrush="#1F2937"
+          BorderThickness="0,0,0,1">
+    <Grid ColumnDefinitions="*,Auto"
+          VerticalAlignment="Center">
+      <StackPanel Spacing="2">
+        <TextBlock Text="Welcome back"
+                   FontSize="14"
+                   Foreground="#9CA3AF" />
+        <TextBlock Text="{Binding Username}"
+                   FontSize="22"
+                   FontWeight="SemiBold"
+                   Foreground="#F9FAFB" />
+      </StackPanel>
+
+      <StackPanel Grid.Column="1"
+                  Orientation="Horizontal"
+                  Spacing="12"
+                  VerticalAlignment="Center">
+        <Border Background="#0F172A"
+                CornerRadius="12"
+                Padding="12,8">
+          <TextBlock Text="{Binding ServerIpDisplay}"
+                     Foreground="#5EEAD4" />
+        </Border>
+        <Button Content="Logout"
+                Height="40"
+                Padding="18,0"
+                Command="{Binding LogoutCommand}"
+                Background="#7F1D1D"
+                Foreground="White" />
+      </StackPanel>
+    </Grid>
+  </Border>
+</UserControl>

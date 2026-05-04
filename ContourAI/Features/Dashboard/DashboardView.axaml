@@ -1,0 +1,159 @@
+<!--
+  Dashboard view for phase 2.
+  Shows recent projects, chats and documents inside the authenticated shell.
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:dashboard="clr-namespace:ContourAI.Features.Dashboard"
+             x:DataType="dashboard:DashboardViewModel"
+             mc:Ignorable="d"
+             x:Class="ContourAI.Features.Dashboard.DashboardView">
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                VerticalScrollBarVisibility="Auto">
+    <StackPanel Spacing="24"
+                Margin="0,0,0,24">
+      <StackPanel Spacing="6">
+        <TextBlock Text="Dashboard"
+                   FontSize="28"
+                   FontWeight="SemiBold"
+                   Foreground="#F9FAFB" />
+        <TextBlock Text="Быстрый доступ к последним проектам, чатам и документам."
+                   Foreground="#9CA3AF" />
+      </StackPanel>
+
+      <Border Background="#0F172A"
+              CornerRadius="14"
+              Padding="14"
+              IsVisible="{Binding IsLoading}">
+        <TextBlock Text="Загрузка dashboard..."
+                   Foreground="#5EEAD4"
+                   FontWeight="SemiBold" />
+      </Border>
+
+      <Border Background="#3F1D1D"
+              CornerRadius="14"
+              Padding="14"
+              IsVisible="{Binding HasError}">
+        <TextBlock Text="{Binding ErrorMessage}"
+                   TextWrapping="Wrap"
+                   Foreground="#FECACA" />
+      </Border>
+
+      <Grid ColumnDefinitions="*,*,*"
+            ColumnSpacing="20">
+        <Border Grid.Column="0"
+                Background="#111827"
+                CornerRadius="16"
+                Padding="20">
+          <StackPanel Spacing="14">
+            <TextBlock Text="Recent Projects"
+                       FontSize="18"
+                       FontWeight="SemiBold"
+                       Foreground="#F9FAFB" />
+            <TextBlock Text="Пока нет проектов."
+                       IsVisible="{Binding IsProjectsEmpty}"
+                       Foreground="#6B7280" />
+            <ItemsControl ItemsSource="{Binding RecentProjects}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Background="#0F172A"
+                          CornerRadius="12"
+                          Padding="12"
+                          Margin="0,0,0,10">
+                    <StackPanel Spacing="4">
+                      <TextBlock Text="{Binding Title}"
+                                 FontWeight="SemiBold"
+                                 Foreground="#F3F4F6" />
+                      <TextBlock Text="{Binding Kind}"
+                                 FontSize="12"
+                                 Foreground="#5EEAD4" />
+                      <TextBlock Text="{Binding UpdatedAtText}"
+                                 FontSize="12"
+                                 Foreground="#9CA3AF" />
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <Border Grid.Column="1"
+                Background="#111827"
+                CornerRadius="16"
+                Padding="20">
+          <StackPanel Spacing="14">
+            <TextBlock Text="Recent Chats"
+                       FontSize="18"
+                       FontWeight="SemiBold"
+                       Foreground="#F9FAFB" />
+            <TextBlock Text="Пока нет чатов."
+                       IsVisible="{Binding IsChatsEmpty}"
+                       Foreground="#6B7280" />
+            <ItemsControl ItemsSource="{Binding RecentChats}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Background="#0F172A"
+                          CornerRadius="12"
+                          Padding="12"
+                          Margin="0,0,0,10">
+                    <StackPanel Spacing="4">
+                      <TextBlock Text="{Binding Title}"
+                                 FontWeight="SemiBold"
+                                 Foreground="#F3F4F6" />
+                      <TextBlock Text="{Binding Kind}"
+                                 FontSize="12"
+                                 Foreground="#5EEAD4" />
+                      <TextBlock Text="{Binding UpdatedAtText}"
+                                 FontSize="12"
+                                 Foreground="#9CA3AF" />
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <Border Grid.Column="2"
+                Background="#111827"
+                CornerRadius="16"
+                Padding="20">
+          <StackPanel Spacing="14">
+            <TextBlock Text="Recent Documents"
+                       FontSize="18"
+                       FontWeight="SemiBold"
+                       Foreground="#F9FAFB" />
+            <TextBlock Text="Пока нет документов."
+                       IsVisible="{Binding IsDocumentsEmpty}"
+                       Foreground="#6B7280" />
+            <ItemsControl ItemsSource="{Binding RecentDocuments}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Background="#0F172A"
+                          CornerRadius="12"
+                          Padding="12"
+                          Margin="0,0,0,10">
+                    <StackPanel Spacing="4">
+                      <TextBlock Text="{Binding Title}"
+                                 FontWeight="SemiBold"
+                                 Foreground="#F3F4F6" />
+                      <TextBlock Text="{Binding Kind}"
+                                 FontSize="12"
+                                 Foreground="#5EEAD4" />
+                      <TextBlock Text="{Binding UpdatedAtText}"
+                                 FontSize="12"
+                                 Foreground="#9CA3AF" />
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+      </Grid>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

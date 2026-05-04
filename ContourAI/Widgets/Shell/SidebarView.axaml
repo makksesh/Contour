@@ -1,0 +1,75 @@
+<!--
+  Sidebar shell widget for authenticated phase 2 layout.
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:shell="clr-namespace:ContourAI.Features.Shell"
+             x:DataType="shell:AuthenticatedShellViewModel"
+             mc:Ignorable="d"
+             x:Class="ContourAI.Widgets.Shell.SidebarView">
+  <Border Background="#0F172A"
+          Padding="20">
+    <DockPanel LastChildFill="True">
+      <StackPanel DockPanel.Dock="Top"
+                  Spacing="18">
+        <StackPanel Spacing="6"
+                    Margin="0,0,0,16">
+          <TextBlock Text="ContourAI"
+                     FontSize="24"
+                     FontWeight="SemiBold"
+                     Foreground="#F9FAFB" />
+          <TextBlock Text="AI workspace"
+                     Foreground="#94A3B8" />
+        </StackPanel>
+
+        <Button Content="Dashboard"
+                HorizontalContentAlignment="Left"
+                Height="42"
+                Background="#134E4A"
+                Foreground="White" />
+        <Button Content="Projects"
+                HorizontalContentAlignment="Left"
+                Height="42"
+                Background="Transparent"
+                Foreground="#CBD5E1" />
+        <Button Content="Global Chat"
+                HorizontalContentAlignment="Left"
+                Height="42"
+                Background="Transparent"
+                Foreground="#CBD5E1" />
+        <Button Content="Documents"
+                HorizontalContentAlignment="Left"
+                Height="42"
+                Background="Transparent"
+                Foreground="#CBD5E1" />
+        <Button Content="Indexing"
+                HorizontalContentAlignment="Left"
+                Height="42"
+                Background="Transparent"
+                Foreground="#CBD5E1" />
+        <Button Content="RAG Search"
+                HorizontalContentAlignment="Left"
+                Height="42"
+                Background="Transparent"
+                Foreground="#CBD5E1" />
+        <Button Content="System Monitor"
+                HorizontalContentAlignment="Left"
+                Height="42"
+                Background="Transparent"
+                Foreground="#CBD5E1" />
+      </StackPanel>
+
+      <StackPanel DockPanel.Dock="Bottom"
+                  Spacing="8"
+                  Margin="0,20,0,0">
+        <TextBlock Text="Server"
+                   FontSize="12"
+                   Foreground="#94A3B8" />
+        <TextBlock Text="{Binding ServerIpDisplay}"
+                   Foreground="#5EEAD4" />
+      </StackPanel>
+    </DockPanel>
+  </Border>
+</UserControl>

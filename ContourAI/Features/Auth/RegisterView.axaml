@@ -1,0 +1,101 @@
+<!--
+  Register view for Avalonia 12.x.
+  Reuses in-memory server IP setting from shared application state.
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:auth="clr-namespace:ContourAI.Features.Auth"
+             x:DataType="auth:RegisterViewModel"
+             mc:Ignorable="d"
+             x:Class="ContourAI.Features.Auth.RegisterView">
+  <Border Background="#111827"
+          Padding="32">
+    <Grid RowDefinitions="Auto,*"
+          MaxWidth="520"
+          HorizontalAlignment="Center"
+          VerticalAlignment="Center">
+      <StackPanel Spacing="8"
+                  Margin="0,0,0,24">
+        <TextBlock Text="Создание аккаунта"
+                   FontSize="30"
+                   FontWeight="SemiBold"
+                   Foreground="#F9FAFB" />
+        <TextBlock Text="Регистрация в ContourAI"
+                   FontSize="15"
+                   Foreground="#9CA3AF" />
+      </StackPanel>
+
+      <Border Grid.Row="1"
+              Background="#1F2937"
+              CornerRadius="18"
+              Padding="24">
+        <StackPanel Spacing="16">
+          <Border Background="#0F172A"
+                  CornerRadius="12"
+                  Padding="12">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Текущий сервер"
+                         FontWeight="SemiBold"
+                         Foreground="#F3F4F6" />
+              <TextBlock Text="{Binding ServerIpDisplay}"
+                         Foreground="#5EEAD4" />
+            </StackPanel>
+          </Border>
+
+          <StackPanel Spacing="6">
+            <TextBlock Text="Username"
+                       FontWeight="SemiBold"
+                       Foreground="#F3F4F6" />
+            <TextBox Watermark="Введите username"
+                     Text="{Binding Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     Classes="auth-input" />
+          </StackPanel>
+
+          <StackPanel Spacing="6">
+            <TextBlock Text="Email"
+                       FontWeight="SemiBold"
+                       Foreground="#F3F4F6" />
+            <TextBox Watermark="Введите email"
+                     Text="{Binding Email, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     Classes="auth-input" />
+          </StackPanel>
+
+          <StackPanel Spacing="6">
+            <TextBlock Text="Пароль"
+                       FontWeight="SemiBold"
+                       Foreground="#F3F4F6" />
+            <TextBox Watermark="Введите пароль"
+                     PasswordChar="●"
+                     Text="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     Classes="auth-input" />
+          </StackPanel>
+
+          <TextBlock Text="{Binding ErrorMessage}"
+                     TextWrapping="Wrap"
+                     Foreground="#FCA5A5"
+                     IsVisible="{Binding HasError}" />
+
+          <Button Content="Создать аккаунт"
+                  Height="44"
+                  Command="{Binding RegisterCommand}"
+                  Background="#0F766E"
+                  Foreground="White"
+                  FontWeight="SemiBold" />
+
+          <StackPanel Orientation="Horizontal"
+                      Spacing="8"
+                      HorizontalAlignment="Center">
+            <TextBlock Text="Уже есть аккаунт?"
+                       Foreground="#9CA3AF" />
+            <Button Content="Войти"
+                    Command="{Binding OpenLoginCommand}"
+                    Background="Transparent"
+                    Foreground="#5EEAD4" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Border>
+</UserControl>

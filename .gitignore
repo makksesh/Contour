@@ -1,0 +1,45 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+bin/
+obj/
+out/
+
+# .NET
+*.rsuser
+TestResults/
+*.nupkg
+*.snupkg
+
+# NuGet
+packages/
+.nuget/
+project.assets.json
+project.nuget.cache
+
+# Logs
+*.log
+
+# Avalonia / generated
+*.g.cs
+*.g.i.cs
+
+# Publish
+publish/
+artifacts/
+
+# Local environment
+.env
+.env.*
