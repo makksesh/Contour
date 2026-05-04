@@ -1,0 +1,212 @@
+<!--
+  Экран списка проектов.
+  Master-detail: сетка карточек слева, панель выбранного проекта справа.
+  Диалог создания отображается как overlay поверх контента.
+  Проект: DevAssistant / ContourAI.
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:ContourAI.Features.Projects"
+             x:DataType="vm:ProjectsViewModel"
+             mc:Ignorable="d"
+             x:Class="ContourAI.Features.Projects.ProjectsView">
+  <Grid RowDefinitions="Auto,*">
+
+    <!-- Заголовок и кнопка создания -->
+    <Grid Grid.Row="0"
+          ColumnDefinitions="*,Auto"
+          Margin="0,0,0,20">
+      <StackPanel Spacing="4">
+        <TextBlock Text="Projects"
+                   FontSize="22"
+                   FontWeight="SemiBold"
+                   Foreground="#F9FAFB" />
+        <TextBlock Text="Manage your knowledge base projects"
+                   FontSize="13"
+                   Foreground="#64748B" />
+      </StackPanel>
+      <Button Grid.Column="1"
+              Content="+ New Project"
+              Command="{Binding OpenCreateDialogCommand}"
+              Background="#0D9488"
+              Foreground="White"
+              Padding="16,10"
+              CornerRadius="8" />
+    </Grid>
+
+    <!-- Основной контент -->
+    <Grid Grid.Row="1">
+
+      <!-- Loading state -->
+      <StackPanel IsVisible="{Binding IsLoading}"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center"
+                  Spacing="12">
+        <TextBlock Text="Loading projects..."
+                   Foreground="#64748B"
+                   HorizontalAlignment="Center" />
+      </StackPanel>
+
+      <!-- Error state -->
+      <Border IsVisible="{Binding HasError}"
+              Background="#1E1B1B"
+              BorderBrush="#7F1D1D"
+              BorderThickness="1"
+              CornerRadius="8"
+              Padding="16"
+              VerticalAlignment="Top">
+        <TextBlock Text="{Binding ErrorMessage}"
+                   Foreground="#FCA5A5"
+                   TextWrapping="Wrap" />
+      </Border>
+
+      <!-- Empty state -->
+      <StackPanel IsVisible="{Binding IsEmpty}"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center"
+                  Spacing="12">
+        <TextBlock Text="No projects yet"
+                   FontSize="18"
+                   FontWeight="Medium"
+                   Foreground="#94A3B8"
+                   HorizontalAlignment="Center" />
+        <TextBlock Text="Create your first project to get started"
+                   Foreground="#475569"
+                   HorizontalAlignment="Center" />
+        <Button Content="Create Project"
+                Command="{Binding OpenCreateDialogCommand}"
+                HorizontalAlignment="Center"
+                Background="#0D9488"
+                Foreground="White"
+                Padding="20,10"
+                CornerRadius="8" />
+      </StackPanel>
+
+      <!-- Project cards grid -->
+      <ScrollViewer IsVisible="{Binding !IsLoading}">
+        <ItemsControl ItemsSource="{Binding Projects}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <WrapPanel Orientation="Horizontal" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="vm:ProjectCardViewModel">
+              <Border Background="#0F172A"
+                      BorderBrush="#1E293B"
+                      BorderThickness="1"
+                      CornerRadius="10"
+                      Padding="18"
+                      Margin="0,0,16,16"
+                      Width="260"
+                      Cursor="Hand">
+                <Border.Styles>
+                  <Style Selector="Border:pointerover">
+                    <Setter Property="BorderBrush" Value="#0D9488" />
+                  </Style>
+                </Border.Styles>
+                <StackPanel Spacing="8">
+                  <TextBlock Text="{Binding Name}"
+                             FontSize="15"
+                             FontWeight="SemiBold"
+                             Foreground="#F1F5F9"
+                             TextTrimming="CharacterEllipsis" />
+                  <TextBlock Text="{Binding Description}"
+                             FontSize="12"
+                             Foreground="#64748B"
+                             TextWrapping="Wrap"
+                             MaxLines="2" />
+                  <TextBlock Text="{Binding UpdatedAtText}"
+                             FontSize="11"
+                             Foreground="#334155" />
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+
+      <!-- Create project dialog overlay -->
+      <Border IsVisible="{Binding IsDialogOpen}"
+              Background="#80020617"
+              HorizontalAlignment="Stretch"
+              VerticalAlignment="Stretch">
+        <Border Background="#0F172A"
+                BorderBrush="#1E293B"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="28"
+                Width="420"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                DataContext="{Binding CreateDialog}">
+          <StackPanel Spacing="16">
+            <TextBlock Text="New Project"
+                       FontSize="18"
+                       FontWeight="SemiBold"
+                       Foreground="#F9FAFB" />
+
+            <!-- Name field -->
+            <StackPanel Spacing="6">
+              <TextBlock Text="Name *"
+                         FontSize="12"
+                         Foreground="#94A3B8" />
+              <TextBox Text="{Binding ProjectName}"
+                       Watermark="Enter project name"
+                       Background="#020617"
+                       Foreground="#F1F5F9"
+                       BorderBrush="#1E293B"
+                       Padding="10,8"
+                       CornerRadius="6" />
+            </StackPanel>
+
+            <!-- Description field -->
+            <StackPanel Spacing="6">
+              <TextBlock Text="Description"
+                         FontSize="12"
+                         Foreground="#94A3B8" />
+              <TextBox Text="{Binding Description}"
+                       Watermark="Optional description"
+                       Background="#020617"
+                       Foreground="#F1F5F9"
+                       BorderBrush="#1E293B"
+                       Padding="10,8"
+                       CornerRadius="6"
+                       AcceptsReturn="True"
+                       Height="72" />
+            </StackPanel>
+
+            <!-- Error -->
+            <TextBlock IsVisible="{Binding HasError}"
+                       Text="{Binding ErrorMessage}"
+                       Foreground="#FCA5A5"
+                       FontSize="12"
+                       TextWrapping="Wrap" />
+
+            <!-- Buttons -->
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="10">
+              <Button Content="Cancel"
+                      Command="{Binding CancelCommand}"
+                      Background="Transparent"
+                      Foreground="#94A3B8"
+                      Padding="14,8"
+                      CornerRadius="6" />
+              <Button Content="Create"
+                      Command="{Binding ConfirmCommand}"
+                      IsEnabled="{Binding CanConfirm}"
+                      Background="#0D9488"
+                      Foreground="White"
+                      Padding="14,8"
+                      CornerRadius="6" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+      </Border>
+
+    </Grid>
+  </Grid>
+</UserControl>
