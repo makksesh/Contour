@@ -1,12 +1,18 @@
 /// <summary>
 /// Главная точка входа Avalonia 12.x приложения.
-/// Регистрирует DI-контейнер с поддержкой session-слоя Фазы 3, Projects-слоя Фазы 4 и Documents-слоя Фазы 6.
+/// Регистрирует DI-контейнер с поддержкой:
+///   Фаза 3 — session/auth lifecycle
+///   Фаза 4 — Projects
+///   Фаза 5 — Chat (Global + Project)
+///   Фаза 6 — Documents
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
+
 using System;
 using Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using ContourAI.Features.Auth;
+using ContourAI.Features.Chat;
 using ContourAI.Features.Dashboard;
 using ContourAI.Features.Documents;
 using ContourAI.Features.Projects;
@@ -51,11 +57,15 @@ internal static class Program
         // Фаза 4: project context
         services.AddSingleton<ProjectContextStore>();
 
+        // Фаза 5: chat state
+        services.AddSingleton<ChatStore>();
+
         // API-сервисы
         services.AddSingleton<AuthService>();
         services.AddSingleton<DashboardService>();
         services.AddSingleton<ProjectsService>();
-        services.AddSingleton<DocumentsService>();   // Фаза 6
+        services.AddSingleton<DocumentsService>();
+        services.AddSingleton<ChatService>();       // Фаза 5
 
         // ViewModels
         services.AddTransient<LoginViewModel>();
@@ -63,7 +73,8 @@ internal static class Program
         services.AddSingleton<DashboardViewModel>();
         services.AddSingleton<CreateProjectDialogViewModel>();
         services.AddSingleton<ProjectsViewModel>();
-        services.AddSingleton<DocumentsViewModel>();  // Фаза 6
+        services.AddSingleton<DocumentsViewModel>();
+        services.AddSingleton<ChatViewModel>();     // Фаза 5
         services.AddSingleton<AuthenticatedShellViewModel>();
         services.AddSingleton<MainWindowViewModel>();
 
