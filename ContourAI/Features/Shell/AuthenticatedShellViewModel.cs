@@ -2,9 +2,10 @@
 /// ViewModel авторизованного shell-экрана.
 /// Управляет навигацией: Projects, Chat, Documents.
 /// Предоставляет RecentGlobalChats и RecentProjects для SidebarView.
-/// SelectGlobalChatCommand — открыть конкретный глобальный тред из сайдбара.
-/// OpenProjectFromSidebarCommand — открыть проект из сайдбара.
-/// ShowSettingsCommand — заглушка для будущего экрана настроек.
+/// Подписывается на Chat.ThreadsChanged и Projects.ProjectsChanged
+/// для live-обновления Sidebar без ручного refresh.
+/// AddNewGlobalChatCommand / AddNewProjectCommand — кнопки «+» в Sidebar.
+/// Inline rename чатов и проектов через ChatService / ProjectsService.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -31,6 +32,8 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
     private readonly AuthSessionStore        _sessionStore;
     private readonly SessionAuthService      _sessionAuthService;
     private readonly ProjectContextStore     _projectContextStore;
+    private readonly ChatService             _chatService;
+    private readonly ProjectsService         _projectsService;
     private object? _currentContent;
 
     public AuthenticatedShellViewModel(
@@ -38,6 +41,8 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         AuthSessionStore        sessionStore,
         SessionAuthService      sessionAuthService,
         ProjectContextStore     projectContextStore,
+        ChatService             chatService,
+        ProjectsService         projectsService,
         DashboardViewModel      dashboardViewModel,
         ProjectsViewModel       projectsViewModel,
         ChatViewModel           chatViewModel,
@@ -47,6 +52,8 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         _sessionStore            = sessionStore;
         _sessionAuthService      = sessionAuthService;
         _projectContextStore     = projectContextStore;
+        _chatService             = chatService;
+        _projectsService         = projectsService;
 
         Dashboard = dashboardViewModel;
         Projects  = projectsViewModel;
@@ -60,16 +67,26 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         ShowDocumentsCommand = new AsyncRelayCommand(ShowDocumentsAsync);
         ShowSettingsCommand  = new RelayCommand(OnShowSettings);
 
-        SelectGlobalChatCommand      = new AsyncRelayCommand<ChatThreadItemViewModel>(SelectGlobalChatAsync);
+        SelectGlobalChatCommand       = new AsyncRelayCommand<ChatThreadItemViewModel>(SelectGlobalChatAsync);
         OpenProjectFromSidebarCommand = new AsyncRelayCommand<ProjectCardViewModel>(OpenProjectFromSidebarAsync);
 
-        // Кнопка "Open" на карточке проекта — переходим на Documents этого проекта
+        // Кнопки «+» в Sidebar
+        AddNewGlobalChatCommand = new AsyncRelayCommand(AddNewGlobalChatAsync);
+        AddNewProjectCommand    = new AsyncRelayCommand(AddNewProjectAsync);
+
+        // Переименование из Sidebar
+        RenameChatFromSidebarCommand    = new AsyncRelayCommand<ChatThreadItemViewModel>(RenameChatFromSidebarAsync);
+        RenameProjectFromSidebarCommand = new AsyncRelayCommand<ProjectCardViewModel>(RenameProjectFromSidebarAsync);
+
+        // Кнопка Open на карточке проекта
         Projects.ProjectOpened += OnProjectOpened;
 
-        // Синхронизация RecentGlobalChats с Chat.Threads
-        Chat.Threads.CollectionChanged += OnChatThreadsChanged;
+        // Live-обновление Sidebar при изменениях в Chat и Projects
+        Chat.ThreadsChanged      += RebuildRecentGlobalChats;
+        Projects.ProjectsChanged += RebuildRecentProjects;
 
-        // Синхронизация RecentProjects с Projects.Projects
+        // Также реагируем на прямые изменения коллекций (начальная загрузка)
+        Chat.Threads.CollectionChanged    += OnChatThreadsChanged;
         Projects.Projects.CollectionChanged += OnProjectsCollectionChanged;
 
         _connectionSettingsStore.PropertyChanged += (_, args) =>
@@ -85,7 +102,6 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
                 RaisePropertyChanged(nameof(Username));
         };
 
-        // Старт — показываем dashboard
         _currentContent = Dashboard;
     }
 
@@ -114,16 +130,24 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
     public ICommand ShowDocumentsCommand { get; }
     public ICommand ShowSettingsCommand  { get; }
 
-    /// <summary>Открыть конкретный глобальный тред из Sidebar.</summary>
-    public ICommand SelectGlobalChatCommand { get; }
-
-    /// <summary>Открыть проект из Sidebar (переход на Documents).</summary>
+    public ICommand SelectGlobalChatCommand       { get; }
     public ICommand OpenProjectFromSidebarCommand { get; }
+
+    /// <summary>Кнопка «+» рядом с заголовком «RECENT CHATS» — создаёт новый глобальный тред.</summary>
+    public ICommand AddNewGlobalChatCommand { get; }
+
+    /// <summary>Кнопка «+» рядом с заголовком «RECENT PROJECTS» — создаёт новый проект.</summary>
+    public ICommand AddNewProjectCommand { get; }
+
+    /// <summary>Переименование чата из Sidebar (вызывается после CommitEdit в ChatThreadItemViewModel).</summary>
+    public ICommand RenameChatFromSidebarCommand { get; }
+
+    /// <summary>Переименование проекта из Sidebar (вызывается после CommitEdit в ProjectCardViewModel).</summary>
+    public ICommand RenameProjectFromSidebarCommand { get; }
 
     public string Username        => _sessionStore.CurrentUsername;
     public string ServerIpDisplay => _connectionSettingsStore.ServerIpDisplay;
 
-    /// <summary>Текущий отображаемый раздел в центральной области shell.</summary>
     public object? CurrentContent
     {
         get => _currentContent;
@@ -135,9 +159,6 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
     public bool IsChatActive      => CurrentContent is ChatViewModel;
     public bool IsDocumentsActive => CurrentContent is DocumentsViewModel;
 
-    /// <summary>
-    /// Применяет токен в AuthSessionStore и загружает dashboard.
-    /// </summary>
     public async Task ApplyAuthAsync(AuthTokenDto authToken, CancellationToken cancellationToken = default)
     {
         _sessionStore.Apply(authToken);
@@ -149,9 +170,6 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
 
     // ─── Синхронизация Sidebar коллекций ─────────────────────────────────────
 
-    /// <summary>
-    /// Пересобирает RecentGlobalChats из Chat.Threads (только IsGlobal == true).
-    /// </summary>
     private void RebuildRecentGlobalChats()
     {
         RecentGlobalChats.Clear();
@@ -160,9 +178,6 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
                 RecentGlobalChats.Add(thread);
     }
 
-    /// <summary>
-    /// Пересобирает RecentProjects из Projects.Projects.
-    /// </summary>
     private void RebuildRecentProjects()
     {
         RecentProjects.Clear();
@@ -176,16 +191,95 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
     private void OnProjectsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         => RebuildRecentProjects();
 
-    // ─── Обработчик кнопки Open ───────────────────────────────────────────────
+    // ─── Кнопки «+» ──────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Вызывается когда пользователь нажал Open на карточке проекта.
-    /// ProjectContextStore уже обновлён внутри ProjectsViewModel.OnOpenProject().
-    /// Переходим на Documents и загружаем документы выбранного проекта.
+    /// Создаёт новый глобальный тред с названием = текущая дата/время.
+    /// Если Chat ещё не инициализирован — инициализирует его.
     /// </summary>
+    private async Task AddNewGlobalChatAsync()
+    {
+        var title = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
+        try
+        {
+            var dto = await _chatService.CreateGlobalAsync(
+                new Entities.Chat.CreateGlobalThreadRequest(title));
+            if (dto == null) return;
+
+            // Если треды ещё не загружены — загрузим
+            if (Chat.Threads.Count == 0)
+                await Chat.InitializeAsync();
+            else
+            {
+                // Вставляем новый тред вручную в начало коллекции Chat.Threads
+                // (ChatViewModel не знает об этом создании — обходим через reload)
+                await Chat.InitializeAsync();
+            }
+            RebuildRecentGlobalChats();
+        }
+        catch { /* silent */ }
+    }
+
+    /// <summary>
+    /// Создаёт новый проект с названием = текущая дата/время.
+    /// </summary>
+    private async Task AddNewProjectAsync()
+    {
+        var name = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
+        try
+        {
+            var dto = await _projectsService.CreateProjectAsync(
+                new Entities.Projects.CreateProjectRequest(name, string.Empty));
+            if (dto == null) return;
+
+            // Перезагружаем список проектов
+            await Projects.InitializeAsync();
+            // Принудительно обновляем коллекцию
+            await _reloadProjects();
+            RebuildRecentProjects();
+        }
+        catch { /* silent */ }
+    }
+
+    // helper — перезагружает Projects без навигации
+    private async Task _reloadProjects()
+    {
+        try { await Projects.LoadProjectsCommand.ExecuteAsync(null); } catch { }
+    }
+
+    // ─── Inline rename из Sidebar ─────────────────────────────────────────────
+
+    private async Task RenameChatFromSidebarAsync(ChatThreadItemViewModel? item)
+    {
+        if (item == null || string.IsNullOrWhiteSpace(item.EditTitle)) return;
+        try
+        {
+            var dto = await _chatService.RenameAsync(
+                item.Id, new Entities.Chat.RenameThreadRequest(item.EditTitle.Trim()));
+            if (dto != null) item.Title = dto.Title;
+        }
+        catch { /* silent */ }
+    }
+
+    private async Task RenameProjectFromSidebarAsync(ProjectCardViewModel? card)
+    {
+        if (card == null || string.IsNullOrWhiteSpace(card.EditName)) return;
+        try
+        {
+            var ok = await _projectsService.UpdateSettingsAsync(
+                card.Id,
+                new Entities.Projects.UpdateProjectSettingsRequest(
+                    card.EditName.Trim(), card.Description, card.AccessMode));
+            if (ok) card.Name = card.EditName.Trim();
+        }
+        catch { /* silent */ }
+    }
+
+    // ─── Обработчик кнопки Open ───────────────────────────────────────────────
+
     private void OnProjectOpened(Guid projectId)
     {
-        var _ = ShowDocumentsAsync();
+        _ = ShowDocumentsAsync();
     }
 
     // ─── Навигация ────────────────────────────────────────────────────────────
@@ -231,23 +325,16 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
 
     // ─── Команды Sidebar ──────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Открывает Chat и активирует выбранный тред.
-    /// </summary>
     private async Task SelectGlobalChatAsync(ChatThreadItemViewModel? thread)
     {
         if (thread == null) return;
         CurrentContent = Chat;
         RaiseActiveFlags();
-        // Убеждаемся что треды загружены, затем открываем нужный
         if (Chat.Threads.Count == 0)
             await Chat.InitializeAsync();
         await Chat.OpenThreadByIdAsync(thread.Id);
     }
 
-    /// <summary>
-    /// Открывает проект из сайдбара (устанавливает контекст и переходит на Documents).
-    /// </summary>
     private async Task OpenProjectFromSidebarAsync(ProjectCardViewModel? card)
     {
         if (card == null) return;

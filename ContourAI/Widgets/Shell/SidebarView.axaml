@@ -2,6 +2,8 @@
   SidebarView — переработанный боковой бар.
   Разделён на 3 части: 45% недавние глобальные чаты | 45% недавние проекты | 10% кнопка Настройки.
   Логотип и информация о сервере убраны.
+  Кнопки «+» рядом с заголовками секций — создают новый чат / проект.
+  Кнопки редактирования «✎» — инлайн-переименование (ToggleEditCommand).
   Скролл внутри каждой секции если элементы не помещаются.
   Проект: DevAssistant / ContourAI.
 -->
@@ -20,11 +22,52 @@
 
     <!-- Заголовок секции -->
     <Style Selector="TextBlock.section-header">
-      <Setter Property="FontSize"      Value="11"/>
+      <Setter Property="FontSize"      Value="10"/>
       <Setter Property="FontWeight"    Value="SemiBold"/>
       <Setter Property="Foreground"    Value="#475569"/>
-      <Setter Property="Margin"        Value="12 0 12 6"/>
-      <Setter Property="LetterSpacing" Value="1"/>
+      <Setter Property="LetterSpacing" Value="1.2"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- Кнопка «+» добавить чат/проект -->
+    <Style Selector="Button.add-btn">
+      <Setter Property="Background"  Value="Transparent"/>
+      <Setter Property="Foreground"  Value="#475569"/>
+      <Setter Property="Width"       Value="20"/>
+      <Setter Property="Height"      Value="20"/>
+      <Setter Property="Padding"     Value="0"/>
+      <Setter Property="CornerRadius" Value="4"/>
+      <Setter Property="FontSize"    Value="16"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment"   Value="Center"/>
+      <Setter Property="Cursor"      Value="Hand"/>
+    </Style>
+    <Style Selector="Button.add-btn:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#1E293B"/>
+      <Setter Property="TextBlock.Foreground" Value="#94A3B8"/>
+    </Style>
+
+    <!-- Кнопка редактирования «✎» -->
+    <Style Selector="Button.edit-btn">
+      <Setter Property="Background"  Value="Transparent"/>
+      <Setter Property="Foreground"  Value="#334155"/>
+      <Setter Property="Width"       Value="18"/>
+      <Setter Property="Height"      Value="18"/>
+      <Setter Property="Padding"     Value="0"/>
+      <Setter Property="CornerRadius" Value="3"/>
+      <Setter Property="FontSize"    Value="11"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment"   Value="Center"/>
+      <Setter Property="Cursor"      Value="Hand"/>
+    </Style>
+    <Style Selector="Button.edit-btn:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#1E293B"/>
+      <Setter Property="TextBlock.Foreground" Value="#5EEAD4"/>
+    </Style>
+    <!-- edit-btn активен когда IsEditing=true -->
+    <Style Selector="Button.edit-btn.editing /template/ ContentPresenter">
+      <Setter Property="Background" Value="#1E293B"/>
+      <Setter Property="TextBlock.Foreground" Value="#5EEAD4"/>
     </Style>
 
     <!-- Строка элемента (чат / проект) -->
@@ -33,10 +76,9 @@
       <Setter Property="Foreground"                 Value="#CBD5E1"/>
       <Setter Property="HorizontalAlignment"        Value="Stretch"/>
       <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-      <Setter Property="Padding"                    Value="12 7"/>
+      <Setter Property="Padding"                    Value="10 6"/>
       <Setter Property="CornerRadius"               Value="6"/>
       <Setter Property="Margin"                     Value="6 1"/>
-      <Setter Property="Height"                     Value="46"/>
       <Setter Property="Cursor"                     Value="Hand"/>
     </Style>
     <Style Selector="Button.item:pointerover /template/ ContentPresenter">
@@ -45,6 +87,22 @@
     <Style Selector="Button.item.active">
       <Setter Property="Background" Value="#1E293B"/>
       <Setter Property="Foreground" Value="#5EEAD4"/>
+    </Style>
+
+    <!-- Inline TextBox редактирования -->
+    <Style Selector="TextBox.inline-edit">
+      <Setter Property="Background"   Value="#0F172A"/>
+      <Setter Property="Foreground"   Value="#E2E8F0"/>
+      <Setter Property="BorderBrush"  Value="#334155"/>
+      <Setter Property="BorderThickness" Value="0 0 0 1"/>
+      <Setter Property="FontSize"     Value="12"/>
+      <Setter Property="Padding"      Value="2 1"/>
+      <Setter Property="Height"       Value="22"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="CaretBrush"   Value="#5EEAD4"/>
+    </Style>
+    <Style Selector="TextBox.inline-edit:focus /template/ Border">
+      <Setter Property="BorderBrush" Value="#5EEAD4"/>
     </Style>
 
     <!-- Кнопка Настройки -->
@@ -65,9 +123,9 @@
 
     <!-- Divider -->
     <Style Selector="Border.divider">
-      <Setter Property="Height"          Value="1"/>
-      <Setter Property="Background"      Value="#1E293B"/>
-      <Setter Property="Margin"          Value="0"/>
+      <Setter Property="Height"     Value="1"/>
+      <Setter Property="Background" Value="#1E293B"/>
+      <Setter Property="Margin"     Value="0"/>
     </Style>
 
   </UserControl.Styles>
@@ -75,7 +133,6 @@
   <!-- Основной контейнер -->
   <Border Background="#0F172A">
     <Grid>
-      <!-- 3 строки: 45* | 45* | 10* -->
       <Grid.RowDefinitions>
         <RowDefinition Height="45*"/>
         <RowDefinition Height="Auto"/>
@@ -89,11 +146,21 @@
            ═══════════════════════════════════════════════ -->
       <Grid Grid.Row="0" RowDefinitions="Auto,*">
 
-        <!-- Заголовок секции чатов -->
-        <TextBlock Grid.Row="0"
-                   Classes="section-header"
-                   Text="RECENT CHATS"
-                   Margin="12 14 12 6"/>
+        <!-- Заголовок: RECENT CHATS + кнопка + -->
+        <Grid Grid.Row="0"
+              ColumnDefinitions="*,Auto"
+              Margin="12 14 10 6">
+          <TextBlock Grid.Column="0"
+                     Classes="section-header"
+                     Text="RECENT CHATS"/>
+          <!-- Кнопка добавить новый чат -->
+          <Button Grid.Column="1"
+                  Classes="add-btn"
+                  Command="{Binding AddNewGlobalChatCommand}"
+                  ToolTip.Tip="New chat">
+            <TextBlock Text="+" FontSize="16" FontWeight="Light" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+          </Button>
+        </Grid>
 
         <!-- Скроллируемый список чатов -->
         <ScrollViewer Grid.Row="1"
@@ -103,31 +170,58 @@
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="chat:ChatThreadItemViewModel">
                 <!--
-                  Кнопка треда: название + время последнего использования.
-                  Команда открытия треда передаётся через привязку к Shell ViewModel
-                  через RelativeSource + Tag (Id) — или используется SelectChatCommand.
+                  Строка чата: кнопка-кликалка (заглушка) + кнопка редактирования.
+                  Когда IsEditing=false — показываем TextBlock + TimeLabel.
+                  Когда IsEditing=true  — показываем TextBox + Enter для применения.
                 -->
-                <Button Classes="item"
-                        Classes.active="{Binding IsSelected}"
-                        Command="{Binding $parent[UserControl].((shell:AuthenticatedShellViewModel)DataContext).SelectGlobalChatCommand}"
-                        CommandParameter="{Binding}">
-                  <Grid ColumnDefinitions="*,Auto">
-                    <!-- Название чата -->
-                    <TextBlock Grid.Column="0"
-                               Text="{Binding Title}"
-                               FontSize="13"
-                               TextTrimming="CharacterEllipsis"
-                               VerticalAlignment="Center"
-                               Foreground="{Binding $parent[Button].Foreground}"/>
-                    <!-- Время -->
-                    <TextBlock Grid.Column="1"
-                               Text="{Binding TimeLabel}"
-                               FontSize="11"
-                               Foreground="#475569"
-                               VerticalAlignment="Center"
-                               Margin="6 0 0 0"/>
-                  </Grid>
-                </Button>
+                <Grid ColumnDefinitions="*,Auto" Margin="6 1">
+
+                  <!-- Область клика на чат (заглушка) -->
+                  <Button Grid.Column="0"
+                          Classes="item"
+                          Classes.active="{Binding IsSelected}"
+                          Command="{Binding $parent[UserControl].((shell:AuthenticatedShellViewModel)DataContext).SelectGlobalChatCommand}"
+                          CommandParameter="{Binding}"
+                          Padding="10 6">
+                    <Grid ColumnDefinitions="*,Auto">
+
+                      <!-- Название (или TextBox при редактировании) -->
+                      <TextBlock Grid.Column="0"
+                                 IsVisible="{Binding !IsEditing}"
+                                 Text="{Binding Title}"
+                                 FontSize="12"
+                                 TextTrimming="CharacterEllipsis"
+                                 VerticalAlignment="Center"
+                                 Foreground="{Binding $parent[Button].Foreground}"/>
+                      <TextBox Grid.Column="0"
+                               IsVisible="{Binding IsEditing}"
+                               Classes="inline-edit"
+                               Text="{Binding EditTitle, Mode=TwoWay}"
+                               VerticalAlignment="Center"/>
+
+                      <!-- Время -->
+                      <TextBlock Grid.Column="1"
+                                 IsVisible="{Binding !IsEditing}"
+                                 Text="{Binding TimeLabel}"
+                                 FontSize="10"
+                                 Foreground="#334155"
+                                 VerticalAlignment="Center"
+                                 Margin="6 0 0 0"/>
+                    </Grid>
+                  </Button>
+
+                  <!-- Кнопка редактирования ✎ -->
+                  <Button Grid.Column="1"
+                          Classes="edit-btn"
+                          Classes.editing="{Binding IsEditing}"
+                          Command="{Binding ToggleEditCommand}"
+                          VerticalAlignment="Center"
+                          Margin="2 0 2 0"
+                          ToolTip.Tip="Rename">
+                    <TextBlock Text="✎" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                  </Button>
+
+                </Grid>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
@@ -143,11 +237,21 @@
            ═══════════════════════════════════════════════ -->
       <Grid Grid.Row="2" RowDefinitions="Auto,*">
 
-        <!-- Заголовок секции проектов -->
-        <TextBlock Grid.Row="0"
-                   Classes="section-header"
-                   Text="RECENT PROJECTS"
-                   Margin="12 12 12 6"/>
+        <!-- Заголовок: RECENT PROJECTS + кнопка + -->
+        <Grid Grid.Row="0"
+              ColumnDefinitions="*,Auto"
+              Margin="12 12 10 6">
+          <TextBlock Grid.Column="0"
+                     Classes="section-header"
+                     Text="RECENT PROJECTS"/>
+          <!-- Кнопка добавить новый проект -->
+          <Button Grid.Column="1"
+                  Classes="add-btn"
+                  Command="{Binding AddNewProjectCommand}"
+                  ToolTip.Tip="New project">
+            <TextBlock Text="+" FontSize="16" FontWeight="Light" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+          </Button>
+        </Grid>
 
         <!-- Скроллируемый список проектов -->
         <ScrollViewer Grid.Row="1"
@@ -157,28 +261,55 @@
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="projects:ProjectCardViewModel">
                 <!--
-                  Кнопка проекта: название + дата создания.
+                  Строка проекта: кнопка-кликалка (заглушка) + кнопка редактирования.
                 -->
-                <Button Classes="item"
-                        Command="{Binding $parent[UserControl].((shell:AuthenticatedShellViewModel)DataContext).OpenProjectFromSidebarCommand}"
-                        CommandParameter="{Binding}">
-                  <Grid ColumnDefinitions="*,Auto">
-                    <!-- Название проекта -->
-                    <TextBlock Grid.Column="0"
-                               Text="{Binding Name}"
-                               FontSize="13"
-                               TextTrimming="CharacterEllipsis"
-                               VerticalAlignment="Center"
-                               Foreground="{Binding $parent[Button].Foreground}"/>
-                    <!-- Дата -->
-                    <TextBlock Grid.Column="1"
-                               Text="{Binding CreatedAtLabel}"
-                               FontSize="11"
-                               Foreground="#475569"
-                               VerticalAlignment="Center"
-                               Margin="6 0 0 0"/>
-                  </Grid>
-                </Button>
+                <Grid ColumnDefinitions="*,Auto" Margin="6 1">
+
+                  <!-- Область клика на проект (заглушка) -->
+                  <Button Grid.Column="0"
+                          Classes="item"
+                          Command="{Binding $parent[UserControl].((shell:AuthenticatedShellViewModel)DataContext).OpenProjectFromSidebarCommand}"
+                          CommandParameter="{Binding}"
+                          Padding="10 6">
+                    <Grid ColumnDefinitions="*,Auto">
+
+                      <!-- Название (или TextBox при редактировании) -->
+                      <TextBlock Grid.Column="0"
+                                 IsVisible="{Binding !IsEditing}"
+                                 Text="{Binding Name}"
+                                 FontSize="12"
+                                 TextTrimming="CharacterEllipsis"
+                                 VerticalAlignment="Center"
+                                 Foreground="{Binding $parent[Button].Foreground}"/>
+                      <TextBox Grid.Column="0"
+                               IsVisible="{Binding IsEditing}"
+                               Classes="inline-edit"
+                               Text="{Binding EditName, Mode=TwoWay}"
+                               VerticalAlignment="Center"/>
+
+                      <!-- Дата -->
+                      <TextBlock Grid.Column="1"
+                                 IsVisible="{Binding !IsEditing}"
+                                 Text="{Binding CreatedAtLabel}"
+                                 FontSize="10"
+                                 Foreground="#334155"
+                                 VerticalAlignment="Center"
+                                 Margin="6 0 0 0"/>
+                    </Grid>
+                  </Button>
+
+                  <!-- Кнопка редактирования ✎ -->
+                  <Button Grid.Column="1"
+                          Classes="edit-btn"
+                          Classes.editing="{Binding IsEditing}"
+                          Command="{Binding ToggleEditCommand}"
+                          VerticalAlignment="Center"
+                          Margin="2 0 2 0"
+                          ToolTip.Tip="Rename">
+                    <TextBlock Text="✎" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                  </Button>
+
+                </Grid>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
@@ -192,16 +323,11 @@
       <!-- ═══════════════════════════════════════════════
            СЕКЦИЯ 3 — Настройки (10%)
            ═══════════════════════════════════════════════ -->
-      <Grid Grid.Row="4" RowDefinitions="*">
-        <!--
-          Кнопка «Настройки» — фон прозрачный, при наведении меняется.
-          Иконка шестерёнки (Unicode) + подпись.
-        -->
+      <Grid Grid.Row="4">
         <Button Classes="settings"
                 Command="{Binding ShowSettingsCommand}"
                 VerticalAlignment="Center">
           <StackPanel Orientation="Horizontal" Spacing="10">
-            <!-- Иконка шестерёнки -->
             <TextBlock Text="&#9881;"
                        FontSize="16"
                        VerticalAlignment="Center"

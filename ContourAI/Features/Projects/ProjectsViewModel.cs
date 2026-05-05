@@ -1,11 +1,15 @@
 /// <summary>
 /// ViewModel экрана списка проектов.
-/// Поддерживает: загрузку, создание, удаление проектов, настройки и управление папкой.
+/// Загружает проекты через ProjectsService.
+/// После создания проекта поднимает ProjectsChanged — AuthenticatedShellViewModel
+/// подписывается и перестраивает RecentProjects в Sidebar.
+/// Поддерживает инлайн-переименование через ProjectCardViewModel.RenameRequested.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
 using System;
 using System.Collections.ObjectModel;
+using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -17,8 +21,9 @@ namespace ContourAI.Features.Projects;
 
 public sealed partial class ProjectsViewModel : ObservableObject
 {
-    private readonly ProjectsService      _projectsService;
-    private readonly ProjectContextStore  _projectContext;
+    private readonly ProjectsService     _projectsService;
+    private readonly ProjectContextStore _projectContextStore;
+    private CancellationTokenSource      _cts = new();
 
     public ObservableCollection<ProjectCardViewModel> Projects { get; } = new();
 
@@ -27,138 +32,162 @@ public sealed partial class ProjectsViewModel : ObservableObject
     [ObservableProperty] private bool   _hasError;
     [ObservableProperty] private string _errorMessage = string.Empty;
 
-    // ─── Диалог создания ─────────────────────────────────────────────────────
-    [ObservableProperty] private bool _isCreateDialogOpen;
-    [ObservableProperty] private CreateProjectDialogViewModel? _createDialog;
+    // ── Создание нового проекта (диалог) ──────────────────────────────────────
+    [ObservableProperty] private bool   _isCreateDialogOpen;
+    [ObservableProperty] private string _newProjectName = string.Empty;
 
-    // ─── Диалог настроек ─────────────────────────────────────────────────────
-    [ObservableProperty] private bool _isSettingsDialogOpen;
-    [ObservableProperty] private ProjectSettingsDialogViewModel? _settingsDialog;
+    // ── События ──────────────────────────────────────────────────────────────
 
-    // ─── Подтверждение удаления ───────────────────────────────────────────────
-    [ObservableProperty] private bool   _isDeleteConfirmOpen;
-    [ObservableProperty] private string _deleteConfirmName = string.Empty;
-    private Guid _pendingDeleteId;
-
+    /// <summary>Пользователь нажал Open на карточке проекта.</summary>
     public event Action<Guid>? ProjectOpened;
+
+    /// <summary>
+    /// Поднимается после создания или удаления проекта.
+    /// AuthenticatedShellViewModel обновляет RecentProjects в Sidebar.
+    /// </summary>
+    public event Action? ProjectsChanged;
 
     public ProjectsViewModel(
         ProjectsService     projectsService,
-        ProjectContextStore projectContext,
-        CreateProjectDialogViewModel createDialog)
+        ProjectContextStore projectContextStore)
     {
-        _projectsService = projectsService;
-        _projectContext  = projectContext;
-        _createDialog    = createDialog;
-
-        _createDialog.ProjectCreated += OnProjectCreated;
-        _createDialog.Cancelled      += OnCreateCancelled;
+        _projectsService     = projectsService;
+        _projectContextStore = projectContextStore;
     }
 
-    public async Task InitializeAsync() => await LoadAsync();
+    // ── Initialize ────────────────────────────────────────────────────────────
 
-    // ─── Load ─────────────────────────────────────────────────────────────────
+    public async Task InitializeAsync()
+    {
+        if (Projects.Count == 0)
+            await LoadProjectsAsync();
+    }
+
+    // ── Load ──────────────────────────────────────────────────────────────────
 
     [RelayCommand]
-    private async Task LoadAsync()
+    private async Task LoadProjectsAsync()
     {
-        IsLoading    = true;
-        HasError     = false;
-        ErrorMessage = string.Empty;
+        IsLoading = true;
+        HasError  = false;
         Projects.Clear();
+
         try
         {
-            var list = await _projectsService.GetProjectsAsync();
+            var list = await _projectsService.GetProjectsAsync(_cts.Token);
             if (list == null) return;
+
             foreach (var dto in list)
-            {
-                var card = new ProjectCardViewModel(dto);
-                card.OpenRequested     += OnOpenProject;
-                card.SettingsRequested += OnOpenSettings;
-                card.DeleteRequested   += OnRequestDelete;
-                Projects.Add(card);
-            }
+                AddCard(new ProjectCardViewModel(dto));
+
             IsEmpty = Projects.Count == 0;
         }
-        catch (Exception ex)
-        {
-            HasError     = true;
-            ErrorMessage = ex.Message;
-        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex) { HasError = true; ErrorMessage = ex.Message; }
         finally { IsLoading = false; }
     }
 
-    // ─── Create ───────────────────────────────────────────────────────────────
+    // ── Create project dialog ─────────────────────────────────────────────────
 
     [RelayCommand]
     private void OpenCreateDialog()
     {
-        CreateDialog!.Reset();
+        NewProjectName     = string.Empty;
         IsCreateDialogOpen = true;
     }
 
-    private void OnProjectCreated(ProjectDto dto)
+    [RelayCommand]
+    private void CloseCreateDialog()
     {
         IsCreateDialogOpen = false;
-        var card = new ProjectCardViewModel(new ProjectSummaryDto(
-            dto.Id, dto.Name, dto.Description, dto.AccessMode, dto.CreatedAtUtc, dto.FolderCount));
-        card.OpenRequested     += OnOpenProject;
-        card.SettingsRequested += OnOpenSettings;
-        card.DeleteRequested   += OnRequestDelete;
-        Projects.Insert(0, card);
-        IsEmpty = false;
+        NewProjectName     = string.Empty;
     }
 
-    private void OnCreateCancelled() => IsCreateDialogOpen = false;
+    // ── Create project ────────────────────────────────────────────────────────
 
-    // ─── Open ─────────────────────────────────────────────────────────────────
-
-    private void OnOpenProject(ProjectCardViewModel card)
+    [RelayCommand]
+    private async Task CreateProjectAsync()
     {
-        _projectContext.Select(card.Id, card.Name);
+        var name = NewProjectName.Trim();
+        if (string.IsNullOrEmpty(name))
+            name = $"{DateTime.Now:dd.MM.yyyy HH:mm:ss}";
+
+        IsCreateDialogOpen = false;
+        NewProjectName     = string.Empty;
+        IsLoading          = true;
+        HasError           = false;
+
+        try
+        {
+            var dto = await _projectsService.CreateProjectAsync(
+                new CreateProjectRequest(name, string.Empty), _cts.Token);
+            if (dto == null) return;
+
+            var summary = new ProjectSummaryDto
+            {
+                Id          = dto.Id,
+                Name        = dto.Name,
+                Description = dto.Description,
+                AccessMode  = dto.AccessMode,
+                CreatedAtUtc = dto.CreatedAtUtc,
+                FolderCount = 0
+            };
+            var card = new ProjectCardViewModel(summary);
+            AddCard(card);
+            Projects.Move(Projects.IndexOf(card), 0); // в начало
+            IsEmpty = false;
+            ProjectsChanged?.Invoke();
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex) { HasError = true; ErrorMessage = ex.Message; }
+        finally { IsLoading = false; }
+    }
+
+    // ── Open / Delete / Rename ────────────────────────────────────────────────
+
+    private void OnProjectOpenRequested(ProjectCardViewModel card)
+    {
+        _projectContextStore.Select(card.Id, card.Name);
         ProjectOpened?.Invoke(card.Id);
     }
 
-    // ─── Settings ─────────────────────────────────────────────────────────────
-
-    private void OnOpenSettings(ProjectCardViewModel card)
+    private async void OnProjectDeleteRequested(ProjectCardViewModel card)
     {
-        var vm = new ProjectSettingsDialogViewModel(card.Id, _projectsService);
-        vm.Closed += () => IsSettingsDialogOpen = false;
-        vm.Saved  += () => _ = LoadAsync();
-
-        // Используем FolderCount карточки напрямую — без лишнего API-запроса
-        vm.HasFolderAttached = card.FolderCount > 0;
-
-        SettingsDialog        = vm;
-        IsSettingsDialogOpen  = true;
-    }
-
-    // ─── Delete ───────────────────────────────────────────────────────────────
-
-    private void OnRequestDelete(ProjectCardViewModel card)
-    {
-        _pendingDeleteId    = card.Id;
-        DeleteConfirmName   = card.Name;
-        IsDeleteConfirmOpen = true;
-    }
-
-    [RelayCommand]
-    private async Task ConfirmDeleteAsync()
-    {
-        IsDeleteConfirmOpen = false;
         try
         {
-            var ok = await _projectsService.DeleteProjectAsync(_pendingDeleteId);
+            var ok = await _projectsService.DeleteProjectAsync(card.Id, _cts.Token);
             if (!ok) return;
-            for (int i = 0; i < Projects.Count; i++)
-                if (Projects[i].Id == _pendingDeleteId)
-                { Projects.RemoveAt(i); break; }
+            Projects.Remove(card);
             IsEmpty = Projects.Count == 0;
+            ProjectsChanged?.Invoke();
         }
-        catch { /* TODO: show error */ }
+        catch { /* silent */ }
     }
 
-    [RelayCommand]
-    private void CancelDelete() => IsDeleteConfirmOpen = false;
+    private async void OnProjectRenameRequested(ProjectCardViewModel card, string newName)
+    {
+        try
+        {
+            var ok = await _projectsService.UpdateSettingsAsync(
+                card.Id,
+                new UpdateProjectSettingsRequest(newName, card.Description, card.AccessMode),
+                _cts.Token);
+            if (ok)
+            {
+                card.Name = newName;
+                ProjectsChanged?.Invoke();
+            }
+        }
+        catch { /* silent */ }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private void AddCard(ProjectCardViewModel card)
+    {
+        card.OpenRequested    += OnProjectOpenRequested;
+        card.DeleteRequested  += OnProjectDeleteRequested;
+        card.RenameRequested  += OnProjectRenameRequested;
+        Projects.Add(card);
+    }
 }

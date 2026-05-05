@@ -2,6 +2,9 @@
 /// ViewModel экрана чата.
 /// Поддерживает глобальный и проектный режим.
 /// Отправка сообщений — SSE-стриминг через ChatService.StreamAsync.
+/// После создания треда или отправки сообщения поднимает ThreadsChanged
+/// — Sidebar подписывается для live-обновления.
+/// Поддерживает инлайн-переименование тредов (ChatThreadItemViewModel.RenameRequested).
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -28,6 +31,12 @@ public sealed partial class ChatViewModel : ObservableObject
     // ── Событие «назад» ──────────────────────────────────────────────────────
     public event Action? OnBack;
 
+    /// <summary>
+    /// Поднимается после создания треда или отправки сообщения.
+    /// AuthenticatedShellViewModel подписывается и перестраивает RecentGlobalChats.
+    /// </summary>
+    public event Action? ThreadsChanged;
+
     // ── Список тредов (левая панель) ─────────────────────────────────────────
     public ObservableCollection<ChatThreadItemViewModel> Threads  { get; } = new();
 
@@ -35,13 +44,11 @@ public sealed partial class ChatViewModel : ObservableObject
     public ObservableCollection<ChatMessageViewModel> Messages { get; } = new();
 
     // ── Активный тред ────────────────────────────────────────────────────────
-    /// <summary>Активный тред (AXAML: SelectedThread).</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasActiveThread))]
     [NotifyPropertyChangedFor(nameof(SelectedThreadTitle))]
     private ChatThreadItemViewModel? _selectedThread;
 
-    /// <summary>Заголовок активного треда для хедера (AXAML: SelectedThreadTitle).</summary>
     public string SelectedThreadTitle
         => _selectedThread?.Title ?? "Select or create a thread";
 
@@ -53,15 +60,13 @@ public sealed partial class ChatViewModel : ObservableObject
     private string _inputText = string.Empty;
 
     // ── Scope switcher ────────────────────────────────────────────────────────
-    /// <summary>Метка текущего scope (GLOBAL / PROJECT) для хедера чата.</summary>
     [ObservableProperty] private string _scopeLabel = "GLOBAL";
 
     // ── Создание нового треда (диалог) ────────────────────────────────────────
     [ObservableProperty] private string _newThreadTitle        = string.Empty;
     [ObservableProperty] private bool   _isNewThreadDialogOpen;
 
-    // ── Флаг отправки (для кнопки «Отмена» и блокировки Send) ────────────────
-    /// <summary>true пока идёт SSE-стриминг ответа ассистента.</summary>
+    // ── Флаг отправки ─────────────────────────────────────────────────────────
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCommand))]
     private bool _isSending;
@@ -123,7 +128,7 @@ public sealed partial class ChatViewModel : ObservableObject
 
         try
         {
-            List<ChatThreadDto>? list;
+            System.Collections.Generic.List<ChatThreadDto>? list;
             if (_projectId.HasValue)
                 list = await _chatService.GetThreadsByProjectAsync(_projectId.Value, _cts.Token);
             else
@@ -132,13 +137,10 @@ public sealed partial class ChatViewModel : ObservableObject
             if (list == null) return;
 
             foreach (var dto in list)
-            {
-                var item = new ChatThreadItemViewModel(dto);
-                item.Selected        += OnThreadSelected;
-                item.DeleteRequested += OnThreadDeleteRequested;
-                Threads.Add(item);
-            }
+                AddThread(new ChatThreadItemViewModel(dto));
+
             IsThreadsEmpty = Threads.Count == 0;
+            ThreadsChanged?.Invoke();
         }
         catch (OperationCanceledException) { }
         catch (Exception ex) { HasError = true; ErrorMessage = ex.Message; }
@@ -178,9 +180,8 @@ public sealed partial class ChatViewModel : ObservableObject
     private async Task SelectThreadAsync(ChatThreadItemViewModel thread)
         => OnThreadSelected(thread);
 
-    // ── Scope switch commands (AXAML: SwitchToGlobalCommand / SwitchToProjectCommand) ──
+    // ── Scope switch commands ─────────────────────────────────────────────────
 
-    /// <summary>Переключает вид на глобальные треды.</summary>
     [RelayCommand]
     private async Task SwitchToGlobalAsync()
     {
@@ -188,7 +189,6 @@ public sealed partial class ChatViewModel : ObservableObject
         await LoadThreadsAsync();
     }
 
-    /// <summary>Переключает вид на треды проекта.</summary>
     [RelayCommand]
     private async Task SwitchToProjectAsync()
     {
@@ -198,7 +198,6 @@ public sealed partial class ChatViewModel : ObservableObject
 
     // ── New thread dialog commands ────────────────────────────────────────────
 
-    /// <summary>Открывает диалог создания треда (AXAML: OpenNewThreadDialogCommand).</summary>
     [RelayCommand]
     private void OpenNewThreadDialog()
     {
@@ -206,7 +205,6 @@ public sealed partial class ChatViewModel : ObservableObject
         IsNewThreadDialogOpen = true;
     }
 
-    /// <summary>Закрывает диалог без создания (AXAML: CloseNewThreadDialogCommand).</summary>
     [RelayCommand]
     private void CloseNewThreadDialog()
     {
@@ -220,7 +218,8 @@ public sealed partial class ChatViewModel : ObservableObject
     private async Task CreateThreadAsync()
     {
         var title = NewThreadTitle.Trim();
-        if (string.IsNullOrEmpty(title)) title = "New conversation";
+        if (string.IsNullOrEmpty(title))
+            title = $"{DateTime.Now:dd.MM.yyyy HH:mm:ss}";
 
         IsNewThreadDialogOpen = false;
         NewThreadTitle        = string.Empty;
@@ -239,11 +238,14 @@ public sealed partial class ChatViewModel : ObservableObject
             if (dto == null) return;
 
             var item = new ChatThreadItemViewModel(dto);
-            item.Selected        += OnThreadSelected;
-            item.DeleteRequested += OnThreadDeleteRequested;
-            Threads.Insert(0, item);
+            AddThread(item);
+            Threads.Insert(0, item); // уже добавлен через AddThread — перемещаем наверх
+            // AddThread добавляет в конец; заменим порядок: убрать и вставить в начало
+            Threads.Remove(item);
+            AddThread(item, insertAtTop: true);
             IsThreadsEmpty = false;
             OnThreadSelected(item);
+            ThreadsChanged?.Invoke();
         }
         catch (OperationCanceledException) { }
         catch (Exception ex) { HasError = true; ErrorMessage = ex.Message; }
@@ -265,8 +267,26 @@ public sealed partial class ChatViewModel : ObservableObject
                 IsMessagesEmpty = true;
             }
             IsThreadsEmpty = Threads.Count == 0;
+            ThreadsChanged?.Invoke();
         }
         catch { /* silent */ }
+    }
+
+    // ── Rename thread ─────────────────────────────────────────────────────────
+
+    private async void OnThreadRenameRequested(ChatThreadItemViewModel item, string newTitle)
+    {
+        try
+        {
+            var dto = await _chatService.RenameAsync(
+                item.Id, new RenameThreadRequest(newTitle), _cts.Token);
+            if (dto != null)
+            {
+                item.Title = dto.Title;
+                ThreadsChanged?.Invoke();
+            }
+        }
+        catch { /* silent — название откатится при следующей загрузке */ }
     }
 
     // ── Send (SSE streaming) ──────────────────────────────────────────────────
@@ -274,9 +294,6 @@ public sealed partial class ChatViewModel : ObservableObject
     private bool CanSend() =>
         !string.IsNullOrWhiteSpace(InputText) && !IsBusy && !IsSending && SelectedThread != null;
 
-    /// <summary>
-    /// Отправляет сообщение и принимает ответ ассистента токен за токеном через SSE.
-    /// </summary>
     [RelayCommand(CanExecute = nameof(CanSend))]
     private async Task SendAsync()
     {
@@ -306,6 +323,9 @@ public sealed partial class ChatViewModel : ObservableObject
                 await Dispatcher.UIThread.InvokeAsync(
                     () => assistantMsg.AppendToken(token));
             }
+
+            // После успешной отправки сообщения обновляем Sidebar
+            ThreadsChanged?.Invoke();
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)
@@ -351,5 +371,19 @@ public sealed partial class ChatViewModel : ObservableObject
     {
         _cts.Cancel();
         OnBack?.Invoke();
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /// <summary>Добавляет тред в коллекцию и подписывается на его события.</summary>
+    private void AddThread(ChatThreadItemViewModel item, bool insertAtTop = false)
+    {
+        item.Selected        += OnThreadSelected;
+        item.DeleteRequested += OnThreadDeleteRequested;
+        item.RenameRequested += OnThreadRenameRequested;
+        if (insertAtTop)
+            Threads.Insert(0, item);
+        else
+            Threads.Add(item);
     }
 }

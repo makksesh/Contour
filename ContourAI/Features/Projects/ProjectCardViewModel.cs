@@ -1,7 +1,7 @@
 /// <summary>
-/// ViewModel карточки проекта в списке.
+/// ViewModel карточки проекта в списке и Sidebar.
+/// Поддерживает инлайн-редактирование названия через IsEditing / EditName / ToggleEditCommand.
 /// Содержит команды Delete и OpenSettings.
-/// CreatedAtLabel — форматированная дата для отображения в Sidebar.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -15,11 +15,13 @@ namespace ContourAI.Features.Projects;
 public sealed partial class ProjectCardViewModel : ObservableObject
 {
     public Guid              Id          { get; }
-    public string            Name        { get; }
     public string            Description { get; }
     public ProjectAccessMode AccessMode  { get; }
     public DateTime          CreatedAt   { get; }
     public int               FolderCount { get; }
+
+    /// <summary>Отображаемое название проекта.</summary>
+    [ObservableProperty] private string _name = string.Empty;
 
     public string AccessModeLabel  => AccessMode == ProjectAccessMode.Shared ? "Shared" : "Private";
     public string FolderCountLabel => FolderCount == 1 ? "1 folder" : $"{FolderCount} folders";
@@ -27,22 +29,39 @@ public sealed partial class ProjectCardViewModel : ObservableObject
     /// <summary>Форматированная дата создания для Sidebar (пример: "2d ago", "May 3").</summary>
     public string CreatedAtLabel => FormatTimeAgo(CreatedAt);
 
-    /// <summary>Открыть экран проекта (Documents / Chat).</summary>
+    // ── Инлайн-редактирование ────────────────────────────────────────────────
+
+    /// <summary>true — поле ввода названия видимо, TextBlock скрыт.</summary>
+    [ObservableProperty] private bool   _isEditing;
+
+    /// <summary>Буфер редактируемого названия.</summary>
+    [ObservableProperty] private string _editName = string.Empty;
+
+    // ── События ──────────────────────────────────────────────────────────────
+
     public event Action<ProjectCardViewModel>? OpenRequested;
-    /// <summary>Открыть диалог настроек проекта.</summary>
     public event Action<ProjectCardViewModel>? SettingsRequested;
-    /// <summary>Запрос на удаление проекта.</summary>
     public event Action<ProjectCardViewModel>? DeleteRequested;
+
+    /// <summary>
+    /// Поднимается когда пользователь подтвердил новое название.
+    /// Подписчик (ProjectsViewModel) делает PATCH на сервер.
+    /// </summary>
+    public event Action<ProjectCardViewModel, string>? RenameRequested;
+
+    // ── Конструктор ───────────────────────────────────────────────────────────
 
     public ProjectCardViewModel(ProjectSummaryDto dto)
     {
         Id          = dto.Id;
-        Name        = dto.Name;
+        _name       = dto.Name;
         Description = dto.Description ?? string.Empty;
         AccessMode  = dto.AccessMode;
         CreatedAt   = dto.CreatedAtUtc;
         FolderCount = dto.FolderCount;
     }
+
+    // ── Команды ───────────────────────────────────────────────────────────────
 
     [RelayCommand]
     private void Open()     => OpenRequested?.Invoke(this);
@@ -52,6 +71,47 @@ public sealed partial class ProjectCardViewModel : ObservableObject
 
     [RelayCommand]
     private void Delete()   => DeleteRequested?.Invoke(this);
+
+    /// <summary>
+    /// Переключает режим редактирования.
+    /// Первый клик — открывает TextBox с текущим Name.
+    /// Второй клик — применяет изменения (вызывает RenameRequested).
+    /// </summary>
+    [RelayCommand]
+    public void ToggleEdit()
+    {
+        if (!IsEditing)
+        {
+            EditName  = Name;
+            IsEditing = true;
+        }
+        else
+        {
+            CommitEdit();
+        }
+    }
+
+    /// <summary>Подтверждает переименование и закрывает TextBox.</summary>
+    [RelayCommand]
+    public void CommitEdit()
+    {
+        if (!IsEditing) return;
+        var newName = EditName.Trim();
+        if (string.IsNullOrEmpty(newName)) newName = Name;
+        IsEditing = false;
+        if (newName != Name)
+            RenameRequested?.Invoke(this, newName);
+    }
+
+    /// <summary>Отменяет редактирование без сохранения.</summary>
+    [RelayCommand]
+    public void CancelEdit()
+    {
+        IsEditing = false;
+        EditName  = Name;
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private static string FormatTimeAgo(DateTime utc)
     {
