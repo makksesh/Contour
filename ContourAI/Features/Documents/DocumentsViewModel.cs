@@ -1,11 +1,15 @@
 /// <summary>
 /// ViewModel экрана документов проекта.
 /// Загружает список, загружает файл через диалог выбора, удаляет, фильтрует по статусу.
+/// UploadCommand принимает TopLevel? из code-behind (DocumentsView.axaml.cs).
+/// SetFilterCommand принимает int индекс фильтра из XAML CommandParameter.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -32,12 +36,21 @@ public sealed partial class DocumentsViewModel : ObservableObject
     [ObservableProperty] private bool   _isUploading;
     [ObservableProperty] private string _projectName  = string.Empty;
 
-    // ─── Фильтр ────────────────────────────────────────────────────────────────
+    // ─── Фильтр ──────────────────────────────────────────────────────────────────
+
     [ObservableProperty] private int _selectedFilterIndex; // 0=All,1=Indexed,2=Pending,3=Processing,4=Failed
 
     partial void OnSelectedFilterIndexChanged(int value) => ApplyFilter();
 
-    // ─── Подтверждение удаления ───────────────────────────────────────────────
+    // Биндинги активности кнопок фильтра — читаются через Classes.active в XAML
+    public bool IsFilterAll        => SelectedFilterIndex == 0;
+    public bool IsFilterIndexed    => SelectedFilterIndex == 1;
+    public bool IsFilterPending    => SelectedFilterIndex == 2;
+    public bool IsFilterProcessing => SelectedFilterIndex == 3;
+    public bool IsFilterFailed     => SelectedFilterIndex == 4;
+
+    // ─── Подтверждение удаления ──────────────────────────────────────────────
+
     [ObservableProperty] private bool   _isDeleteConfirmOpen;
     [ObservableProperty] private string _deleteConfirmName = string.Empty;
     private Guid _pendingDeleteId;
@@ -57,7 +70,7 @@ public sealed partial class DocumentsViewModel : ObservableObject
         await LoadAsync();
     }
 
-    // ─── Load ─────────────────────────────────────────────────────────────────
+    // ─── Load ────────────────────────────────────────────────────────────────────────
 
     [RelayCommand]
     private async Task LoadAsync()
@@ -93,7 +106,20 @@ public sealed partial class DocumentsViewModel : ObservableObject
         finally { IsLoading = false; }
     }
 
-    // ─── Filter ───────────────────────────────────────────────────────────────
+    // ─── Filter ───────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Вызывается из XAML через CommandParameter кнопок фильтра.
+    /// CommandParameter приходит как string, поэтому парсим вручную.
+    /// </summary>
+    [RelayCommand]
+    private void SetFilter(object? param)
+    {
+        if (param is string s && int.TryParse(s, out var idx))
+            SelectedFilterIndex = idx;
+        else if (param is int i)
+            SelectedFilterIndex = i;
+    }
 
     private void ApplyFilter()
     {
@@ -109,13 +135,20 @@ public sealed partial class DocumentsViewModel : ObservableObject
         foreach (var card in filtered)
             Documents.Add(card);
         IsEmpty = Documents.Count == 0;
+
+        // Обновляем биндинги активности кнопок
+        OnPropertyChanged(nameof(IsFilterAll));
+        OnPropertyChanged(nameof(IsFilterIndexed));
+        OnPropertyChanged(nameof(IsFilterPending));
+        OnPropertyChanged(nameof(IsFilterProcessing));
+        OnPropertyChanged(nameof(IsFilterFailed));
     }
 
-    // ─── Upload ───────────────────────────────────────────────────────────────
+    // ─── Upload ───────────────────────────────────────────────────────────────────
 
     /// <summary>
     /// Открывает нативный диалог выбора файла Avalonia и загружает выбранный файл.
-    /// Принимает TopLevel для доступа к StorageProvider.
+    /// Принимает TopLevel? из code-behind, не из XAML Command-биндинга.
     /// </summary>
     [RelayCommand]
     private async Task UploadAsync(TopLevel? topLevel)
@@ -159,12 +192,12 @@ public sealed partial class DocumentsViewModel : ObservableObject
         finally { IsUploading = false; }
     }
 
-    // ─── Delete ───────────────────────────────────────────────────────────────
+    // ─── Delete ───────────────────────────────────────────────────────────────────
 
     private void OnRequestDelete(DocumentCardViewModel card)
     {
-        _pendingDeleteId   = card.Id;
-        DeleteConfirmName  = card.FileName;
+        _pendingDeleteId    = card.Id;
+        DeleteConfirmName   = card.FileName;
         IsDeleteConfirmOpen = true;
     }
 

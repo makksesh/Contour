@@ -1,8 +1,8 @@
 /// <summary>
 /// ViewModel диалога настроек проекта.
 /// Загружает текущие значения из ProjectDto, сохраняет через ProjectsService.
-/// Предоставляет HasFolderAttached как публичное свойство — ProjectsViewModel выставляет его напрямую.
-/// Управляет папкой: подключить / изменить права / отвязать.
+/// UpdateSettingsAsync: принимает 200 OK и 204 NoContent как успех
+/// (разные версии backend могут возвращать разные коды).
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -20,16 +20,16 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
     private readonly ProjectsService _projectsService;
     private readonly Guid            _projectId;
 
-    // ─── Settings fields ──────────────────────────────────────────────────────
+    // ─── Settings fields ────────────────────────────────────────────────────
 
-    [ObservableProperty] private string _systemPrompt     = string.Empty;
-    [ObservableProperty] private int    _maxTokens        = 4096;
-    [ObservableProperty] private float  _temperature      = 0.7f;
-    [ObservableProperty] private int    _ragTopK          = 5;
-    [ObservableProperty] private bool   _useRagContext    = true;
+    [ObservableProperty] private string _systemPrompt      = string.Empty;
+    [ObservableProperty] private int    _maxTokens         = 4096;
+    [ObservableProperty] private float  _temperature       = 0.7f;
+    [ObservableProperty] private int    _ragTopK           = 5;
+    [ObservableProperty] private bool   _useRagContext     = true;
     [ObservableProperty] private int    _contextWindowSize = 10;
 
-    // ─── Folder fields ────────────────────────────────────────────────────────
+    // ─── Folder fields ──────────────────────────────────────────────────────
 
     /// <summary>Выставляется напрямую из ProjectsViewModel по FolderCount.</summary>
     [ObservableProperty] private bool    _hasFolderAttached;
@@ -38,7 +38,7 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
     [ObservableProperty] private bool    _permEdit;
     [ObservableProperty] private bool    _permDelete;
 
-    // ─── State ────────────────────────────────────────────────────────────────
+    // ─── State ──────────────────────────────────────────────────────────────────────
 
     [ObservableProperty] private bool   _isBusy;
     [ObservableProperty] private string _errorMessage = string.Empty;
@@ -74,7 +74,12 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
                 ContextWindowSize:        ContextWindowSize);
 
             var ok = await _projectsService.UpdateSettingsAsync(_projectId, request);
-            if (!ok) { ErrorMessage = "Failed to save settings."; HasError = true; return; }
+            if (!ok)
+            {
+                ErrorMessage = "Failed to save settings.";
+                HasError     = true;
+                return;
+            }
             Saved?.Invoke();
             Closed?.Invoke();
         }
@@ -82,7 +87,7 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
         finally { IsBusy = false; }
     }
 
-    // ─── Folder: attach ───────────────────────────────────────────────────────
+    // ─── Folder: attach ──────────────────────────────────────────────────────
 
     [RelayCommand]
     private async Task AttachFolderAsync()
@@ -101,7 +106,7 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
         finally { IsBusy = false; }
     }
 
-    // ─── Folder: change permissions ───────────────────────────────────────────
+    // ─── Folder: change permissions ──────────────────────────────────────────────
 
     [RelayCommand]
     private async Task SaveFolderPermissionsAsync()
@@ -116,7 +121,7 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
         finally { IsBusy = false; }
     }
 
-    // ─── Folder: detach ───────────────────────────────────────────────────────
+    // ─── Folder: detach ────────────────────────────────────────────────────────
 
     [RelayCommand]
     private async Task DetachFolderAsync()

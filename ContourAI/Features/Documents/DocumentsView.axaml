@@ -30,6 +30,10 @@
       <Setter Property="CornerRadius" Value="5"/>
       <Setter Property="FontSize" Value="12"/>
     </Style>
+    <Style Selector="Button.filter.active">
+      <Setter Property="Background" Value="#313b3b"/>
+      <Setter Property="Foreground" Value="#4f98a3"/>
+    </Style>
   </UserControl.Styles>
 
   <Grid>
@@ -47,8 +51,9 @@
           </StackPanel>
           <TextBlock Text="Upload and manage project documents" FontSize="13" Foreground="#797876"/>
         </StackPanel>
-        <Button Grid.Column="1" Classes="primary"
-                Command="{Binding UploadCommand}"
+        <!-- Upload: handled via Click in code-behind to pass TopLevel -->
+        <Button x:Name="UploadButton"
+                Grid.Column="1" Classes="primary"
                 IsEnabled="{Binding !IsUploading}">
           <Panel>
             <TextBlock Text="↑ Upload File" IsVisible="{Binding !IsUploading}"/>
@@ -57,13 +62,23 @@
         </Button>
       </Grid>
 
-      <!-- Filter bar -->
+      <!-- Filter bar: each button calls SetFilterCommand with its index -->
       <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6" Margin="0 0 0 16">
-        <Button Classes="filter" Command="{Binding LoadCommand}">All</Button>
-        <Button Classes="filter">Indexed</Button>
-        <Button Classes="filter">Pending</Button>
-        <Button Classes="filter">Processing</Button>
-        <Button Classes="filter">Failed</Button>
+        <Button Classes="filter"
+                Classes.active="{Binding IsFilterAll}"
+                Command="{Binding SetFilterCommand}" CommandParameter="0">All</Button>
+        <Button Classes="filter"
+                Classes.active="{Binding IsFilterIndexed}"
+                Command="{Binding SetFilterCommand}" CommandParameter="1">Indexed</Button>
+        <Button Classes="filter"
+                Classes.active="{Binding IsFilterPending}"
+                Command="{Binding SetFilterCommand}" CommandParameter="2">Pending</Button>
+        <Button Classes="filter"
+                Classes.active="{Binding IsFilterProcessing}"
+                Command="{Binding SetFilterCommand}" CommandParameter="3">Processing</Button>
+        <Button Classes="filter"
+                Classes.active="{Binding IsFilterFailed}"
+                Command="{Binding SetFilterCommand}" CommandParameter="4">Failed</Button>
         <Button Classes="ghost" Command="{Binding LoadCommand}" FontSize="12">↻ Refresh</Button>
       </StackPanel>
 
@@ -113,13 +128,11 @@
                         <TextBlock Text="{Binding StatusLabel}" FontSize="12"
                                    Foreground="{Binding StatusColor}"/>
                       </StackPanel>
-                      <!-- Error message for failed docs -->
                       <TextBlock IsVisible="{Binding HasError}"
                                  Text="{Binding ErrorMessage}"
                                  FontSize="11" Foreground="#dd6974"
                                  TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
-
                     <!-- Actions -->
                     <Button Grid.Column="1" Classes="danger" FontSize="12"
                             Command="{Binding DeleteCommand}" VerticalAlignment="Center">
