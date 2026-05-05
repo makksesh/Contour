@@ -121,9 +121,10 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
     /// ProjectContextStore уже обновлён внутри ProjectsViewModel.OnOpenProject().
     /// Переходим на Documents и загружаем документы выбранного проекта.
     /// </summary>
-    private void OnProjectOpened(Guid _)
+    private void OnProjectOpened(Guid projectId)
     {
-        _ = ShowDocumentsAsync();
+        // Используем отдельный discard для Task, чтобы не конфликтовать с параметром projectId
+        var _ = ShowDocumentsAsync();
     }
 
     // ─── Навигация ────────────────────────────────────────────────────────────

@@ -2,7 +2,7 @@
 /// Сервис для работы с проектами: список, создание, получение, удаление,
 /// обновление настроек, управление папкой.
 /// Использует AuthorizedHttpClientFactory — токен не передаётся вручную.
-/// При 401/403 вызывает SessionAuthService.HandleUnauthorized().
+/// ВАЖНО: НЕ использовать using при вызове CreateAuthorized() — HttpClient singleton.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -37,7 +37,7 @@ public sealed class ProjectsService
         _sessionAuthService = sessionAuthService;
     }
 
-    // ─── helpers ──────────────────────────────────────────────────────────────
+    // ─── helpers ─────────────────────────────────────────────────────────────────
 
     private bool HandleAuth(HttpStatusCode code)
     {
@@ -54,8 +54,8 @@ public sealed class ProjectsService
     /// <summary>Возвращает список всех проектов пользователя.</summary>
     public async Task<List<ProjectSummaryDto>?> GetProjectsAsync(CancellationToken ct = default)
     {
-        using var http     = _httpFactory.CreateAuthorized();
-        var       response = await http.GetAsync("api/projects", ct);
+        var http     = _httpFactory.CreateAuthorized();
+        var response = await http.GetAsync("api/projects", ct);
         if (HandleAuth(response.StatusCode)) return null;
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<List<ProjectSummaryDto>>(JsonOptions, ct);
@@ -66,8 +66,8 @@ public sealed class ProjectsService
     /// <summary>Возвращает детали конкретного проекта.</summary>
     public async Task<ProjectDto?> GetProjectByIdAsync(Guid projectId, CancellationToken ct = default)
     {
-        using var http     = _httpFactory.CreateAuthorized();
-        var       response = await http.GetAsync($"api/projects/{projectId}", ct);
+        var http     = _httpFactory.CreateAuthorized();
+        var response = await http.GetAsync($"api/projects/{projectId}", ct);
         if (HandleAuth(response.StatusCode)) return null;
         if (response.StatusCode == HttpStatusCode.NotFound) return null;
         response.EnsureSuccessStatusCode();
@@ -79,68 +79,68 @@ public sealed class ProjectsService
     /// <summary>Создаёт новый проект и возвращает его DTO.</summary>
     public async Task<ProjectDto?> CreateProjectAsync(CreateProjectRequest request, CancellationToken ct = default)
     {
-        using var http     = _httpFactory.CreateAuthorized();
-        var       response = await http.PostAsJsonAsync("api/projects", request, JsonOptions, ct);
+        var http     = _httpFactory.CreateAuthorized();
+        var response = await http.PostAsJsonAsync("api/projects", request, JsonOptions, ct);
         if (HandleAuth(response.StatusCode)) return null;
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<ProjectDto>(JsonOptions, ct);
     }
 
-    // ─── DELETE /api/projects/{id} ────────────────────────────────────────────
+    // ─── DELETE /api/projects/{id} ───────────────────────────────────────────────
 
     /// <summary>Удаляет проект. Возвращает true при успехе (204).</summary>
     public async Task<bool> DeleteProjectAsync(Guid projectId, CancellationToken ct = default)
     {
-        using var http     = _httpFactory.CreateAuthorized();
-        var       response = await http.DeleteAsync($"api/projects/{projectId}", ct);
+        var http     = _httpFactory.CreateAuthorized();
+        var response = await http.DeleteAsync($"api/projects/{projectId}", ct);
         if (HandleAuth(response.StatusCode)) return false;
         return response.StatusCode == HttpStatusCode.NoContent;
     }
 
-    // ─── PATCH /api/projects/{id}/settings ───────────────────────────────────
+    // ─── PATCH /api/projects/{id}/settings ───────────────────────────────────────────
 
     /// <summary>Обновляет настройки проекта (модели, промпт, temperature, RAG). Возвращает true при 204.</summary>
     public async Task<bool> UpdateSettingsAsync(Guid projectId, UpdateProjectSettingsRequest request, CancellationToken ct = default)
     {
-        using var http = _httpFactory.CreateAuthorized();
-        var content    = JsonContent.Create(request, options: JsonOptions);
-        var response   = await http.PatchAsync($"api/projects/{projectId}/settings", content, ct);
+        var http    = _httpFactory.CreateAuthorized();
+        var content = JsonContent.Create(request, options: JsonOptions);
+        var response = await http.PatchAsync($"api/projects/{projectId}/settings", content, ct);
         if (HandleAuth(response.StatusCode)) return false;
         return response.StatusCode == HttpStatusCode.NoContent;
     }
 
-    // ─── POST /api/projects/{id}/folders ─────────────────────────────────────
+    // ─── POST /api/projects/{id}/folders ───────────────────────────────────────────
 
     /// <summary>Подключает папку к проекту. Возвращает FolderDto при успехе (201).</summary>
     public async Task<FolderDto?> AddFolderAsync(Guid projectId, AddProjectFolderRequest request, CancellationToken ct = default)
     {
-        using var http     = _httpFactory.CreateAuthorized();
-        var       response = await http.PostAsJsonAsync($"api/projects/{projectId}/folders", request, JsonOptions, ct);
+        var http     = _httpFactory.CreateAuthorized();
+        var response = await http.PostAsJsonAsync($"api/projects/{projectId}/folders", request, JsonOptions, ct);
         if (HandleAuth(response.StatusCode)) return null;
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<FolderDto>(JsonOptions, ct);
     }
 
-    // ─── PATCH /api/projects/{id}/folder/permission ───────────────────────────
+    // ─── PATCH /api/projects/{id}/folder/permission ────────────────────────────────────
 
     /// <summary>Изменяет права подключённой папки. Возвращает true при 204.</summary>
     public async Task<bool> ChangeFolderPermissionAsync(Guid projectId, FolderPermission permission, CancellationToken ct = default)
     {
-        using var http    = _httpFactory.CreateAuthorized();
-        var request       = new ChangeFolderPermissionRequest(permission);
-        var content       = JsonContent.Create(request, options: JsonOptions);
-        var response      = await http.PatchAsync($"api/projects/{projectId}/folder/permission", content, ct);
+        var http     = _httpFactory.CreateAuthorized();
+        var request  = new ChangeFolderPermissionRequest(permission);
+        var content  = JsonContent.Create(request, options: JsonOptions);
+        var response = await http.PatchAsync($"api/projects/{projectId}/folder/permission", content, ct);
         if (HandleAuth(response.StatusCode)) return false;
         return response.StatusCode == HttpStatusCode.NoContent;
     }
 
-    // ─── DELETE /api/projects/{id}/folder ────────────────────────────────────
+    // ─── DELETE /api/projects/{id}/folder ─────────────────────────────────────────────
 
     /// <summary>Отвязывает папку от проекта. Возвращает true при 204.</summary>
     public async Task<bool> RemoveFolderAsync(Guid projectId, CancellationToken ct = default)
     {
-        using var http     = _httpFactory.CreateAuthorized();
-        var       response = await http.DeleteAsync($"api/projects/{projectId}/folder", ct);
+        var http     = _httpFactory.CreateAuthorized();
+        var response = await http.DeleteAsync($"api/projects/{projectId}/folder", ct);
         if (HandleAuth(response.StatusCode)) return false;
         return response.StatusCode == HttpStatusCode.NoContent;
     }

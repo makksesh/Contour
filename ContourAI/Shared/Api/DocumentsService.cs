@@ -5,7 +5,7 @@
 /// GET  /api/documents/{documentId}
 /// DELETE /api/documents/{documentId}
 /// Использует AuthorizedHttpClientFactory.
-/// При 401/403 — SessionAuthService.HandleUnauthorized().
+/// ВАЖНО: НЕ использовать using при вызове CreateAuthorized() — HttpClient singleton.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -51,32 +51,32 @@ public sealed class DocumentsService
         return false;
     }
 
-    // ─── GET /api/documents/projects/{projectId} ───────────────────────────────
+    // ─── GET /api/documents/projects/{projectId} ──────────────────────────────────
 
     /// <summary>Возвращает список документов проекта.</summary>
     public async Task<List<DocumentDto>?> GetProjectDocumentsAsync(Guid projectId, CancellationToken ct = default)
     {
-        using var http     = _httpFactory.CreateAuthorized();
-        var       response = await http.GetAsync($"api/documents/projects/{projectId}", ct);
+        var http     = _httpFactory.CreateAuthorized();
+        var response = await http.GetAsync($"api/documents/projects/{projectId}", ct);
         if (HandleAuth(response.StatusCode)) return null;
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<List<DocumentDto>>(JsonOptions, ct);
     }
 
-    // ─── GET /api/documents/{documentId} ─────────────────────────────────────
+    // ─── GET /api/documents/{documentId} ───────────────────────────────────────────
 
     /// <summary>Возвращает детали одного документа.</summary>
     public async Task<DocumentDto?> GetDocumentByIdAsync(Guid documentId, CancellationToken ct = default)
     {
-        using var http     = _httpFactory.CreateAuthorized();
-        var       response = await http.GetAsync($"api/documents/{documentId}", ct);
+        var http     = _httpFactory.CreateAuthorized();
+        var response = await http.GetAsync($"api/documents/{documentId}", ct);
         if (HandleAuth(response.StatusCode)) return null;
         if (response.StatusCode == HttpStatusCode.NotFound) return null;
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<DocumentDto>(JsonOptions, ct);
     }
 
-    // ─── POST /api/documents/upload ───────────────────────────────────────────
+    // ─── POST /api/documents/upload ────────────────────────────────────────────────
 
     /// <summary>
     /// Загружает файл на сервер (multipart/form-data).
@@ -87,9 +87,9 @@ public sealed class DocumentsService
         string filePath,
         CancellationToken ct = default)
     {
-        using var http    = _httpFactory.CreateAuthorized();
+        var http      = _httpFactory.CreateAuthorized();
         await using var stream = File.OpenRead(filePath);
-        var fileName = Path.GetFileName(filePath);
+        var fileName  = Path.GetFileName(filePath);
 
         using var form = new MultipartFormDataContent();
         form.Add(new StringContent(projectId.ToString()),          "projectId");
@@ -102,13 +102,13 @@ public sealed class DocumentsService
         return await response.Content.ReadFromJsonAsync<DocumentDto>(JsonOptions, ct);
     }
 
-    // ─── DELETE /api/documents/{documentId} ───────────────────────────────────
+    // ─── DELETE /api/documents/{documentId} ──────────────────────────────────────────
 
     /// <summary>Удаляет документ. Возвращает true при 204.</summary>
     public async Task<bool> DeleteDocumentAsync(Guid documentId, CancellationToken ct = default)
     {
-        using var http     = _httpFactory.CreateAuthorized();
-        var       response = await http.DeleteAsync($"api/documents/{documentId}", ct);
+        var http     = _httpFactory.CreateAuthorized();
+        var response = await http.DeleteAsync($"api/documents/{documentId}", ct);
         if (HandleAuth(response.StatusCode)) return false;
         return response.StatusCode == HttpStatusCode.NoContent;
     }
