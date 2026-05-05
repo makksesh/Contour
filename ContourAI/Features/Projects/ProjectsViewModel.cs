@@ -1,6 +1,6 @@
 /// <summary>
 /// ViewModel экрана списка проектов.
-/// Поддерживает: загрузку, создание, удаление проектов, открытие настроек.
+/// Поддерживает: загрузку, создание, удаление проектов, настройки и управление папкой.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -127,20 +127,11 @@ public sealed partial class ProjectsViewModel : ObservableObject
         vm.Closed += () => IsSettingsDialogOpen = false;
         vm.Saved  += () => _ = LoadAsync();
 
-        // Загрузить детали проекта для отображения текущей папки
-        _ = LoadProjectDetailsAsync(card.Id, vm);
+        // Используем FolderCount карточки напрямую — без лишнего API-запроса
+        vm.HasFolderAttached = card.FolderCount > 0;
 
         SettingsDialog        = vm;
         IsSettingsDialogOpen  = true;
-    }
-
-    private async Task LoadProjectDetailsAsync(Guid projectId, ProjectSettingsDialogViewModel vm)
-    {
-        var dto = await _projectsService.GetProjectByIdAsync(projectId);
-        if (dto == null) return;
-        // FolderDto недоступен отдельно через API; используем FolderCount как индикатор
-        // Полная информация о папке доступна после реализации Documents-сервиса
-        vm.LoadFrom(dto, folderAttached: dto.FolderCount > 0);
     }
 
     // ─── Delete ───────────────────────────────────────────────────────────────
@@ -165,7 +156,7 @@ public sealed partial class ProjectsViewModel : ObservableObject
                 { Projects.RemoveAt(i); break; }
             IsEmpty = Projects.Count == 0;
         }
-        catch { /* TODO: показать ошибку */ }
+        catch { /* TODO: show error */ }
     }
 
     [RelayCommand]

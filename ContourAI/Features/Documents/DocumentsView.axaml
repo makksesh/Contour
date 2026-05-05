@@ -1,0 +1,160 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:ContourAI.Features.Documents"
+             x:Class="ContourAI.Features.Documents.DocumentsView"
+             x:DataType="vm:DocumentsViewModel">
+
+  <UserControl.Styles>
+    <Style Selector="Button.primary">
+      <Setter Property="Background" Value="#01696f"/>
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="Padding" Value="14 7"/>
+      <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    <Style Selector="Button.danger">
+      <Setter Property="Background" Value="#a12c7b"/>
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="Padding" Value="12 6"/>
+      <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    <Style Selector="Button.ghost">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Foreground" Value="#7a7974"/>
+      <Setter Property="Padding" Value="12 6"/>
+      <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    <Style Selector="Button.filter">
+      <Setter Property="Background" Value="#22211f"/>
+      <Setter Property="Foreground" Value="#797876"/>
+      <Setter Property="Padding" Value="10 5"/>
+      <Setter Property="CornerRadius" Value="5"/>
+      <Setter Property="FontSize" Value="12"/>
+    </Style>
+  </UserControl.Styles>
+
+  <Grid>
+    <!-- ═══ MAIN LAYOUT ═══ -->
+    <Grid RowDefinitions="Auto,Auto,*" Margin="32 24">
+
+      <!-- Header -->
+      <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0 0 0 16">
+        <StackPanel Grid.Column="0" Spacing="3">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="Documents" FontSize="22" FontWeight="SemiBold" Foreground="#cdccca"/>
+            <Border Background="#313b3b" CornerRadius="4" Padding="8 2" VerticalAlignment="Center">
+              <TextBlock Text="{Binding ProjectName}" FontSize="12" Foreground="#4f98a3"/>
+            </Border>
+          </StackPanel>
+          <TextBlock Text="Upload and manage project documents" FontSize="13" Foreground="#797876"/>
+        </StackPanel>
+        <Button Grid.Column="1" Classes="primary"
+                Command="{Binding UploadCommand}"
+                IsEnabled="{Binding !IsUploading}">
+          <Panel>
+            <TextBlock Text="↑ Upload File" IsVisible="{Binding !IsUploading}"/>
+            <TextBlock Text="Uploading..."   IsVisible="{Binding IsUploading}"/>
+          </Panel>
+        </Button>
+      </Grid>
+
+      <!-- Filter bar -->
+      <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6" Margin="0 0 0 16">
+        <Button Classes="filter" Command="{Binding LoadCommand}">All</Button>
+        <Button Classes="filter">Indexed</Button>
+        <Button Classes="filter">Pending</Button>
+        <Button Classes="filter">Processing</Button>
+        <Button Classes="filter">Failed</Button>
+        <Button Classes="ghost" Command="{Binding LoadCommand}" FontSize="12">↻ Refresh</Button>
+      </StackPanel>
+
+      <!-- Content area -->
+      <Grid Grid.Row="2">
+        <!-- Loading -->
+        <TextBlock IsVisible="{Binding IsLoading}"
+                   Text="Loading documents..."
+                   Foreground="#797876"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+        <!-- Error -->
+        <StackPanel IsVisible="{Binding HasError}"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+          <TextBlock Text="{Binding ErrorMessage}" Foreground="#dd6974" HorizontalAlignment="Center"/>
+          <Button Classes="primary" Command="{Binding LoadCommand}" HorizontalAlignment="Center">Retry</Button>
+        </StackPanel>
+
+        <!-- Empty -->
+        <StackPanel IsVisible="{Binding IsEmpty}"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+          <TextBlock Text="No documents yet" FontSize="16" FontWeight="Medium"
+                     Foreground="#cdccca" HorizontalAlignment="Center"/>
+          <TextBlock Text="Upload files to index them for RAG search"
+                     FontSize="13" Foreground="#797876" HorizontalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- Document list -->
+        <ScrollViewer IsVisible="{Binding !IsLoading}">
+          <ItemsControl ItemsSource="{Binding Documents}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:DocumentCardViewModel">
+                <Border Margin="0 0 0 8"
+                        Background="#1c1b19" CornerRadius="8"
+                        BorderBrush="#393836" BorderThickness="1"
+                        Padding="16 12">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <!-- Info -->
+                    <StackPanel Grid.Column="0" Spacing="4">
+                      <TextBlock Text="{Binding FileName}" FontSize="14" FontWeight="Medium"
+                                 Foreground="#cdccca" TextTrimming="CharacterEllipsis"/>
+                      <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Text="{Binding SizeLabel}"  FontSize="12" Foreground="#797876"/>
+                        <TextBlock Text="•" FontSize="12" Foreground="#393836"/>
+                        <TextBlock Text="{Binding ContentType}" FontSize="12" Foreground="#797876"/>
+                        <TextBlock Text="•" FontSize="12" Foreground="#393836"/>
+                        <TextBlock Text="{Binding StatusLabel}" FontSize="12"
+                                   Foreground="{Binding StatusColor}"/>
+                      </StackPanel>
+                      <!-- Error message for failed docs -->
+                      <TextBlock IsVisible="{Binding HasError}"
+                                 Text="{Binding ErrorMessage}"
+                                 FontSize="11" Foreground="#dd6974"
+                                 TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+
+                    <!-- Actions -->
+                    <Button Grid.Column="1" Classes="danger" FontSize="12"
+                            Command="{Binding DeleteCommand}" VerticalAlignment="Center">
+                      ✕
+                    </Button>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </Grid>
+    </Grid>
+
+    <!-- ═══ DELETE CONFIRM OVERLAY ═══ -->
+    <Grid IsVisible="{Binding IsDeleteConfirmOpen}">
+      <Border Background="#80000000"/>
+      <Border Width="360"
+              Background="#1c1b19" CornerRadius="12"
+              BorderBrush="#393836" BorderThickness="1"
+              HorizontalAlignment="Center" VerticalAlignment="Center"
+              Padding="28 24">
+        <StackPanel Spacing="16">
+          <TextBlock Text="Delete Document" FontSize="18" FontWeight="SemiBold" Foreground="#cdccca"/>
+          <TextBlock TextWrapping="Wrap" Foreground="#797876" FontSize="13">
+            <Run Text="Are you sure you want to delete "/>
+            <Run Text="{Binding DeleteConfirmName}" FontWeight="SemiBold" Foreground="#cdccca"/>
+            <Run Text="? This cannot be undone."/>
+          </TextBlock>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Classes="ghost"  Command="{Binding CancelDeleteCommand}">Cancel</Button>
+            <Button Classes="danger" Command="{Binding ConfirmDeleteCommand}">Delete</Button>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Grid>
+</UserControl>

@@ -1,6 +1,6 @@
 /// <summary>
 /// Главная точка входа Avalonia 12.x приложения.
-/// Регистрирует DI-контейнер с поддержкой session-слоя Фазы 3 и Projects-слоя Фазы 4.
+/// Регистрирует DI-контейнер с поддержкой session-слоя Фазы 3, Projects-слоя Фазы 4 и Documents-слоя Фазы 6.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 using System;
@@ -8,6 +8,7 @@ using Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using ContourAI.Features.Auth;
 using ContourAI.Features.Dashboard;
+using ContourAI.Features.Documents;
 using ContourAI.Features.Projects;
 using ContourAI.Features.Shell;
 using ContourAI.Shared.Api;
@@ -54,6 +55,7 @@ internal static class Program
         services.AddSingleton<AuthService>();
         services.AddSingleton<DashboardService>();
         services.AddSingleton<ProjectsService>();
+        services.AddSingleton<DocumentsService>();   // Фаза 6
 
         // ViewModels
         services.AddTransient<LoginViewModel>();
@@ -61,6 +63,7 @@ internal static class Program
         services.AddSingleton<DashboardViewModel>();
         services.AddSingleton<CreateProjectDialogViewModel>();
         services.AddSingleton<ProjectsViewModel>();
+        services.AddSingleton<DocumentsViewModel>();  // Фаза 6
         services.AddSingleton<AuthenticatedShellViewModel>();
         services.AddSingleton<MainWindowViewModel>();
 

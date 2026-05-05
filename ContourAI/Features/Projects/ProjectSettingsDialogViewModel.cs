@@ -1,6 +1,7 @@
 /// <summary>
 /// ViewModel диалога настроек проекта.
 /// Загружает текущие значения из ProjectDto, сохраняет через ProjectsService.
+/// Предоставляет HasFolderAttached как публичное свойство — ProjectsViewModel выставляет его напрямую.
 /// Управляет папкой: подключить / изменить права / отвязать.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
@@ -30,8 +31,9 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
 
     // ─── Folder fields ────────────────────────────────────────────────────────
 
-    [ObservableProperty] private string? _folderPath;
+    /// <summary>Выставляется напрямую из ProjectsViewModel по FolderCount.</summary>
     [ObservableProperty] private bool    _hasFolderAttached;
+    [ObservableProperty] private string? _folderPath;
     [ObservableProperty] private bool    _permRead;
     [ObservableProperty] private bool    _permEdit;
     [ObservableProperty] private bool    _permDelete;
@@ -51,59 +53,32 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
         _projectsService = projectsService;
     }
 
-    /// <summary>Инициализировать из уже загруженного ProjectDto и текущей FolderDto (если есть).</summary>
-    public void LoadFrom(ProjectDto project, FolderDto? folder)
-    {
-        if (folder != null)
-        {
-            HasFolderAttached = true;
-            FolderPath        = folder.Path;
-            PermRead          = folder.Permission.HasFlag(FolderPermission.Read);
-            PermEdit          = folder.Permission.HasFlag(FolderPermission.Edit);
-            PermDelete        = folder.Permission.HasFlag(FolderPermission.Delete);
-        }
-        else
-        {
-            HasFolderAttached = false;
-            FolderPath        = null;
-        }
-    }
-
     // ─── Save settings ────────────────────────────────────────────────────────
 
     [RelayCommand]
     private async Task SaveSettingsAsync()
     {
-        IsBusy     = true;
-        HasError   = false;
+        IsBusy       = true;
+        HasError     = false;
         ErrorMessage = string.Empty;
         try
         {
             var request = new UpdateProjectSettingsRequest(
-                ChatModelEndpointId:       null,
-                EmbeddingModelEndpointId:  null,
-                SystemPrompt:              SystemPrompt,
-                MaxTokens:                 MaxTokens,
-                Temperature:               Temperature,
-                RagTopK:                   RagTopK,
-                UseRagContext:             UseRagContext,
-                ContextWindowSize:         ContextWindowSize);
+                ChatModelEndpointId:      null,
+                EmbeddingModelEndpointId: null,
+                SystemPrompt:             SystemPrompt,
+                MaxTokens:                MaxTokens,
+                Temperature:              Temperature,
+                RagTopK:                  RagTopK,
+                UseRagContext:            UseRagContext,
+                ContextWindowSize:        ContextWindowSize);
 
             var ok = await _projectsService.UpdateSettingsAsync(_projectId, request);
-            if (!ok)
-            {
-                ErrorMessage = "Failed to save settings.";
-                HasError = true;
-                return;
-            }
+            if (!ok) { ErrorMessage = "Failed to save settings."; HasError = true; return; }
             Saved?.Invoke();
             Closed?.Invoke();
         }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-            HasError = true;
-        }
+        catch (Exception ex) { ErrorMessage = ex.Message; HasError = true; }
         finally { IsBusy = false; }
     }
 
@@ -113,19 +88,14 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
     private async Task AttachFolderAsync()
     {
         if (string.IsNullOrWhiteSpace(FolderPath)) return;
-        IsBusy = true;
-        HasError = false;
+        IsBusy = true; HasError = false;
         try
         {
-            var perm = BuildPermission();
-            var dto  = await _projectsService.AddFolderAsync(_projectId, new AddProjectFolderRequest(FolderPath, perm));
-            if (dto == null)
-            {
-                ErrorMessage = "Failed to attach folder.";
-                HasError = true;
-                return;
-            }
+            var dto = await _projectsService.AddFolderAsync(_projectId,
+                new AddProjectFolderRequest(FolderPath, BuildPermission()));
+            if (dto == null) { ErrorMessage = "Failed to attach folder."; HasError = true; return; }
             HasFolderAttached = true;
+            FolderPath        = dto.Path;
         }
         catch (Exception ex) { ErrorMessage = ex.Message; HasError = true; }
         finally { IsBusy = false; }
@@ -136,8 +106,7 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
     [RelayCommand]
     private async Task SaveFolderPermissionsAsync()
     {
-        IsBusy = true;
-        HasError = false;
+        IsBusy = true; HasError = false;
         try
         {
             var ok = await _projectsService.ChangeFolderPermissionAsync(_projectId, BuildPermission());
@@ -152,14 +121,13 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
     [RelayCommand]
     private async Task DetachFolderAsync()
     {
-        IsBusy = true;
-        HasError = false;
+        IsBusy = true; HasError = false;
         try
         {
             var ok = await _projectsService.RemoveFolderAsync(_projectId);
             if (!ok) { ErrorMessage = "Failed to detach folder."; HasError = true; return; }
-            HasFolderAttached = false;
-            FolderPath        = null;
+            HasFolderAttached          = false;
+            FolderPath                 = null;
             PermRead = PermEdit = PermDelete = false;
         }
         catch (Exception ex) { ErrorMessage = ex.Message; HasError = true; }
