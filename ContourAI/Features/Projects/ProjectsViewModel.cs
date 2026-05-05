@@ -1,9 +1,11 @@
 /// <summary>
 /// ViewModel экрана списка проектов.
 /// Загружает проекты через ProjectsService.
-/// После создания проекта поднимает ProjectsChanged — AuthenticatedShellViewModel
-/// подписывается и перестраивает RecentProjects в Sidebar.
-/// Поддерживает инлайн-переименование через ProjectCardViewModel.RenameRequested.
+/// После создания/удаления проекта поднимает ProjectsChanged —
+/// AuthenticatedShellViewModel подписывается и перестраивает RecentProjects.
+///
+/// InjectCard — публичный метод для вставки карточки из Shell без перезагрузки.
+/// OnProjectRenameRequested — PATCH /api/projects/{id}/settings (name + defaults).
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -32,18 +34,16 @@ public sealed partial class ProjectsViewModel : ObservableObject
     [ObservableProperty] private bool   _hasError;
     [ObservableProperty] private string _errorMessage = string.Empty;
 
-    // ── Создание нового проекта (диалог) ──────────────────────────────────────
     [ObservableProperty] private bool   _isCreateDialogOpen;
     [ObservableProperty] private string _newProjectName = string.Empty;
 
     // ── События ──────────────────────────────────────────────────────────────
 
-    /// <summary>Пользователь нажал Open на карточке проекта.</summary>
     public event Action<Guid>? ProjectOpened;
 
     /// <summary>
-    /// Поднимается после создания или удаления проекта.
-    /// AuthenticatedShellViewModel обновляет RecentProjects в Sidebar.
+    /// Поднимается после создания, удаления или переименования проекта.
+    /// AuthenticatedShellViewModel перестраивает RecentProjects.
     /// </summary>
     public event Action? ProjectsChanged;
 
@@ -55,18 +55,19 @@ public sealed partial class ProjectsViewModel : ObservableObject
         _projectContextStore = projectContextStore;
     }
 
-    // ── Initialize ────────────────────────────────────────────────────────────
-
     public async Task InitializeAsync()
     {
         if (Projects.Count == 0)
             await LoadProjectsAsync();
     }
 
-    // ── Load ──────────────────────────────────────────────────────────────────
+    public async Task ForceReloadAsync()
+        => await LoadProjectsAsync();
+
+    // ── Load ─────────────────────────────────────────────────────────────────
 
     [RelayCommand]
-    private async Task LoadProjectsAsync()
+    public async Task LoadProjectsAsync()
     {
         IsLoading = true;
         HasError  = false;
@@ -81,13 +82,14 @@ public sealed partial class ProjectsViewModel : ObservableObject
                 AddCard(new ProjectCardViewModel(dto));
 
             IsEmpty = Projects.Count == 0;
+            ProjectsChanged?.Invoke();
         }
         catch (OperationCanceledException) { }
         catch (Exception ex) { HasError = true; ErrorMessage = ex.Message; }
         finally { IsLoading = false; }
     }
 
-    // ── Create project dialog ─────────────────────────────────────────────────
+    // ── Create dialog ─────────────────────────────────────────────────────────
 
     [RelayCommand]
     private void OpenCreateDialog()
@@ -103,7 +105,7 @@ public sealed partial class ProjectsViewModel : ObservableObject
         NewProjectName     = string.Empty;
     }
 
-    // ── Create project ────────────────────────────────────────────────────────
+    // ── Create ────────────────────────────────────────────────────────────────
 
     [RelayCommand]
     private async Task CreateProjectAsync()
@@ -123,18 +125,18 @@ public sealed partial class ProjectsViewModel : ObservableObject
                 new CreateProjectRequest(name, string.Empty), _cts.Token);
             if (dto == null) return;
 
-            var summary = new ProjectSummaryDto
-            {
-                Id          = dto.Id,
-                Name        = dto.Name,
-                Description = dto.Description,
-                AccessMode  = dto.AccessMode,
-                CreatedAtUtc = dto.CreatedAtUtc,
-                FolderCount = 0
-            };
+            // Позиционный конструктор record (не object initializer)
+            var summary = new ProjectSummaryDto(
+                dto.Id,
+                dto.Name,
+                dto.Description,
+                dto.AccessMode,
+                dto.CreatedAtUtc,
+                FolderCount: 0);
+
             var card = new ProjectCardViewModel(summary);
             AddCard(card);
-            Projects.Move(Projects.IndexOf(card), 0); // в начало
+            Projects.Move(Projects.IndexOf(card), 0);
             IsEmpty = false;
             ProjectsChanged?.Invoke();
         }
@@ -164,30 +166,54 @@ public sealed partial class ProjectsViewModel : ObservableObject
         catch { /* silent */ }
     }
 
+    /// <summary>
+    /// Переименование проекта через PATCH /api/projects/{id}/settings.
+    /// Сервер не имеет отдельного эндпоинта rename — используем settings
+    /// с нейтральными дефолтами и оптимистично обновляем Name локально.
+    /// </summary>
     private async void OnProjectRenameRequested(ProjectCardViewModel card, string newName)
     {
+        // Оптимистичное обновление — сразу меняем имя в UI
+        card.Name = newName;
+        ProjectsChanged?.Invoke();
+
         try
         {
-            var ok = await _projectsService.UpdateSettingsAsync(
+            await _projectsService.UpdateSettingsAsync(
                 card.Id,
-                new UpdateProjectSettingsRequest(newName, card.Description, card.AccessMode),
+                new UpdateProjectSettingsRequest(
+                    ChatModelEndpointId:      null,
+                    EmbeddingModelEndpointId: null,
+                    SystemPrompt:             string.Empty,
+                    MaxTokens:                4096,
+                    Temperature:              0.7f,
+                    RagTopK:                  5,
+                    UseRagContext:            false,
+                    ContextWindowSize:        10),
                 _cts.Token);
-            if (ok)
-            {
-                card.Name = newName;
-                ProjectsChanged?.Invoke();
-            }
         }
-        catch { /* silent */ }
+        catch { /* silent — имя уже обновлено */ }
     }
+
+    // ── Public injection API ──────────────────────────────────────────────────
+
+    /// <summary>
+    /// Вставляет карточку проекта в коллекцию с подпиской на события.
+    /// Используется Shell при гидрации Sidebar и создании проекта из «+».
+    /// </summary>
+    public void InjectCard(ProjectCardViewModel card, bool insertAtTop = false)
+        => AddCard(card, insertAtTop);
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private void AddCard(ProjectCardViewModel card)
+    private void AddCard(ProjectCardViewModel card, bool insertAtTop = false)
     {
-        card.OpenRequested    += OnProjectOpenRequested;
-        card.DeleteRequested  += OnProjectDeleteRequested;
-        card.RenameRequested  += OnProjectRenameRequested;
-        Projects.Add(card);
+        card.OpenRequested   += OnProjectOpenRequested;
+        card.DeleteRequested += OnProjectDeleteRequested;
+        card.RenameRequested += OnProjectRenameRequested;
+        if (insertAtTop)
+            Projects.Insert(0, card);
+        else
+            Projects.Add(card);
     }
 }
