@@ -1,6 +1,8 @@
 <!--
-  Sidebar с навигационными кнопками и подсветкой активной секции.
-  Фаза 4-6: Projects, Chat, Documents подключены к командам Shell.
+  SidebarView — переработанный боковой бар.
+  Разделён на 3 части: 45% недавние глобальные чаты | 45% недавние проекты | 10% кнопка Настройки.
+  Логотип и информация о сервере убраны.
+  Скролл внутри каждой секции если элементы не помещаются.
   Проект: DevAssistant / ContourAI.
 -->
 <UserControl xmlns="https://github.com/avaloniaui"
@@ -8,86 +10,210 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:shell="clr-namespace:ContourAI.Features.Shell"
+             xmlns:chat="clr-namespace:ContourAI.Features.Chat"
+             xmlns:projects="clr-namespace:ContourAI.Features.Projects"
              x:DataType="shell:AuthenticatedShellViewModel"
              mc:Ignorable="d"
              x:Class="ContourAI.Widgets.Shell.SidebarView">
 
   <UserControl.Styles>
-    <!-- Базовый стиль кнопки навигации -->
-    <Style Selector="Button.nav">
-      <Setter Property="Background"              Value="Transparent"/>
-      <Setter Property="Foreground"              Value="#CBD5E1"/>
-      <Setter Property="HorizontalAlignment"     Value="Stretch"/>
-      <Setter Property="HorizontalContentAlignment" Value="Left"/>
-      <Setter Property="Height"                  Value="42"/>
-      <Setter Property="Padding"                 Value="12 0"/>
-      <Setter Property="CornerRadius"            Value="6"/>
+
+    <!-- Заголовок секции -->
+    <Style Selector="TextBlock.section-header">
+      <Setter Property="FontSize"      Value="11"/>
+      <Setter Property="FontWeight"    Value="SemiBold"/>
+      <Setter Property="Foreground"    Value="#475569"/>
+      <Setter Property="Margin"        Value="12 0 12 6"/>
+      <Setter Property="LetterSpacing" Value="1"/>
     </Style>
-    <!-- Активная кнопка -->
-    <Style Selector="Button.nav.active">
+
+    <!-- Строка элемента (чат / проект) -->
+    <Style Selector="Button.item">
+      <Setter Property="Background"                 Value="Transparent"/>
+      <Setter Property="Foreground"                 Value="#CBD5E1"/>
+      <Setter Property="HorizontalAlignment"        Value="Stretch"/>
+      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+      <Setter Property="Padding"                    Value="12 7"/>
+      <Setter Property="CornerRadius"               Value="6"/>
+      <Setter Property="Margin"                     Value="6 1"/>
+      <Setter Property="Height"                     Value="46"/>
+      <Setter Property="Cursor"                     Value="Hand"/>
+    </Style>
+    <Style Selector="Button.item:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#1E293B"/>
+    </Style>
+    <Style Selector="Button.item.active">
       <Setter Property="Background" Value="#1E293B"/>
       <Setter Property="Foreground" Value="#5EEAD4"/>
     </Style>
-    <!-- Hover -->
-    <Style Selector="Button.nav:pointerover /template/ ContentPresenter">
+
+    <!-- Кнопка Настройки -->
+    <Style Selector="Button.settings">
+      <Setter Property="Background"                 Value="Transparent"/>
+      <Setter Property="Foreground"                 Value="#94A3B8"/>
+      <Setter Property="HorizontalAlignment"        Value="Stretch"/>
+      <Setter Property="HorizontalContentAlignment" Value="Left"/>
+      <Setter Property="Height"                     Value="44"/>
+      <Setter Property="Padding"                    Value="14 0"/>
+      <Setter Property="CornerRadius"               Value="6"/>
+      <Setter Property="Margin"                     Value="6 4"/>
+      <Setter Property="Cursor"                     Value="Hand"/>
+    </Style>
+    <Style Selector="Button.settings:pointerover /template/ ContentPresenter">
       <Setter Property="Background" Value="#1E293B"/>
     </Style>
+
+    <!-- Divider -->
+    <Style Selector="Border.divider">
+      <Setter Property="Height"          Value="1"/>
+      <Setter Property="Background"      Value="#1E293B"/>
+      <Setter Property="Margin"          Value="0"/>
+    </Style>
+
   </UserControl.Styles>
 
-  <Border Background="#0F172A" Padding="20">
-    <DockPanel LastChildFill="True">
+  <!-- Основной контейнер -->
+  <Border Background="#0F172A">
+    <Grid>
+      <!-- 3 строки: 45* | 45* | 10* -->
+      <Grid.RowDefinitions>
+        <RowDefinition Height="45*"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="45*"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="10*"/>
+      </Grid.RowDefinitions>
 
-      <StackPanel DockPanel.Dock="Top" Spacing="6">
+      <!-- ═══════════════════════════════════════════════
+           СЕКЦИЯ 1 — Недавние глобальные чаты (45%)
+           ═══════════════════════════════════════════════ -->
+      <Grid Grid.Row="0" RowDefinitions="Auto,*">
 
-        <!-- Логотип -->
-        <StackPanel Spacing="6" Margin="0 0 0 24">
-          <TextBlock Text="ContourAI"
-                     FontSize="22" FontWeight="SemiBold"
-                     Foreground="#F9FAFB"/>
-          <TextBlock Text="AI workspace"
-                     FontSize="12" Foreground="#94A3B8"/>
-        </StackPanel>
+        <!-- Заголовок секции чатов -->
+        <TextBlock Grid.Row="0"
+                   Classes="section-header"
+                   Text="RECENT CHATS"
+                   Margin="12 14 12 6"/>
 
-        <!-- Dashboard -->
-        <Button Classes="nav"
-                Classes.active="{Binding IsDashboardActive}"
-                Command="{Binding ShowDashboardCommand}"
-                Content="Dashboard"/>
+        <!-- Скроллируемый список чатов -->
+        <ScrollViewer Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+          <ItemsControl ItemsSource="{Binding RecentGlobalChats}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="chat:ChatThreadItemViewModel">
+                <!--
+                  Кнопка треда: название + время последнего использования.
+                  Команда открытия треда передаётся через привязку к Shell ViewModel
+                  через RelativeSource + Tag (Id) — или используется SelectChatCommand.
+                -->
+                <Button Classes="item"
+                        Classes.active="{Binding IsSelected}"
+                        Command="{Binding $parent[UserControl].((shell:AuthenticatedShellViewModel)DataContext).SelectGlobalChatCommand}"
+                        CommandParameter="{Binding}">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <!-- Название чата -->
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding Title}"
+                               FontSize="13"
+                               TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center"
+                               Foreground="{Binding $parent[Button].Foreground}"/>
+                    <!-- Время -->
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding TimeLabel}"
+                               FontSize="11"
+                               Foreground="#475569"
+                               VerticalAlignment="Center"
+                               Margin="6 0 0 0"/>
+                  </Grid>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
 
-        <!-- Projects -->
-        <Button Classes="nav"
-                Classes.active="{Binding IsProjectsActive}"
-                Command="{Binding ShowProjectsCommand}"
-                Content="Projects"/>
+      </Grid>
 
-        <!-- Global Chat -->
-        <Button Classes="nav"
-                Classes.active="{Binding IsChatActive}"
-                Command="{Binding ShowChatCommand}"
-                Content="Global Chat"/>
+      <!-- Разделитель -->
+      <Border Grid.Row="1" Classes="divider"/>
 
-        <!-- Documents -->
-        <Button Classes="nav"
-                Classes.active="{Binding IsDocumentsActive}"
-                Command="{Binding ShowDocumentsCommand}"
-                Content="Documents"/>
+      <!-- ═══════════════════════════════════════════════
+           СЕКЦИЯ 2 — Недавние проекты (45%)
+           ═══════════════════════════════════════════════ -->
+      <Grid Grid.Row="2" RowDefinitions="Auto,*">
 
-        <!-- Будущие разделы -->
-        <Button Classes="nav" IsEnabled="False"
-                Foreground="#475569" Content="Indexing"/>
-        <Button Classes="nav" IsEnabled="False"
-                Foreground="#475569" Content="RAG Search"/>
-        <Button Classes="nav" IsEnabled="False"
-                Foreground="#475569" Content="System Monitor"/>
+        <!-- Заголовок секции проектов -->
+        <TextBlock Grid.Row="0"
+                   Classes="section-header"
+                   Text="RECENT PROJECTS"
+                   Margin="12 12 12 6"/>
 
-      </StackPanel>
+        <!-- Скроллируемый список проектов -->
+        <ScrollViewer Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+          <ItemsControl ItemsSource="{Binding RecentProjects}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="projects:ProjectCardViewModel">
+                <!--
+                  Кнопка проекта: название + дата создания.
+                -->
+                <Button Classes="item"
+                        Command="{Binding $parent[UserControl].((shell:AuthenticatedShellViewModel)DataContext).OpenProjectFromSidebarCommand}"
+                        CommandParameter="{Binding}">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <!-- Название проекта -->
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding Name}"
+                               FontSize="13"
+                               TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center"
+                               Foreground="{Binding $parent[Button].Foreground}"/>
+                    <!-- Дата -->
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding CreatedAtLabel}"
+                               FontSize="11"
+                               Foreground="#475569"
+                               VerticalAlignment="Center"
+                               Margin="6 0 0 0"/>
+                  </Grid>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
 
-      <!-- Footer: Server info -->
-      <StackPanel DockPanel.Dock="Bottom" Spacing="8" Margin="0 20 0 0">
-        <TextBlock Text="Server"      FontSize="12" Foreground="#94A3B8"/>
-        <TextBlock Text="{Binding ServerIpDisplay}" FontSize="13" Foreground="#5EEAD4"/>
-      </StackPanel>
+      </Grid>
 
-    </DockPanel>
+      <!-- Разделитель -->
+      <Border Grid.Row="3" Classes="divider"/>
+
+      <!-- ═══════════════════════════════════════════════
+           СЕКЦИЯ 3 — Настройки (10%)
+           ═══════════════════════════════════════════════ -->
+      <Grid Grid.Row="4" RowDefinitions="*">
+        <!--
+          Кнопка «Настройки» — фон прозрачный, при наведении меняется.
+          Иконка шестерёнки (Unicode) + подпись.
+        -->
+        <Button Classes="settings"
+                Command="{Binding ShowSettingsCommand}"
+                VerticalAlignment="Center">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <!-- Иконка шестерёнки -->
+            <TextBlock Text="&#9881;"
+                       FontSize="16"
+                       VerticalAlignment="Center"
+                       Foreground="#64748B"/>
+            <TextBlock Text="Settings"
+                       FontSize="14"
+                       VerticalAlignment="Center"/>
+          </StackPanel>
+        </Button>
+      </Grid>
+
+    </Grid>
   </Border>
+
 </UserControl>

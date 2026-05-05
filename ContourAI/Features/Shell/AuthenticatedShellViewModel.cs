@@ -1,11 +1,16 @@
 /// <summary>
 /// ViewModel авторизованного shell-экрана.
-/// Управляет навигацией: Dashboard, Projects, Chat, Documents.
-/// Подписывается на Projects.ProjectOpened — при нажатии Open переходит на Documents.
+/// Управляет навигацией: Projects, Chat, Documents.
+/// Предоставляет RecentGlobalChats и RecentProjects для SidebarView.
+/// SelectGlobalChatCommand — открыть конкретный глобальный тред из сайдбара.
+/// OpenProjectFromSidebarCommand — открыть проект из сайдбара.
+/// ShowSettingsCommand — заглушка для будущего экрана настроек.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
 using System;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -53,9 +58,19 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         ShowProjectsCommand  = new AsyncRelayCommand(ShowProjectsAsync);
         ShowChatCommand      = new AsyncRelayCommand(ShowChatAsync);
         ShowDocumentsCommand = new AsyncRelayCommand(ShowDocumentsAsync);
+        ShowSettingsCommand  = new RelayCommand(OnShowSettings);
+
+        SelectGlobalChatCommand      = new AsyncRelayCommand<ChatThreadItemViewModel>(SelectGlobalChatAsync);
+        OpenProjectFromSidebarCommand = new AsyncRelayCommand<ProjectCardViewModel>(OpenProjectFromSidebarAsync);
 
         // Кнопка "Open" на карточке проекта — переходим на Documents этого проекта
         Projects.ProjectOpened += OnProjectOpened;
+
+        // Синхронизация RecentGlobalChats с Chat.Threads
+        Chat.Threads.CollectionChanged += OnChatThreadsChanged;
+
+        // Синхронизация RecentProjects с Projects.Projects
+        Projects.Projects.CollectionChanged += OnProjectsCollectionChanged;
 
         _connectionSettingsStore.PropertyChanged += (_, args) =>
         {
@@ -75,17 +90,35 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
     }
 
     public event Action? LogoutRequested;
+    public event Action? SettingsRequested;
 
     public DashboardViewModel Dashboard { get; }
     public ProjectsViewModel  Projects  { get; }
     public ChatViewModel      Chat      { get; }
     public DocumentsViewModel Documents { get; }
 
+    // ─── Коллекции для Sidebar ────────────────────────────────────────────────
+
+    /// <summary>Недавние глобальные чаты (все, с прокруткой в сайдбаре).</summary>
+    public ObservableCollection<ChatThreadItemViewModel> RecentGlobalChats { get; } = new();
+
+    /// <summary>Недавние проекты (все, с прокруткой в сайдбаре).</summary>
+    public ObservableCollection<ProjectCardViewModel> RecentProjects { get; } = new();
+
+    // ─── Команды ──────────────────────────────────────────────────────────────
+
     public ICommand LogoutCommand        { get; }
     public ICommand ShowDashboardCommand { get; }
     public ICommand ShowProjectsCommand  { get; }
     public ICommand ShowChatCommand      { get; }
     public ICommand ShowDocumentsCommand { get; }
+    public ICommand ShowSettingsCommand  { get; }
+
+    /// <summary>Открыть конкретный глобальный тред из Sidebar.</summary>
+    public ICommand SelectGlobalChatCommand { get; }
+
+    /// <summary>Открыть проект из Sidebar (переход на Documents).</summary>
+    public ICommand OpenProjectFromSidebarCommand { get; }
 
     public string Username        => _sessionStore.CurrentUsername;
     public string ServerIpDisplay => _connectionSettingsStore.ServerIpDisplay;
@@ -114,6 +147,35 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         await Dashboard.LoadAsync(authToken.AccessToken, cancellationToken);
     }
 
+    // ─── Синхронизация Sidebar коллекций ─────────────────────────────────────
+
+    /// <summary>
+    /// Пересобирает RecentGlobalChats из Chat.Threads (только IsGlobal == true).
+    /// </summary>
+    private void RebuildRecentGlobalChats()
+    {
+        RecentGlobalChats.Clear();
+        foreach (var thread in Chat.Threads)
+            if (thread.IsGlobal)
+                RecentGlobalChats.Add(thread);
+    }
+
+    /// <summary>
+    /// Пересобирает RecentProjects из Projects.Projects.
+    /// </summary>
+    private void RebuildRecentProjects()
+    {
+        RecentProjects.Clear();
+        foreach (var project in Projects.Projects)
+            RecentProjects.Add(project);
+    }
+
+    private void OnChatThreadsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        => RebuildRecentGlobalChats();
+
+    private void OnProjectsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        => RebuildRecentProjects();
+
     // ─── Обработчик кнопки Open ───────────────────────────────────────────────
 
     /// <summary>
@@ -123,7 +185,6 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
     /// </summary>
     private void OnProjectOpened(Guid projectId)
     {
-        // Используем отдельный discard для Task, чтобы не конфликтовать с параметром projectId
         var _ = ShowDocumentsAsync();
     }
 
@@ -147,6 +208,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         CurrentContent = Chat;
         RaiseActiveFlags();
         await Chat.InitializeAsync();
+        RebuildRecentGlobalChats();
     }
 
     private async Task ShowDocumentsAsync()
@@ -162,6 +224,35 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         _projectContextStore.Clear();
         Dashboard.Clear();
         LogoutRequested?.Invoke();
+    }
+
+    private void OnShowSettings()
+        => SettingsRequested?.Invoke();
+
+    // ─── Команды Sidebar ──────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Открывает Chat и активирует выбранный тред.
+    /// </summary>
+    private async Task SelectGlobalChatAsync(ChatThreadItemViewModel? thread)
+    {
+        if (thread == null) return;
+        CurrentContent = Chat;
+        RaiseActiveFlags();
+        // Убеждаемся что треды загружены, затем открываем нужный
+        if (Chat.Threads.Count == 0)
+            await Chat.InitializeAsync();
+        await Chat.OpenThreadByIdAsync(thread.Id);
+    }
+
+    /// <summary>
+    /// Открывает проект из сайдбара (устанавливает контекст и переходит на Documents).
+    /// </summary>
+    private async Task OpenProjectFromSidebarAsync(ProjectCardViewModel? card)
+    {
+        if (card == null) return;
+        _projectContextStore.Select(card.Id, card.Name);
+        await ShowDocumentsAsync();
     }
 
     private void RaiseActiveFlags()
