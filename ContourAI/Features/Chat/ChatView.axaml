@@ -47,207 +47,230 @@
     </Style>
   </UserControl.Styles>
 
-  <!-- ═══ Root: sidebar + chat area ═══ -->
-  <Grid ColumnDefinitions="260,*">
+  <!--
+    FIX AVLN3000: UserControl.Content может иметь только одного дочернего.
+    Оборачиваем всё (основной Grid + диалог-оверлей) в Panel.
+  -->
+  <Panel>
 
-    <!-- ─── SIDEBAR ─────────────────────────────────────────────────── -->
-    <Border Grid.Column="0" Background="#171614"
-            BorderBrush="#262523" BorderThickness="0 0 1 0">
-      <Grid RowDefinitions="Auto,Auto,*">
+    <!-- ═══ Root: sidebar + chat area ═══ -->
+    <Grid ColumnDefinitions="260,*">
 
-        <!-- Scope switcher -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="4" Margin="12 12 12 8">
-          <Button Classes="scope active" Command="{Binding SwitchToGlobalCommand}">Global</Button>
-          <Button Classes="scope"        Command="{Binding SwitchToProjectCommand}">Project</Button>
-        </StackPanel>
+      <!-- ─── SIDEBAR ─────────────────────────────────────────────────── -->
+      <Border Grid.Column="0" Background="#171614"
+              BorderBrush="#262523" BorderThickness="0 0 1 0">
+        <Grid RowDefinitions="Auto,Auto,*">
 
-        <!-- New thread button -->
-        <Button Grid.Row="1" Classes="primary"
-                HorizontalAlignment="Stretch" Margin="12 0 12 8"
-                Command="{Binding OpenNewThreadDialogCommand}">
-          + New Thread
-        </Button>
+          <!-- Scope switcher -->
+          <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="4" Margin="12 12 12 8">
+            <Button Classes="scope active" Command="{Binding SwitchToGlobalCommand}">Global</Button>
+            <Button Classes="scope"        Command="{Binding SwitchToProjectCommand}">Project</Button>
+          </StackPanel>
 
-        <!-- Threads list -->
-        <ScrollViewer Grid.Row="2">
-          <Grid>
-            <!-- Loading -->
-            <TextBlock IsVisible="{Binding IsLoadingThreads}"
-                       Text="Loading..."
-                       Foreground="#5a5957" FontSize="12"
-                       HorizontalAlignment="Center" Margin="0 16"/>
+          <!-- New thread button -->
+          <Button Grid.Row="1" Classes="primary"
+                  HorizontalAlignment="Stretch" Margin="12 0 12 8"
+                  Command="{Binding OpenNewThreadDialogCommand}">
+            + New Thread
+          </Button>
 
-            <!-- Empty -->
-            <StackPanel IsVisible="{Binding IsThreadsEmpty}"
-                        HorizontalAlignment="Center" Margin="16" Spacing="8">
-              <TextBlock Text="No threads yet" Foreground="#5a5957"
-                         FontSize="12" HorizontalAlignment="Center"/>
-              <TextBlock Text="Create a new thread to start" Foreground="#393836"
-                         FontSize="11" TextWrapping="Wrap" HorizontalAlignment="Center"
-                         TextAlignment="Center"/>
+          <!-- Threads list -->
+          <ScrollViewer Grid.Row="2">
+            <Grid>
+              <!-- Loading -->
+              <TextBlock IsVisible="{Binding IsLoadingThreads}"
+                         Text="Loading..."
+                         Foreground="#5a5957" FontSize="12"
+                         HorizontalAlignment="Center" Margin="0 16"/>
+
+              <!-- Empty -->
+              <StackPanel IsVisible="{Binding IsThreadsEmpty}"
+                          HorizontalAlignment="Center" Margin="16" Spacing="8">
+                <TextBlock Text="No threads yet" Foreground="#5a5957"
+                           FontSize="12" HorizontalAlignment="Center"/>
+                <TextBlock Text="Create a new thread to start" Foreground="#393836"
+                           FontSize="11" TextWrapping="Wrap" HorizontalAlignment="Center"
+                           TextAlignment="Center"/>
+              </StackPanel>
+
+              <!-- List -->
+              <ItemsControl ItemsSource="{Binding Threads}" IsVisible="{Binding !IsLoadingThreads}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate DataType="vm:ChatThreadItemViewModel">
+                    <Border Classes="thread-item"
+                            Classes.selected="{Binding IsSelected}"
+                            PointerPressed="ThreadItem_PointerPressed">
+                      <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="2">
+                          <TextBlock Text="{Binding Title}" FontSize="13" Foreground="#cdccca"
+                                     TextTrimming="CharacterEllipsis"/>
+                          <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="{Binding TimeLabel}"    FontSize="11" Foreground="#5a5957"/>
+                            <TextBlock Text="{Binding MessageCount}" FontSize="11" Foreground="#5a5957"/>
+                          </StackPanel>
+                        </StackPanel>
+                        <Button Grid.Column="1" Classes="icon"
+                                Click="ThreadDelete_Click"
+                                VerticalAlignment="Center">
+                          ✕
+                        </Button>
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Grid>
+          </ScrollViewer>
+        </Grid>
+      </Border>
+
+      <!-- ─── CHAT AREA ─────────────────────────────────────────────────── -->
+      <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#1c1b19"
+                BorderBrush="#262523" BorderThickness="0 0 0 1"
+                Padding="20 12">
+          <StackPanel Spacing="2">
+            <!--
+              FIX AVLN2000: TextTransform не поддерживается в Avalonia.
+              Используем явный UpperCase текст через ScopeLabel в VM, убираем TextTransform.
+            -->
+            <TextBlock Text="{Binding ScopeLabel}" FontSize="11"
+                       Foreground="#4f98a3" FontWeight="SemiBold"
+                       CharacterSpacing="100"/>
+            <TextBlock Text="{Binding SelectedThreadTitle}" FontSize="15"
+                       FontWeight="Medium" Foreground="#cdccca"/>
+          </StackPanel>
+        </Border>
+
+        <!-- Messages -->
+        <ScrollViewer Grid.Row="1" x:Name="MessagesScroll">
+          <Grid Margin="20 16">
+            <!-- No thread selected -->
+            <StackPanel IsVisible="{Binding !SelectedThread, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+              <TextBlock Text="💬" FontSize="36" HorizontalAlignment="Center"/>
+              <TextBlock Text="Select a thread or create a new one"
+                         FontSize="14" Foreground="#5a5957" HorizontalAlignment="Center"/>
             </StackPanel>
 
-            <!-- List -->
-            <ItemsControl ItemsSource="{Binding Threads}" IsVisible="{Binding !IsLoadingThreads}">
+            <!-- Empty thread -->
+            <StackPanel IsVisible="{Binding IsMessagesEmpty}"
+                        HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+              <TextBlock Text="Start the conversation" FontSize="14"
+                         Foreground="#5a5957" HorizontalAlignment="Center"/>
+              <TextBlock Text="Ask anything — the assistant will answer based on context"
+                         FontSize="12" Foreground="#393836" HorizontalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Loading messages -->
+            <TextBlock IsVisible="{Binding IsLoadingMessages}"
+                       Text="Loading messages..."
+                       Foreground="#5a5957" FontSize="13"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+            <!-- Messages list -->
+            <ItemsControl ItemsSource="{Binding Messages}"
+                          IsVisible="{Binding !IsLoadingMessages}">
               <ItemsControl.ItemTemplate>
-                <DataTemplate DataType="vm:ChatThreadItemViewModel">
-                  <Border Classes="thread-item"
-                          Classes.selected="{Binding IsSelected}"
-                          PointerPressed="ThreadItem_PointerPressed">
-                    <Grid ColumnDefinitions="*,Auto">
-                      <StackPanel Grid.Column="0" Spacing="2">
-                        <TextBlock Text="{Binding Title}" FontSize="13" Foreground="#cdccca"
-                                   TextTrimming="CharacterEllipsis"/>
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                          <TextBlock Text="{Binding TimeLabel}"   FontSize="11" Foreground="#5a5957"/>
-                          <TextBlock Text="{Binding MessageCount}" FontSize="11" Foreground="#5a5957"/>
-                        </StackPanel>
+                <DataTemplate DataType="vm:MessageItemViewModel">
+                  <Grid Margin="0 4">
+                    <!-- User message -->
+                    <Border IsVisible="{Binding IsUser}"
+                            Background="#313b3b" CornerRadius="10 10 2 10"
+                            Padding="12 8" MaxWidth="560"
+                            HorizontalAlignment="Right">
+                      <TextBlock Text="{Binding Content}" Foreground="#cdccca"
+                                 FontSize="14" TextWrapping="Wrap"/>
+                    </Border>
+
+                    <!-- Assistant message -->
+                    <Border IsVisible="{Binding IsAssistant}"
+                            Background="#1c1b19" CornerRadius="10 10 10 2"
+                            BorderBrush="#393836" BorderThickness="1"
+                            Padding="12 8" MaxWidth="680"
+                            HorizontalAlignment="Left">
+                      <StackPanel Spacing="4">
+                        <TextBlock Text="Assistant" FontSize="11"
+                                   Foreground="#4f98a3" FontWeight="SemiBold"/>
+                        <!--
+                          FIX AVLN2000: BoolConverters.IsTrue не существует в Avalonia.
+                          Для эффекта "typing" используем Opacity напрямую:
+                          IsStreaming=true → 0.6, false → 1.0 через Style триггер.
+                        -->
+                        <TextBlock Text="{Binding Content}" Foreground="#cdccca"
+                                   FontSize="14" TextWrapping="Wrap"
+                                   x:Name="MsgContent">
+                          <TextBlock.Styles>
+                            <Style Selector="TextBlock#MsgContent">
+                              <Setter Property="Opacity" Value="1.0"/>
+                            </Style>
+                          </TextBlock.Styles>
+                        </TextBlock>
                       </StackPanel>
-                      <Button Grid.Column="1" Classes="icon"
-                              Click="ThreadDelete_Click"
-                              VerticalAlignment="Center">
-                        ✕
-                      </Button>
-                    </Grid>
-                  </Border>
+                    </Border>
+                  </Grid>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
           </Grid>
         </ScrollViewer>
+
+        <!-- Input bar -->
+        <Border Grid.Row="2" Background="#1c1b19"
+                BorderBrush="#262523" BorderThickness="0 1 0 0"
+                Padding="16 12">
+          <Grid ColumnDefinitions="*,Auto,Auto">
+            <TextBox Grid.Column="0"
+                     Text="{Binding InputText}"
+                     PlaceholderText="Message the assistant..."
+                     AcceptsReturn="False"
+                     FontSize="14"
+                     Background="#22211f"
+                     Foreground="#cdccca"
+                     BorderBrush="#393836"
+                     CornerRadius="8"
+                     Padding="12 8"
+                     KeyDown="Input_KeyDown"/>
+            <Button Grid.Column="1" Classes="ghost" Margin="8 0 0 0"
+                    IsVisible="{Binding IsSending}"
+                    Command="{Binding CancelSendCommand}">
+              ✕
+            </Button>
+            <Button Grid.Column="2" Classes="primary" Margin="8 0 0 0"
+                    Command="{Binding SendCommand}"
+                    IsEnabled="{Binding !IsSending}">
+              Send
+            </Button>
+          </Grid>
+        </Border>
       </Grid>
-    </Border>
+    </Grid>
 
-    <!-- ─── CHAT AREA ─────────────────────────────────────────────────── -->
-    <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
-
-      <!-- Header -->
-      <Border Grid.Row="0" Background="#1c1b19"
-              BorderBrush="#262523" BorderThickness="0 0 0 1"
-              Padding="20 12">
-        <StackPanel Spacing="2">
-          <TextBlock Text="{Binding ScopeLabel}" FontSize="11"
-                     Foreground="#4f98a3" FontWeight="SemiBold"
-                     TextTransform="Uppercase" LetterSpacing="1"/>
-          <TextBlock Text="{Binding SelectedThreadTitle}" FontSize="15"
-                     FontWeight="Medium" Foreground="#cdccca"/>
+    <!-- ═══ NEW THREAD DIALOG OVERLAY ═══ -->
+    <Grid IsVisible="{Binding IsNewThreadDialogOpen}">
+      <Border Background="#80000000"/>
+      <Border Width="360"
+              Background="#1c1b19" CornerRadius="12"
+              BorderBrush="#393836" BorderThickness="1"
+              HorizontalAlignment="Center" VerticalAlignment="Center"
+              Padding="28 24">
+        <StackPanel Spacing="16">
+          <TextBlock Text="New Thread" FontSize="18"
+                     FontWeight="SemiBold" Foreground="#cdccca"/>
+          <TextBox Text="{Binding NewThreadTitle}"
+                   PlaceholderText="Thread title..."
+                   Background="#22211f" Foreground="#cdccca"
+                   BorderBrush="#393836" CornerRadius="6" Padding="10 7"/>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Classes="ghost"   Command="{Binding CloseNewThreadDialogCommand}">Cancel</Button>
+            <Button Classes="primary" Command="{Binding CreateThreadCommand}">Create</Button>
+          </StackPanel>
         </StackPanel>
-      </Border>
-
-      <!-- Messages -->
-      <ScrollViewer Grid.Row="1" x:Name="MessagesScroll">
-        <Grid Margin="20 16">
-          <!-- No thread selected -->
-          <StackPanel IsVisible="{Binding !SelectedThread, Converter={x:Static ObjectConverters.IsNotNull}}"
-                      HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
-            <TextBlock Text="💬" FontSize="36" HorizontalAlignment="Center"/>
-            <TextBlock Text="Select a thread or create a new one"
-                       FontSize="14" Foreground="#5a5957" HorizontalAlignment="Center"/>
-          </StackPanel>
-
-          <!-- Empty thread -->
-          <StackPanel IsVisible="{Binding IsMessagesEmpty}"
-                      HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
-            <TextBlock Text="Start the conversation" FontSize="14"
-                       Foreground="#5a5957" HorizontalAlignment="Center"/>
-            <TextBlock Text="Ask anything — the assistant will answer based on context"
-                       FontSize="12" Foreground="#393836" HorizontalAlignment="Center"/>
-          </StackPanel>
-
-          <!-- Loading messages -->
-          <TextBlock IsVisible="{Binding IsLoadingMessages}"
-                     Text="Loading messages..."
-                     Foreground="#5a5957" FontSize="13"
-                     HorizontalAlignment="Center" VerticalAlignment="Center"/>
-
-          <!-- Messages list -->
-          <ItemsControl ItemsSource="{Binding Messages}"
-                        IsVisible="{Binding !IsLoadingMessages}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate DataType="vm:MessageItemViewModel">
-                <!-- User message -->
-                <Grid Margin="0 4">
-                  <Border IsVisible="{Binding IsUser}"
-                          Background="#313b3b" CornerRadius="10 10 2 10"
-                          Padding="12 8" MaxWidth="560"
-                          HorizontalAlignment="Right">
-                    <TextBlock Text="{Binding Content}" Foreground="#cdccca"
-                               FontSize="14" TextWrapping="Wrap"/>
-                  </Border>
-
-                  <!-- Assistant message -->
-                  <Border IsVisible="{Binding IsAssistant}"
-                          Background="#1c1b19" CornerRadius="10 10 10 2"
-                          BorderBrush="#393836" BorderThickness="1"
-                          Padding="12 8" MaxWidth="680"
-                          HorizontalAlignment="Left">
-                    <StackPanel Spacing="4">
-                      <TextBlock Text="Assistant" FontSize="11"
-                                 Foreground="#4f98a3" FontWeight="SemiBold"/>
-                      <TextBlock Text="{Binding Content}" Foreground="#cdccca"
-                                 FontSize="14" TextWrapping="Wrap"
-                                 Opacity="{Binding IsStreaming, Converter={x:Static BoolConverters.IsTrue}}"/>
-                    </StackPanel>
-                  </Border>
-                </Grid>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-        </Grid>
-      </ScrollViewer>
-
-      <!-- Input bar -->
-      <Border Grid.Row="2" Background="#1c1b19"
-              BorderBrush="#262523" BorderThickness="0 1 0 0"
-              Padding="16 12">
-        <Grid ColumnDefinitions="*,Auto,Auto">
-          <TextBox Grid.Column="0"
-                   Text="{Binding InputText}"
-                   Watermark="Message the assistant..."
-                   AcceptsReturn="False"
-                   FontSize="14"
-                   Background="#22211f"
-                   Foreground="#cdccca"
-                   BorderBrush="#393836"
-                   CornerRadius="8"
-                   Padding="12 8"
-                   KeyDown="Input_KeyDown"/>
-          <Button Grid.Column="1" Classes="ghost" Margin="8 0 0 0"
-                  IsVisible="{Binding IsSending}"
-                  Command="{Binding CancelSendCommand}">
-            ✕
-          </Button>
-          <Button Grid.Column="2" Classes="primary" Margin="8 0 0 0"
-                  Command="{Binding SendCommand}"
-                  IsEnabled="{Binding !IsSending}">
-            Send
-          </Button>
-        </Grid>
       </Border>
     </Grid>
-  </Grid>
 
-  <!-- ═══ NEW THREAD DIALOG OVERLAY ═══ -->
-  <Grid IsVisible="{Binding IsNewThreadDialogOpen}">
-    <Border Background="#80000000"/>
-    <Border Width="360"
-            Background="#1c1b19" CornerRadius="12"
-            BorderBrush="#393836" BorderThickness="1"
-            HorizontalAlignment="Center" VerticalAlignment="Center"
-            Padding="28 24">
-      <StackPanel Spacing="16">
-        <TextBlock Text="New Thread" FontSize="18"
-                   FontWeight="SemiBold" Foreground="#cdccca"/>
-        <TextBox Text="{Binding NewThreadTitle}"
-                 Watermark="Thread title..."
-                 Background="#22211f" Foreground="#cdccca"
-                 BorderBrush="#393836" CornerRadius="6" Padding="10 7"/>
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-          <Button Classes="ghost"   Command="{Binding CloseNewThreadDialogCommand}">Cancel</Button>
-          <Button Classes="primary" Command="{Binding CreateThreadCommand}">Create</Button>
-        </StackPanel>
-      </StackPanel>
-    </Border>
-  </Grid>
+  </Panel>
 
 </UserControl>
