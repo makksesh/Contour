@@ -1,18 +1,14 @@
-/// <summary>
-/// DTO треда (диалога) чата.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
-using System;
-
 namespace ContourAI.Entities.Chat;
 
+/// <summary>DTO треда (проектного или глобального).</summary>
 public sealed record ChatThreadDto(
     Guid      Id,
-    string    Title,
-    ChatScope Scope,
     Guid?     ProjectId,
-    string?   ProjectName,
-    DateTime  CreatedAtUtc,
-    DateTime  UpdatedAtUtc,
-    int       MessageCount);
+    string    Title,
+    int       MessageCount,
+    DateTime? LastMessageAtUtc,
+    DateTime  CreatedAtUtc)
+{
+    /// <summary>true — глобальный тред (не привязан к проекту).</summary>
+    public bool IsGlobal => ProjectId is null;
+}

@@ -1,12 +1,7 @@
-/// <summary>
-/// Запрос на отправку сообщения в тред.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
-using System;
-
 namespace ContourAI.Entities.Chat;
 
-public sealed record SendMessageRequest(
-    Guid   ThreadId,
-    string Content);
+/// <summary>
+/// POST /api/chat/threads/{threadId}/send   — синхронный ответ.
+/// POST /api/chat/threads/{threadId}/stream — SSE-стриминг.
+/// </summary>
+public sealed record SendMessageRequest(string Content);

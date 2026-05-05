@@ -1,16 +1,9 @@
-/// <summary>
-/// DTO одного сообщения чата.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
-using System;
-
 namespace ContourAI.Entities.Chat;
 
+/// <summary>DTO одного сообщения чата.</summary>
 public sealed record ChatMessageDto(
     Guid     Id,
     Guid     ThreadId,
-    ChatRole Role,
+    MessageRole Role,
     string   Content,
-    DateTime CreatedAtUtc,
-    bool     IsStreaming = false);
+    DateTime CreatedAtUtc);

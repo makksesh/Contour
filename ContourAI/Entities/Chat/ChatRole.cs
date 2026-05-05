@@ -1,13 +1,5 @@
-/// <summary>
-/// Роль участника сообщения: User или Assistant.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
+// Сохранён для обратной совместимости — используйте MessageRole.
 namespace ContourAI.Entities.Chat;
 
-public enum ChatRole
-{
-    User      = 0,
-    Assistant = 1,
-    System    = 2
-}
+/// <obsolete>Используйте MessageRole.</obsolete>
+public enum ChatRole { User, Assistant, System }
