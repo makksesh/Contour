@@ -1,6 +1,8 @@
 /// <summary>
 /// Code-behind ChatView.
 /// Обрабатывает PointerPressed на элементах треда и Enter в поле ввода.
+/// Select() → RaiseSelected(), Delete() → RaiseDeleteRequested() —
+/// методы переименованы в ChatThreadItemViewModel для ясности.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -20,13 +22,13 @@ public partial class ChatView : UserControl
     private void ThreadItem_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (sender is Border { DataContext: ChatThreadItemViewModel vm })
-            vm.Select();
+            vm.RaiseSelected();
     }
 
     private void ThreadDelete_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         if (sender is Button { DataContext: ChatThreadItemViewModel vm })
-            vm.Delete();
+            vm.RaiseDeleteRequested();
         e.Handled = true;
     }
 
