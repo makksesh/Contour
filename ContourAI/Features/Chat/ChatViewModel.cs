@@ -35,21 +35,36 @@ public sealed partial class ChatViewModel : ObservableObject
     public ObservableCollection<ChatMessageViewModel> Messages { get; } = new();
 
     // ── Активный тред ────────────────────────────────────────────────────────
+    /// <summary>Активный тред (AXAML: SelectedThread).</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasActiveThread))]
-    private ChatThreadItemViewModel? _activeThread;
+    [NotifyPropertyChangedFor(nameof(SelectedThreadTitle))]
+    private ChatThreadItemViewModel? _selectedThread;
 
-    [ObservableProperty] private string _activeThreadTitle = "Select or create a thread";
-    public bool HasActiveThread => ActiveThread is not null;
+    /// <summary>Заголовок активного треда для хедера (AXAML: SelectedThreadTitle).</summary>
+    public string SelectedThreadTitle
+        => _selectedThread?.Title ?? "Select or create a thread";
+
+    public bool HasActiveThread => SelectedThread is not null;
 
     // ── Ввод ──────────────────────────────────────────────────────────────────
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCommand))]
     private string _inputText = string.Empty;
 
-    // ── Создание нового треда ─────────────────────────────────────────────────
-    [ObservableProperty] private string _newThreadTitle       = string.Empty;
-    [ObservableProperty] private bool   _isCreatingThread;
+    // ── Scope switcher ────────────────────────────────────────────────────────
+    /// <summary>Метка текущего scope (GLOBAL / PROJECT) для хедера чата.</summary>
+    [ObservableProperty] private string _scopeLabel = "GLOBAL";
+
+    // ── Создание нового треда (диалог) ────────────────────────────────────────
+    [ObservableProperty] private string _newThreadTitle        = string.Empty;
+    [ObservableProperty] private bool   _isNewThreadDialogOpen;
+
+    // ── Флаг отправки (для кнопки «Отмена» и блокировки Send) ────────────────
+    /// <summary>true пока идёт SSE-стриминг ответа ассистента.</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SendCommand))]
+    private bool _isSending;
 
     // ── Состояния загрузки / ошибок ───────────────────────────────────────────
     [ObservableProperty]
@@ -84,6 +99,7 @@ public sealed partial class ChatViewModel : ObservableObject
         HeaderTitle     = headerTitle ?? (projectId is null ? "AI Assistant" : "Project Chat");
         ThreadListTitle = projectId is null ? "Threads" : "Project Threads";
         ShowBackButton  = showBackButton;
+        ScopeLabel      = projectId is null ? "GLOBAL" : "PROJECT";
     }
 
     // ── Initialize ────────────────────────────────────────────────────────────
@@ -102,9 +118,8 @@ public sealed partial class ChatViewModel : ObservableObject
         HasError         = false;
         Threads.Clear();
         Messages.Clear();
-        ActiveThread       = null;
-        ActiveThreadTitle  = "Select or create a thread";
-        IsMessagesEmpty    = true;
+        SelectedThread  = null;
+        IsMessagesEmpty = true;
 
         try
         {
@@ -155,8 +170,7 @@ public sealed partial class ChatViewModel : ObservableObject
     private async void OnThreadSelected(ChatThreadItemViewModel item)
     {
         foreach (var t in Threads) t.IsSelected = t.Id == item.Id;
-        ActiveThread      = item;
-        ActiveThreadTitle = item.Title;
+        SelectedThread = item;
         await LoadHistoryAsync(item.Id);
     }
 
@@ -164,21 +178,43 @@ public sealed partial class ChatViewModel : ObservableObject
     private async Task SelectThreadAsync(ChatThreadItemViewModel thread)
         => OnThreadSelected(thread);
 
+    // ── Scope switch commands (AXAML: SwitchToGlobalCommand / SwitchToProjectCommand) ──
+
+    /// <summary>Переключает вид на глобальные треды.</summary>
+    [RelayCommand]
+    private async Task SwitchToGlobalAsync()
+    {
+        ScopeLabel = "GLOBAL";
+        await LoadThreadsAsync();
+    }
+
+    /// <summary>Переключает вид на треды проекта.</summary>
+    [RelayCommand]
+    private async Task SwitchToProjectAsync()
+    {
+        ScopeLabel = "PROJECT";
+        await LoadThreadsAsync();
+    }
+
+    // ── New thread dialog commands ────────────────────────────────────────────
+
+    /// <summary>Открывает диалог создания треда (AXAML: OpenNewThreadDialogCommand).</summary>
+    [RelayCommand]
+    private void OpenNewThreadDialog()
+    {
+        NewThreadTitle        = string.Empty;
+        IsNewThreadDialogOpen = true;
+    }
+
+    /// <summary>Закрывает диалог без создания (AXAML: CloseNewThreadDialogCommand).</summary>
+    [RelayCommand]
+    private void CloseNewThreadDialog()
+    {
+        IsNewThreadDialogOpen = false;
+        NewThreadTitle        = string.Empty;
+    }
+
     // ── Create thread ─────────────────────────────────────────────────────────
-
-    [RelayCommand]
-    private void ShowCreateThread()
-    {
-        NewThreadTitle   = string.Empty;
-        IsCreatingThread = true;
-    }
-
-    [RelayCommand]
-    private void CancelCreateThread()
-    {
-        IsCreatingThread = false;
-        NewThreadTitle   = string.Empty;
-    }
 
     [RelayCommand]
     private async Task CreateThreadAsync()
@@ -186,10 +222,10 @@ public sealed partial class ChatViewModel : ObservableObject
         var title = NewThreadTitle.Trim();
         if (string.IsNullOrEmpty(title)) title = "New conversation";
 
-        IsCreatingThread = false;
-        NewThreadTitle   = string.Empty;
-        IsBusy           = true;
-        HasError         = false;
+        IsNewThreadDialogOpen = false;
+        NewThreadTitle        = string.Empty;
+        IsBusy                = true;
+        HasError              = false;
         try
         {
             ChatThreadDto? dto;
@@ -222,10 +258,9 @@ public sealed partial class ChatViewModel : ObservableObject
         {
             await _chatService.DeleteThreadAsync(item.Id, _cts.Token);
             Threads.Remove(item);
-            if (ActiveThread?.Id == item.Id)
+            if (SelectedThread?.Id == item.Id)
             {
-                ActiveThread      = null;
-                ActiveThreadTitle = "Select or create a thread";
+                SelectedThread  = null;
                 Messages.Clear();
                 IsMessagesEmpty = true;
             }
@@ -237,7 +272,7 @@ public sealed partial class ChatViewModel : ObservableObject
     // ── Send (SSE streaming) ──────────────────────────────────────────────────
 
     private bool CanSend() =>
-        !string.IsNullOrWhiteSpace(InputText) && !IsBusy && ActiveThread != null;
+        !string.IsNullOrWhiteSpace(InputText) && !IsBusy && !IsSending && SelectedThread != null;
 
     /// <summary>
     /// Отправляет сообщение и принимает ответ ассистента токен за токеном через SSE.
@@ -245,18 +280,17 @@ public sealed partial class ChatViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanSend))]
     private async Task SendAsync()
     {
-        if (ActiveThread == null) return;
+        if (SelectedThread == null) return;
 
         var text  = InputText.Trim();
         InputText = string.Empty;
         IsBusy    = true;
+        IsSending = true;
         HasError  = false;
 
-        // Оптимистичное добавление сообщения пользователя
         var userMsg = new ChatMessageViewModel(MessageRole.User, text, DateTime.UtcNow);
         Messages.Add(userMsg);
 
-        // Placeholder ассистента (показывает индикатор генерации)
         var assistantMsg = new ChatMessageViewModel(
             MessageRole.Assistant, string.Empty, DateTime.UtcNow)
         { IsStreaming = true };
@@ -267,7 +301,7 @@ public sealed partial class ChatViewModel : ObservableObject
             var request = new SendMessageRequest(text);
 
             await foreach (var token in _chatService.StreamAsync(
-                               ActiveThread.Id, request, _cts.Token))
+                               SelectedThread.Id, request, _cts.Token))
             {
                 await Dispatcher.UIThread.InvokeAsync(
                     () => assistantMsg.AppendToken(token));
@@ -284,7 +318,8 @@ public sealed partial class ChatViewModel : ObservableObject
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
                 assistantMsg.IsStreaming = false;
-                IsBusy = false;
+                IsBusy    = false;
+                IsSending = false;
             });
         }
     }
@@ -299,13 +334,11 @@ public sealed partial class ChatViewModel : ObservableObject
 
     // ── Open thread by Id (sidebar navigation) ────────────────────────────────
 
-    /// <summary>Открывает конкретный тред по Id. Используется при навигации из сайдбара.</summary>
     public async Task OpenThreadByIdAsync(Guid threadId)
     {
         var existing = Threads.FirstOrDefault(t => t.Id == threadId);
         if (existing != null) { OnThreadSelected(existing); return; }
 
-        // Список ещё не загружен — загружаем и ищем
         await LoadThreadsAsync();
         var found = Threads.FirstOrDefault(t => t.Id == threadId);
         if (found != null) OnThreadSelected(found);

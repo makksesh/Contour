@@ -14,7 +14,12 @@ public sealed partial class ChatThreadItemViewModel : ObservableObject
     public Guid   Id       { get; }
     public string Title    { get; }
     public bool   IsGlobal { get; }
-    public string TimeAgo  { get; }
+
+    /// <summary>Время последнего сообщения (AXAML: TimeLabel).</summary>
+    public string TimeLabel  { get; }
+
+    /// <summary>Счётчик сообщений (AXAML: MessageCount). Пустая строка если 0.</summary>
+    public string MessageCount { get; }
 
     /// <summary>Выделен ли тред как активный в списке.</summary>
     [ObservableProperty] private bool _isSelected;
@@ -24,13 +29,14 @@ public sealed partial class ChatThreadItemViewModel : ObservableObject
 
     public ChatThreadItemViewModel(ChatThreadDto dto)
     {
-        Id       = dto.Id;
-        Title    = dto.Title;
-        IsGlobal = dto.IsGlobal;
-        TimeAgo  = FormatTimeAgo(dto.LastMessageAtUtc ?? dto.CreatedAtUtc);
+        Id           = dto.Id;
+        Title        = dto.Title;
+        IsGlobal     = dto.IsGlobal;
+        TimeLabel    = FormatTimeAgo(dto.LastMessageAtUtc ?? dto.CreatedAtUtc);
+        MessageCount = dto.MessageCount > 0 ? $"{dto.MessageCount} msg" : string.Empty;
     }
 
-    public void RaiseSelected()       => Selected?.Invoke(this);
+    public void RaiseSelected()        => Selected?.Invoke(this);
     public void RaiseDeleteRequested() => DeleteRequested?.Invoke(this);
 
     private static string FormatTimeAgo(DateTime utc)
