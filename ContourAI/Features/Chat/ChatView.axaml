@@ -1,16 +1,28 @@
+<!--
+  ChatView — полная реализация чата:
+    • 260пк левая панель: список тредов + форма создания
+    • Правая область: лента сообщений (Markdown) + поле ввода
+    • SSE-стриминг: индикатор IsStreaming
+  Адаптировано из Desktop.Views.Chat.ChatView под ContourAI.
+  Проект: DevAssistant / ContourAI.
+-->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:ContourAI.Features.Chat"
+             xmlns:md="clr-namespace:Markdown.Avalonia;assembly=Markdown.Avalonia"
              x:Class="ContourAI.Features.Chat.ChatView"
              x:DataType="vm:ChatViewModel">
 
   <UserControl.Styles>
-    <!-- Buttons -->
+    <!-- ── Кнопки ─────────────────────────────────────────────────── -->
     <Style Selector="Button.primary">
       <Setter Property="Background"   Value="#01696f"/>
       <Setter Property="Foreground"   Value="White"/>
       <Setter Property="Padding"      Value="14 7"/>
       <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#0c4e54"/>
     </Style>
     <Style Selector="Button.ghost">
       <Setter Property="Background"   Value="Transparent"/>
@@ -18,11 +30,17 @@
       <Setter Property="Padding"      Value="10 5"/>
       <Setter Property="CornerRadius" Value="6"/>
     </Style>
+    <Style Selector="Button.ghost:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#22211f"/>
+    </Style>
     <Style Selector="Button.icon">
       <Setter Property="Background"   Value="Transparent"/>
       <Setter Property="Foreground"   Value="#5a5957"/>
       <Setter Property="Padding"      Value="4"/>
       <Setter Property="CornerRadius" Value="4"/>
+    </Style>
+    <Style Selector="Button.icon:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#262523"/>
     </Style>
     <Style Selector="Button.scope">
       <Setter Property="Background"   Value="Transparent"/>
@@ -35,48 +53,82 @@
       <Setter Property="Background" Value="#313b3b"/>
       <Setter Property="Foreground" Value="#4f98a3"/>
     </Style>
-    <!-- Thread item -->
+
+    <!-- ── Элемент треда ─────────────────────────────────────────── -->
     <Style Selector="Border.thread-item">
-      <Setter Property="Background"     Value="Transparent"/>
-      <Setter Property="CornerRadius"   Value="6"/>
-      <Setter Property="Padding"        Value="10 8"/>
-      <Setter Property="Cursor"         Value="Hand"/>
+      <Setter Property="Background"   Value="Transparent"/>
+      <Setter Property="CornerRadius" Value="6"/>
+      <Setter Property="Padding"      Value="10 8"/>
+      <Setter Property="Cursor"       Value="Hand"/>
+    </Style>
+    <Style Selector="Border.thread-item:pointerover">
+      <Setter Property="Background" Value="#1c1b19"/>
     </Style>
     <Style Selector="Border.thread-item.selected">
       <Setter Property="Background" Value="#22211f"/>
     </Style>
+
+    <!-- ── TextBox ─────────────────────────────────────────────────── -->
+    <Style Selector="TextBox.chat-input">
+      <Setter Property="Background"  Value="#22211f"/>
+      <Setter Property="Foreground"  Value="#cdccca"/>
+      <Setter Property="BorderBrush" Value="#393836"/>
+      <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="Padding"     Value="12 8"/>
+      <Setter Property="FontSize"    Value="14"/>
+    </Style>
+    <Style Selector="TextBox.chat-input:focus /template/ Border">
+      <Setter Property="BorderBrush" Value="#4f98a3"/>
+    </Style>
+    <Style Selector="TextBox.new-thread-input">
+      <Setter Property="Background"  Value="#22211f"/>
+      <Setter Property="Foreground"  Value="#cdccca"/>
+      <Setter Property="BorderBrush" Value="#393836"/>
+      <Setter Property="CornerRadius" Value="6"/>
+      <Setter Property="Padding"     Value="10 7"/>
+    </Style>
   </UserControl.Styles>
 
   <!--
-    FIX AVLN3000: UserControl.Content может иметь только одного дочернего.
-    Оборачиваем всё (основной Grid + диалог-оверлей) в Panel.
+    Panel — единственный контент UserControl (фикс AVLN3000).
+    Основной Grid + диалог-оверлей находятся в одном Panel.
   -->
   <Panel>
 
-    <!-- ═══ Root: sidebar + chat area ═══ -->
+    <!-- ═══ Главный мачтовый контейнер: sidebar + chat area ═══ -->
     <Grid ColumnDefinitions="260,*">
 
-      <!-- ─── SIDEBAR ─────────────────────────────────────────────────── -->
-      <Border Grid.Column="0" Background="#171614"
-              BorderBrush="#262523" BorderThickness="0 0 1 0">
+      <!-- ─── SIDEBAR — список тредов ─────────────────────────────────── -->
+      <Border Grid.Column="0"
+              Background="#171614"
+              BorderBrush="#262523"
+              BorderThickness="0 0 1 0">
         <Grid RowDefinitions="Auto,Auto,*">
 
-          <!-- Scope switcher -->
-          <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="4" Margin="12 12 12 8">
-            <Button Classes="scope active" Command="{Binding SwitchToGlobalCommand}">Global</Button>
-            <Button Classes="scope"        Command="{Binding SwitchToProjectCommand}">Project</Button>
+          <!-- Переключатель режима Global / Project -->
+          <StackPanel Grid.Row="0"
+                      Orientation="Horizontal"
+                      Spacing="4"
+                      Margin="12 12 12 8">
+            <Button Classes="scope active"
+                    Command="{Binding SwitchToGlobalCommand}">Global</Button>
+            <Button Classes="scope"
+                    Command="{Binding SwitchToProjectCommand}">Project</Button>
           </StackPanel>
 
-          <!-- New thread button -->
-          <Button Grid.Row="1" Classes="primary"
-                  HorizontalAlignment="Stretch" Margin="12 0 12 8"
+          <!-- Кнопка «+ New Thread» -->
+          <Button Grid.Row="1"
+                  Classes="primary"
+                  HorizontalAlignment="Stretch"
+                  Margin="12 0 12 8"
                   Command="{Binding OpenNewThreadDialogCommand}">
             + New Thread
           </Button>
 
-          <!-- Threads list -->
-          <ScrollViewer Grid.Row="2">
-            <Grid>
+          <!-- Список тредов -->
+          <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <Grid Margin="4 0">
+
               <!-- Loading -->
               <TextBlock IsVisible="{Binding IsLoadingThreads}"
                          Text="Loading..."
@@ -85,185 +137,253 @@
 
               <!-- Empty -->
               <StackPanel IsVisible="{Binding IsThreadsEmpty}"
-                          HorizontalAlignment="Center" Margin="16" Spacing="8">
-                <TextBlock Text="No threads yet" Foreground="#5a5957"
-                           FontSize="12" HorizontalAlignment="Center"/>
-                <TextBlock Text="Create a new thread to start" Foreground="#393836"
-                           FontSize="11" TextWrapping="Wrap" HorizontalAlignment="Center"
+                          HorizontalAlignment="Center"
+                          Margin="16" Spacing="8">
+                <TextBlock Text="No threads yet"
+                           Foreground="#5a5957" FontSize="12"
+                           HorizontalAlignment="Center"/>
+                <TextBlock Text="Create a new thread to start"
+                           Foreground="#393836" FontSize="11"
+                           TextWrapping="Wrap"
+                           HorizontalAlignment="Center"
                            TextAlignment="Center"/>
               </StackPanel>
 
-              <!-- List -->
-              <ItemsControl ItemsSource="{Binding Threads}" IsVisible="{Binding !IsLoadingThreads}">
+              <!-- Список -->
+              <ItemsControl ItemsSource="{Binding Threads}"
+                            IsVisible="{Binding !IsLoadingThreads}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate DataType="vm:ChatThreadItemViewModel">
                     <Border Classes="thread-item"
                             Classes.selected="{Binding IsSelected}"
                             PointerPressed="ThreadItem_PointerPressed">
                       <Grid ColumnDefinitions="*,Auto">
+
+                        <!-- Название + время -->
                         <StackPanel Grid.Column="0" Spacing="2">
-                          <TextBlock Text="{Binding Title}" FontSize="13" Foreground="#cdccca"
+                          <TextBlock Text="{Binding Title}"
+                                     FontSize="13" Foreground="#cdccca"
                                      TextTrimming="CharacterEllipsis"/>
                           <StackPanel Orientation="Horizontal" Spacing="6">
-                            <TextBlock Text="{Binding TimeLabel}"    FontSize="11" Foreground="#5a5957"/>
-                            <TextBlock Text="{Binding MessageCount}" FontSize="11" Foreground="#5a5957"/>
+                            <TextBlock Text="{Binding TimeLabel}"
+                                       FontSize="11" Foreground="#5a5957"/>
+                            <TextBlock Text="{Binding MessageCount}"
+                                       FontSize="11" Foreground="#5a5957"/>
                           </StackPanel>
                         </StackPanel>
-                        <Button Grid.Column="1" Classes="icon"
+
+                        <!-- Удалить -->
+                        <Button Grid.Column="1"
+                                Classes="icon"
                                 Click="ThreadDelete_Click"
                                 VerticalAlignment="Center">
                           ✕
                         </Button>
+
                       </Grid>
                     </Border>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
+
             </Grid>
           </ScrollViewer>
         </Grid>
       </Border>
 
-      <!-- ─── CHAT AREA ─────────────────────────────────────────────────── -->
+      <!-- ─── ПРАВАЯ ОБЛАСТЬ: сообщения + ввод ─────────────────────────── -->
       <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
 
-        <!-- Header -->
-        <Border Grid.Row="0" Background="#1c1b19"
-                BorderBrush="#262523" BorderThickness="0 0 0 1"
+        <!-- Хедер: режим + название активного треда -->
+        <Border Grid.Row="0"
+                Background="#1c1b19"
+                BorderBrush="#262523"
+                BorderThickness="0 0 0 1"
                 Padding="20 12">
           <StackPanel Spacing="2">
-            <!--
-              FIX AVLN2000: TextTransform не поддерживается в Avalonia.
-              Используем явный UpperCase текст через ScopeLabel в VM, убираем TextTransform.
-            -->
-            <TextBlock Text="{Binding ScopeLabel}" FontSize="11"
-                       Foreground="#4f98a3" FontWeight="SemiBold"
-                       CharacterSpacing="100"/>
-            <TextBlock Text="{Binding SelectedThreadTitle}" FontSize="15"
-                       FontWeight="Medium" Foreground="#cdccca"/>
+            <TextBlock Text="{Binding ScopeLabel}"
+                       FontSize="11" Foreground="#4f98a3"
+                       FontWeight="SemiBold" CharacterSpacing="100"/>
+            <TextBlock Text="{Binding SelectedThreadTitle}"
+                       FontSize="15" FontWeight="Medium"
+                       Foreground="#cdccca"/>
           </StackPanel>
         </Border>
 
-        <!-- Messages -->
-        <ScrollViewer Grid.Row="1" x:Name="MessagesScroll">
+        <!-- Лента сообщений -->
+        <ScrollViewer Grid.Row="1"
+                      x:Name="MessagesScroll"
+                      VerticalScrollBarVisibility="Auto">
           <Grid Margin="20 16">
-            <!-- No thread selected -->
-            <StackPanel IsVisible="{Binding !SelectedThread, Converter={x:Static ObjectConverters.IsNotNull}}"
-                        HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
-              <TextBlock Text="💬" FontSize="36" HorizontalAlignment="Center"/>
+
+            <!-- Нет активного треда -->
+            <StackPanel IsVisible="{Binding !HasActiveThread}"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="10">
+              <TextBlock Text="&#x1F4AC;" FontSize="36"
+                         HorizontalAlignment="Center"/>
               <TextBlock Text="Select a thread or create a new one"
-                         FontSize="14" Foreground="#5a5957" HorizontalAlignment="Center"/>
+                         FontSize="14" Foreground="#5a5957"
+                         HorizontalAlignment="Center"/>
             </StackPanel>
 
-            <!-- Empty thread -->
+            <!-- Пустой тред -->
             <StackPanel IsVisible="{Binding IsMessagesEmpty}"
-                        HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
-              <TextBlock Text="Start the conversation" FontSize="14"
-                         Foreground="#5a5957" HorizontalAlignment="Center"/>
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="10">
+              <TextBlock Text="Start the conversation"
+                         FontSize="14" Foreground="#5a5957"
+                         HorizontalAlignment="Center"/>
               <TextBlock Text="Ask anything — the assistant will answer based on context"
-                         FontSize="12" Foreground="#393836" HorizontalAlignment="Center"/>
+                         FontSize="12" Foreground="#393836"
+                         HorizontalAlignment="Center"/>
             </StackPanel>
 
-            <!-- Loading messages -->
+            <!-- Загрузка сообщений -->
             <TextBlock IsVisible="{Binding IsLoadingMessages}"
                        Text="Loading messages..."
                        Foreground="#5a5957" FontSize="13"
-                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"/>
 
-            <!-- Messages list -->
+            <!-- Список сообщений -->
             <ItemsControl ItemsSource="{Binding Messages}"
                           IsVisible="{Binding !IsLoadingMessages}">
               <ItemsControl.ItemTemplate>
-                <DataTemplate DataType="vm:MessageItemViewModel">
+                <!--
+                  DataType = ChatMessageViewModel (контракт ContourAI):
+                    Role: MessageRole.User | Assistant
+                    Content: string (обновляется токен за токеном при SSE)
+                    IsStreaming: bool
+                    IsUser / IsAssistant: bool
+                -->
+                <DataTemplate DataType="vm:ChatMessageViewModel">
                   <Grid Margin="0 4">
-                    <!-- User message -->
+
+                    <!-- Сообщение пользователя — справа -->
                     <Border IsVisible="{Binding IsUser}"
-                            Background="#313b3b" CornerRadius="10 10 2 10"
-                            Padding="12 8" MaxWidth="560"
+                            Background="#313b3b"
+                            CornerRadius="10 10 2 10"
+                            Padding="12 8"
+                            MaxWidth="560"
                             HorizontalAlignment="Right">
-                      <TextBlock Text="{Binding Content}" Foreground="#cdccca"
-                                 FontSize="14" TextWrapping="Wrap"/>
+                      <TextBlock Text="{Binding Content}"
+                                 Foreground="#cdccca"
+                                 FontSize="14"
+                                 TextWrapping="Wrap"/>
                     </Border>
 
-                    <!-- Assistant message -->
+                    <!-- Ответ ассистента — слева (с Markdown-рендерингом) -->
                     <Border IsVisible="{Binding IsAssistant}"
-                            Background="#1c1b19" CornerRadius="10 10 10 2"
-                            BorderBrush="#393836" BorderThickness="1"
-                            Padding="12 8" MaxWidth="680"
+                            Background="#1c1b19"
+                            CornerRadius="10 10 10 2"
+                            BorderBrush="#393836"
+                            BorderThickness="1"
+                            Padding="12 8"
+                            MaxWidth="680"
                             HorizontalAlignment="Left">
                       <StackPanel Spacing="4">
-                        <TextBlock Text="Assistant" FontSize="11"
-                                   Foreground="#4f98a3" FontWeight="SemiBold"/>
+
+                        <!-- Лейбл роли -->
+                        <TextBlock Text="Assistant"
+                                   FontSize="11"
+                                   Foreground="#4f98a3"
+                                   FontWeight="SemiBold"/>
+
                         <!--
-                          FIX AVLN2000: BoolConverters.IsTrue не существует в Avalonia.
-                          Для эффекта "typing" используем Opacity напрямую:
-                          IsStreaming=true → 0.6, false → 1.0 через Style триггер.
+                          MarkdownScrollViewer (Markdown.Avalonia 12.0.0-a3):
+                          • свойство Markdown доступно
+                          • скролл управляется внешним MessagesScroll
+                          • IsStreaming отображается индикатором ниже
                         -->
-                        <TextBlock Text="{Binding Content}" Foreground="#cdccca"
-                                   FontSize="14" TextWrapping="Wrap"
-                                   x:Name="MsgContent">
-                          <TextBlock.Styles>
-                            <Style Selector="TextBlock#MsgContent">
-                              <Setter Property="Opacity" Value="1.0"/>
-                            </Style>
-                          </TextBlock.Styles>
-                        </TextBlock>
+                        <md:MarkdownScrollViewer
+                          Markdown="{Binding Content}"
+                          MaxWidth="640"/>
+
+                        <!-- Индикатор стриминга -->
+                        <TextBlock IsVisible="{Binding IsStreaming}"
+                                   Text="●●●"
+                                   Foreground="#4f98a3"
+                                   FontSize="12"
+                                   Margin="4 0 0 0"
+                                   Opacity="0.7"/>
+
                       </StackPanel>
                     </Border>
+
                   </Grid>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
+
           </Grid>
         </ScrollViewer>
 
-        <!-- Input bar -->
-        <Border Grid.Row="2" Background="#1c1b19"
-                BorderBrush="#262523" BorderThickness="0 1 0 0"
+        <!-- Панель ввода -->
+        <Border Grid.Row="2"
+                Background="#1c1b19"
+                BorderBrush="#262523"
+                BorderThickness="0 1 0 0"
                 Padding="16 12">
           <Grid ColumnDefinitions="*,Auto,Auto">
+
             <TextBox Grid.Column="0"
+                     Classes="chat-input"
                      Text="{Binding InputText}"
                      PlaceholderText="Message the assistant..."
                      AcceptsReturn="False"
-                     FontSize="14"
-                     Background="#22211f"
-                     Foreground="#cdccca"
-                     BorderBrush="#393836"
-                     CornerRadius="8"
-                     Padding="12 8"
                      KeyDown="Input_KeyDown"/>
-            <Button Grid.Column="1" Classes="ghost" Margin="8 0 0 0"
+
+            <!-- Кнопка отмены SSE -->
+            <Button Grid.Column="1"
+                    Classes="ghost"
+                    Margin="8 0 0 0"
                     IsVisible="{Binding IsSending}"
                     Command="{Binding CancelSendCommand}">
               ✕
             </Button>
-            <Button Grid.Column="2" Classes="primary" Margin="8 0 0 0"
+
+            <!-- Кнопка отправки -->
+            <Button Grid.Column="2"
+                    Classes="primary"
+                    Margin="8 0 0 0"
                     Command="{Binding SendCommand}"
                     IsEnabled="{Binding !IsSending}">
               Send
             </Button>
+
           </Grid>
         </Border>
+
       </Grid>
     </Grid>
 
-    <!-- ═══ NEW THREAD DIALOG OVERLAY ═══ -->
+    <!-- ═══ ДИАЛОГ СОЗДАНИЯ ТРЕДА (оверлей) ═══ -->
     <Grid IsVisible="{Binding IsNewThreadDialogOpen}">
+      <!-- Полупрозрачный фон -->
       <Border Background="#80000000"/>
+
+      <!-- Окно диалога -->
       <Border Width="360"
-              Background="#1c1b19" CornerRadius="12"
-              BorderBrush="#393836" BorderThickness="1"
-              HorizontalAlignment="Center" VerticalAlignment="Center"
+              Background="#1c1b19"
+              CornerRadius="12"
+              BorderBrush="#393836"
+              BorderThickness="1"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
               Padding="28 24">
         <StackPanel Spacing="16">
-          <TextBlock Text="New Thread" FontSize="18"
-                     FontWeight="SemiBold" Foreground="#cdccca"/>
-          <TextBox Text="{Binding NewThreadTitle}"
-                   PlaceholderText="Thread title..."
-                   Background="#22211f" Foreground="#cdccca"
-                   BorderBrush="#393836" CornerRadius="6" Padding="10 7"/>
-          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+          <TextBlock Text="New Thread"
+                     FontSize="18" FontWeight="SemiBold"
+                     Foreground="#cdccca"/>
+          <TextBox Classes="new-thread-input"
+                   Text="{Binding NewThreadTitle}"
+                   PlaceholderText="Thread title..."/>
+          <StackPanel Orientation="Horizontal"
+                      HorizontalAlignment="Right"
+                      Spacing="8">
             <Button Classes="ghost"   Command="{Binding CloseNewThreadDialogCommand}">Cancel</Button>
             <Button Classes="primary" Command="{Binding CreateThreadCommand}">Create</Button>
           </StackPanel>
@@ -272,5 +392,4 @@
     </Grid>
 
   </Panel>
-
 </UserControl>
