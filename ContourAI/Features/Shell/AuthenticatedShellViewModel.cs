@@ -1,7 +1,7 @@
 /// <summary>
 /// ViewModel авторизованного shell-экрана.
-/// Управляет навигацией между разделами: Dashboard и Projects.
-/// Использует AuthSessionStore вместо прямого хранения токена.
+/// Управляет навигацией: Dashboard, Projects, Chat, Documents.
+/// Фаза 3-6: session lifecycle + все основные разделы.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -11,7 +11,9 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using ContourAI.Features.Auth;
+using ContourAI.Features.Chat;
 using ContourAI.Features.Dashboard;
+using ContourAI.Features.Documents;
 using ContourAI.Features.Projects;
 using ContourAI.Shared.Api;
 using ContourAI.Shared.State;
@@ -32,7 +34,9 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         SessionAuthService sessionAuthService,
         ProjectContextStore projectContextStore,
         DashboardViewModel dashboardViewModel,
-        ProjectsViewModel projectsViewModel)
+        ProjectsViewModel projectsViewModel,
+        ChatViewModel chatViewModel,
+        DocumentsViewModel documentsViewModel)
     {
         _connectionSettingsStore = connectionSettingsStore;
         _sessionStore = sessionStore;
@@ -40,11 +44,15 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         _projectContextStore = projectContextStore;
 
         Dashboard = dashboardViewModel;
-        Projects = projectsViewModel;
+        Projects  = projectsViewModel;
+        Chat      = chatViewModel;
+        Documents = documentsViewModel;
 
-        LogoutCommand = new RelayCommand(() => _ = LogoutAsync());
+        LogoutCommand        = new RelayCommand(() => _ = LogoutAsync());
         ShowDashboardCommand = new RelayCommand(() => ShowSection(Dashboard));
-        ShowProjectsCommand = new AsyncRelayCommand(ShowProjectsAsync);
+        ShowProjectsCommand  = new AsyncRelayCommand(ShowProjectsAsync);
+        ShowChatCommand      = new AsyncRelayCommand(ShowChatAsync);
+        ShowDocumentsCommand = new AsyncRelayCommand(ShowDocumentsAsync);
 
         _connectionSettingsStore.PropertyChanged += (_, args) =>
         {
@@ -66,13 +74,17 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
     public event Action? LogoutRequested;
 
     public DashboardViewModel Dashboard { get; }
-    public ProjectsViewModel Projects { get; }
+    public ProjectsViewModel  Projects  { get; }
+    public ChatViewModel      Chat      { get; }
+    public DocumentsViewModel Documents { get; }
 
-    public ICommand LogoutCommand { get; }
+    public ICommand LogoutCommand        { get; }
     public ICommand ShowDashboardCommand { get; }
-    public ICommand ShowProjectsCommand { get; }
+    public ICommand ShowProjectsCommand  { get; }
+    public ICommand ShowChatCommand      { get; }
+    public ICommand ShowDocumentsCommand { get; }
 
-    public string Username => _sessionStore.CurrentUsername;
+    public string Username        => _sessionStore.CurrentUsername;
     public string ServerIpDisplay => _connectionSettingsStore.ServerIpDisplay;
 
     /// <summary>Текущий отображаемый раздел в центральной области shell.</summary>
@@ -82,11 +94,10 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         private set => SetProperty(ref _currentContent, value);
     }
 
-    /// <summary>True, если активен Dashboard.</summary>
     public bool IsDashboardActive => CurrentContent is DashboardViewModel;
-
-    /// <summary>True, если активен Projects.</summary>
-    public bool IsProjectsActive => CurrentContent is ProjectsViewModel;
+    public bool IsProjectsActive  => CurrentContent is ProjectsViewModel;
+    public bool IsChatActive      => CurrentContent is ChatViewModel;
+    public bool IsDocumentsActive => CurrentContent is DocumentsViewModel;
 
     /// <summary>
     /// Применяет токен в AuthSessionStore и загружает dashboard.
@@ -113,6 +124,20 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         await Projects.InitializeAsync();
     }
 
+    private async Task ShowChatAsync()
+    {
+        CurrentContent = Chat;
+        RaiseActiveFlags();
+        await Chat.InitializeAsync();
+    }
+
+    private async Task ShowDocumentsAsync()
+    {
+        CurrentContent = Documents;
+        RaiseActiveFlags();
+        await Documents.InitializeAsync();
+    }
+
     private async Task LogoutAsync()
     {
         await _sessionAuthService.LogoutAsync();
@@ -125,5 +150,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
     {
         RaisePropertyChanged(nameof(IsDashboardActive));
         RaisePropertyChanged(nameof(IsProjectsActive));
+        RaisePropertyChanged(nameof(IsChatActive));
+        RaisePropertyChanged(nameof(IsDocumentsActive));
     }
 }

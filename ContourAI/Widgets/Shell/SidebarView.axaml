@@ -1,6 +1,6 @@
 <!--
   Sidebar с навигационными кнопками и подсветкой активной секции.
-  Фаза 4: Projects подключён к ShowProjectsCommand.
+  Фаза 4-6: Projects, Chat, Documents подключены к командам Shell.
   Проект: DevAssistant / ContourAI.
 -->
 <UserControl xmlns="https://github.com/avaloniaui"
@@ -11,118 +11,83 @@
              x:DataType="shell:AuthenticatedShellViewModel"
              mc:Ignorable="d"
              x:Class="ContourAI.Widgets.Shell.SidebarView">
-  <Border Background="#0F172A"
-          Padding="20">
+
+  <UserControl.Styles>
+    <!-- Базовый стиль кнопки навигации -->
+    <Style Selector="Button.nav">
+      <Setter Property="Background"              Value="Transparent"/>
+      <Setter Property="Foreground"              Value="#CBD5E1"/>
+      <Setter Property="HorizontalAlignment"     Value="Stretch"/>
+      <Setter Property="HorizontalContentAlignment" Value="Left"/>
+      <Setter Property="Height"                  Value="42"/>
+      <Setter Property="Padding"                 Value="12 0"/>
+      <Setter Property="CornerRadius"            Value="6"/>
+    </Style>
+    <!-- Активная кнопка -->
+    <Style Selector="Button.nav.active">
+      <Setter Property="Background" Value="#1E293B"/>
+      <Setter Property="Foreground" Value="#5EEAD4"/>
+    </Style>
+    <!-- Hover -->
+    <Style Selector="Button.nav:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#1E293B"/>
+    </Style>
+  </UserControl.Styles>
+
+  <Border Background="#0F172A" Padding="20">
     <DockPanel LastChildFill="True">
-      <StackPanel DockPanel.Dock="Top"
-                  Spacing="6">
+
+      <StackPanel DockPanel.Dock="Top" Spacing="6">
 
         <!-- Логотип -->
-        <StackPanel Spacing="6"
-                    Margin="0,0,0,24">
+        <StackPanel Spacing="6" Margin="0 0 0 24">
           <TextBlock Text="ContourAI"
-                     FontSize="22"
-                     FontWeight="SemiBold"
-                     Foreground="#F9FAFB" />
+                     FontSize="22" FontWeight="SemiBold"
+                     Foreground="#F9FAFB"/>
           <TextBlock Text="AI workspace"
-                     FontSize="12"
-                     Foreground="#94A3B8" />
+                     FontSize="12" Foreground="#94A3B8"/>
         </StackPanel>
 
         <!-- Dashboard -->
-        <Button Content="Dashboard"
+        <Button Classes="nav"
+                Classes.active="{Binding IsDashboardActive}"
                 Command="{Binding ShowDashboardCommand}"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Left"
-                Height="42"
-                Padding="12,0"
-                CornerRadius="6"
-                Background="{Binding IsDashboardActive, Converter={x:Static BoolConverters.False}, ConverterParameter=Transparent}"
-                Foreground="{Binding IsDashboardActive, Converter={x:Static BoolConverters.False}, ConverterParameter=#CBD5E1}">
-          <Button.Styles>
-            <Style Selector="Button">
-              <Setter Property="Background" Value="Transparent" />
-              <Setter Property="Foreground" Value="#CBD5E1" />
-            </Style>
-          </Button.Styles>
-        </Button>
+                Content="Dashboard"/>
 
         <!-- Projects -->
-        <Button Content="Projects"
+        <Button Classes="nav"
+                Classes.active="{Binding IsProjectsActive}"
                 Command="{Binding ShowProjectsCommand}"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Left"
-                Height="42"
-                Padding="12,0"
-                CornerRadius="6"
-                Background="Transparent"
-                Foreground="#CBD5E1">
-          <Button.Styles>
-            <Style Selector="Button">
-              <Setter Property="Background" Value="Transparent" />
-              <Setter Property="Foreground" Value="#CBD5E1" />
-            </Style>
-          </Button.Styles>
-        </Button>
+                Content="Projects"/>
 
-        <!-- Остальные — будут активированы в следующих фазах -->
-        <Button Content="Global Chat"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Left"
-                Height="42"
-                Padding="12,0"
-                CornerRadius="6"
-                Background="Transparent"
-                Foreground="#475569"
-                IsEnabled="False" />
-        <Button Content="Documents"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Left"
-                Height="42"
-                Padding="12,0"
-                CornerRadius="6"
-                Background="Transparent"
-                Foreground="#475569"
-                IsEnabled="False" />
-        <Button Content="Indexing"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Left"
-                Height="42"
-                Padding="12,0"
-                CornerRadius="6"
-                Background="Transparent"
-                Foreground="#475569"
-                IsEnabled="False" />
-        <Button Content="RAG Search"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Left"
-                Height="42"
-                Padding="12,0"
-                CornerRadius="6"
-                Background="Transparent"
-                Foreground="#475569"
-                IsEnabled="False" />
-        <Button Content="System Monitor"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Left"
-                Height="42"
-                Padding="12,0"
-                CornerRadius="6"
-                Background="Transparent"
-                Foreground="#475569"
-                IsEnabled="False" />
+        <!-- Global Chat -->
+        <Button Classes="nav"
+                Classes.active="{Binding IsChatActive}"
+                Command="{Binding ShowChatCommand}"
+                Content="Global Chat"/>
+
+        <!-- Documents -->
+        <Button Classes="nav"
+                Classes.active="{Binding IsDocumentsActive}"
+                Command="{Binding ShowDocumentsCommand}"
+                Content="Documents"/>
+
+        <!-- Будущие разделы -->
+        <Button Classes="nav" IsEnabled="False"
+                Foreground="#475569" Content="Indexing"/>
+        <Button Classes="nav" IsEnabled="False"
+                Foreground="#475569" Content="RAG Search"/>
+        <Button Classes="nav" IsEnabled="False"
+                Foreground="#475569" Content="System Monitor"/>
+
       </StackPanel>
 
-      <StackPanel DockPanel.Dock="Bottom"
-                  Spacing="8"
-                  Margin="0,20,0,0">
-        <TextBlock Text="Server"
-                   FontSize="12"
-                   Foreground="#94A3B8" />
-        <TextBlock Text="{Binding ServerIpDisplay}"
-                   FontSize="13"
-                   Foreground="#5EEAD4" />
+      <!-- Footer: Server info -->
+      <StackPanel DockPanel.Dock="Bottom" Spacing="8" Margin="0 20 0 0">
+        <TextBlock Text="Server"      FontSize="12" Foreground="#94A3B8"/>
+        <TextBlock Text="{Binding ServerIpDisplay}" FontSize="13" Foreground="#5EEAD4"/>
       </StackPanel>
+
     </DockPanel>
   </Border>
 </UserControl>
