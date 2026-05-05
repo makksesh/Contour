@@ -1,6 +1,12 @@
+/// <summary>
+/// Результат синхронной отправки сообщения.
+/// Проект: DevAssistant / ContourAI.
+/// </summary>
+
 namespace ContourAI.Entities.Chat;
 
-/// <summary>Ответ POST /api/chat/threads/{id}/send (non-streaming).</summary>
-public sealed record SendMessageResult(
+/// <param name="UserMessage">Сохранённое сообщение пользователя.</param>
+/// <param name="AssistantMessage">Ответ ассистента.</param>
+public record SendMessageResult(
     ChatMessageDto UserMessage,
     ChatMessageDto AssistantMessage);

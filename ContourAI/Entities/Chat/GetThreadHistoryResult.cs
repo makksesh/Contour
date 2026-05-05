@@ -1,6 +1,14 @@
+/// <summary>
+/// Результат запроса истории треда.
+/// Проект: DevAssistant / ContourAI.
+/// </summary>
+
+using System.Collections.Generic;
+
 namespace ContourAI.Entities.Chat;
 
-/// <summary>Ответ GET /api/chat/threads/{id}/history.</summary>
-public sealed record GetThreadHistoryResult(
-    Guid                  ThreadId,
-    List<ChatMessageDto>  Messages);
+/// <param name="Thread">Данные треда.</param>
+/// <param name="Messages">Сообщения в хронологическом порядке.</param>
+public record GetThreadHistoryResult(
+    ChatThreadDto                 Thread,
+    IReadOnlyList<ChatMessageDto> Messages);

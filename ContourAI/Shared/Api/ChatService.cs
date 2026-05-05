@@ -1,18 +1,17 @@
 /// <summary>
 /// Сервис для работы с чатами.
-/// Все треды и сообщения проходят через /api/chat/... на сервере.
 /// Эндпоинты совпадают с рабочим сервером:
-///   GET  /api/chat/projects/{projectId}/threads   — проектные треды
-///   GET  /api/chat/threads                        — глобальные треды
-///   GET  /api/chat/threads/{id}/history           — история сообщений
-///   POST /api/chat/threads                        — создать тред проекта
-///   POST /api/chat/threads/global                 — создать глобальный тред
-///   POST /api/chat/threads/{id}/stream            — SSE-стриминг ответа
-///   POST /api/chat/threads/{id}/send              — синхронный ответ
-///   PUT  /api/chat/threads/{id}                   — переименовать
-///   POST /api/chat/threads/{id}/attach            — привязать к проекту
-///   DELETE /api/chat/threads/{id}/attach          — отвязать от проекта
-///   DELETE /api/chat/threads/{id}                 — удалить
+///   GET    /api/chat/projects/{projectId}/threads
+///   GET    /api/chat/threads
+///   GET    /api/chat/threads/{id}/history
+///   POST   /api/chat/threads            — проектный тред
+///   POST   /api/chat/threads/global     — глобальный тред
+///   POST   /api/chat/threads/{id}/stream
+///   POST   /api/chat/threads/{id}/send
+///   PUT    /api/chat/threads/{id}
+///   POST   /api/chat/threads/{id}/attach
+///   DELETE /api/chat/threads/{id}/attach
+///   DELETE /api/chat/threads/{id}
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -49,7 +48,7 @@ public sealed class ChatService
         _sessionAuth = sessionAuth;
     }
 
-    // ── auth helper ──────────────────────────────────────────────────────────
+    // ── auth helper ──────────────────────────────────────────────────────
 
     private bool HandleAuth(HttpStatusCode code)
     {
@@ -58,7 +57,7 @@ public sealed class ChatService
         return false;
     }
 
-    // ── Threads ──────────────────────────────────────────────────────────────
+    // ── Threads ───────────────────────────────────────────────────────────
 
     /// <summary>GET /api/chat/projects/{projectId}/threads</summary>
     public async Task<List<ChatThreadDto>?> GetThreadsByProjectAsync(
@@ -151,7 +150,7 @@ public sealed class ChatService
         await http.DeleteAsync($"api/chat/threads/{threadId}", ct);
     }
 
-    // ── Messages ─────────────────────────────────────────────────────────────
+    // ── Messages ────────────────────────────────────────────────────────────
 
     /// <summary>
     /// POST /api/chat/threads/{threadId}/send — синхронный ответ ассистента.
@@ -169,7 +168,12 @@ public sealed class ChatService
 
     /// <summary>
     /// POST /api/chat/threads/{threadId}/stream — SSE-стриминг.
-    /// Сервер шлёт фреймы {"token":"..."}, событие "done" завершает поток.
+    ///
+    /// Формат фреймов (НЕстандартный SSE, особенность сервера):
+    ///   1. Строки с данными начинаются с пробела (БЕЗ префикса "data:"):
+    ///      " {"token":"Hello"}\n\n"
+    ///   2. Парсер поддерживает обе формы: с пробелом и с "data:" префиксом.
+    ///   3. Завершение: фрейм с "event: done" + пустым телом.
     /// </summary>
     public async IAsyncEnumerable<string> StreamAsync(
         Guid threadId,
@@ -182,7 +186,7 @@ public sealed class ChatService
         {
             Content = JsonContent.Create(request, options: JsonOptions)
         };
-        // CompletionOption.ResponseHeadersRead — начинаем читать до конца ответа
+
         var response = await http.SendAsync(httpRequest,
             HttpCompletionOption.ResponseHeadersRead, ct);
 
@@ -190,17 +194,33 @@ public sealed class ChatService
         response.EnsureSuccessStatusCode();
 
         await using var stream = await response.Content.ReadAsStreamAsync(ct);
-        using var reader = new StreamReader(stream);
+        using var reader       = new StreamReader(stream);
 
         string? eventName = null;
         string? dataLine  = null;
 
-        /// SSE-парсер: читаем построчно по спецификации text/event-stream.
-        while (!reader.EndOfStream && !ct.IsCancellationRequested)
+        /// <summary>
+        /// Парсер фреймов SSE.
+        /// Сервер шлёт строки в формате:
+        ///   " {"token":"..."}" — пробел + JSON (БЕЗ "data:").
+        ///   "data: {"token":"..."}" — стандартный SSE (тоже поддерживается).
+        ///   "event: done" — завершение потока.
+        ///   "" — пустая строка = разделитель фрейма.
+        /// </summary>
+        while (true)
         {
-            var line = await reader.ReadLineAsync(ct);
+            string? line;
+            try
+            {
+                line = await reader.ReadLineAsync(ct);
+            }
+            catch (OperationCanceledException)
+            {
+                yield break;
+            }
 
-            if (line == null) break;
+            // null = поток закрыт
+            if (line is null) yield break;
 
             if (line.StartsWith("event:", StringComparison.OrdinalIgnoreCase))
             {
@@ -208,25 +228,23 @@ public sealed class ChatService
             }
             else if (line.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
             {
+                // Стандартный SSE: "data: {...}"
                 dataLine = line[5..].Trim();
             }
-            else if (line.Length == 0) // пустая строка = конец фрейма
+            else if (line.StartsWith(' ') || line.StartsWith('\t'))
             {
+                // Нестандартный формат сервера: " {"token":"..."}"
+                dataLine = line.TrimStart();
+            }
+            else if (line.Length == 0)
+            {
+                // Пустая строка — конец фрейма
                 if (string.Equals(eventName, "done", StringComparison.OrdinalIgnoreCase))
                     yield break;
 
-                if (dataLine != null)
+                if (dataLine is not null)
                 {
-                    string? token = null;
-                    try
-                    {
-                        using var doc = JsonDocument.Parse(dataLine);
-                        if (doc.RootElement.TryGetProperty("token", out var t) &&
-                            t.ValueKind == JsonValueKind.String)
-                            token = t.GetString();
-                    }
-                    catch (JsonException) { /* пропускаем некорректный фрейм */ }
-
+                    string? token = TryExtractToken(dataLine);
                     if (!string.IsNullOrEmpty(token))
                         yield return token;
                 }
@@ -234,6 +252,21 @@ public sealed class ChatService
                 eventName = null;
                 dataLine  = null;
             }
+            // Прочие строки (comments, итд.) — пропускаем
         }
+    }
+
+    /// <summary>Извлекает поле "token" из JSON-строки. Возвращает null при ошибке парсинга.</summary>
+    private static string? TryExtractToken(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.TryGetProperty("token", out var t) &&
+                t.ValueKind == JsonValueKind.String)
+                return t.GetString();
+        }
+        catch (JsonException) { /* некорректный фрейм — пропускаем */ }
+        return null;
     }
 }
