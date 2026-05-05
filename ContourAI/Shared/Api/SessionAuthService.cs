@@ -1,7 +1,12 @@
 /// <summary>
 /// Сервис управления session-lifecycle: refresh токена и logout с очисткой состояния.
 /// Использует AuthSessionStore как единый источник истины о текущей сессии.
-/// Централизованно обрабатывает 401/403 — сбрасывает сессию и инициирует redirect на login.
+///
+/// ВАЖНО: HandleUnauthorized() НЕ поднимает SessionExpired.
+/// Он только очищает токены — вызывающий код сам решает, показывать ли ошибку.
+/// SessionExpired поднимается ТОЛЬКО из TryRefreshAsync (refresh провалился)
+/// и LogoutAsync (явный logout пользователя).
+/// Это предотвращает принудительный logout при бизнес-ошибках сервера (401 на /folders и т.п.).
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -16,17 +21,18 @@ namespace ContourAI.Shared.Api;
 
 public sealed class SessionAuthService
 {
-    private readonly AuthService _authService;
+    private readonly AuthService      _authService;
     private readonly AuthSessionStore _sessionStore;
 
     /// <summary>
-    /// Поднимается, когда 401/403 или явный logout — подписывается MainWindowViewModel.
+    /// Поднимается только когда refresh токена провалился или пользователь явно разлогинился.
+    /// Подписчик (MainWindowViewModel) делает redirect на экран Login.
     /// </summary>
     public event Action? SessionExpired;
 
     public SessionAuthService(AuthService authService, AuthSessionStore sessionStore)
     {
-        _authService = authService;
+        _authService  = authService;
         _sessionStore = sessionStore;
     }
 
@@ -40,7 +46,8 @@ public sealed class SessionAuthService
         var refreshToken = _sessionStore.RefreshToken;
         if (string.IsNullOrEmpty(refreshToken))
         {
-            InvalidateSession();
+            _sessionStore.Clear();
+            SessionExpired?.Invoke();
             return false;
         }
 
@@ -49,7 +56,8 @@ public sealed class SessionAuthService
             var newToken = await _authService.RefreshAsync(refreshToken, cancellationToken);
             if (newToken is null)
             {
-                InvalidateSession();
+                _sessionStore.Clear();
+                SessionExpired?.Invoke();
                 return false;
             }
 
@@ -59,7 +67,8 @@ public sealed class SessionAuthService
         catch (HttpRequestException ex) when (
             ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
         {
-            InvalidateSession();
+            _sessionStore.Clear();
+            SessionExpired?.Invoke();
             return false;
         }
         catch
@@ -72,10 +81,11 @@ public sealed class SessionAuthService
     /// <summary>
     /// Выполняет logout: вызывает backend endpoint, затем очищает локальную сессию.
     /// При сетевой ошибке всё равно очищает сессию локально.
+    /// Поднимает SessionExpired — единственное место кроме TryRefreshAsync.
     /// </summary>
     public async Task LogoutAsync(CancellationToken cancellationToken = default)
     {
-        var accessToken = _sessionStore.AccessToken;
+        var accessToken  = _sessionStore.AccessToken;
         var refreshToken = _sessionStore.RefreshToken;
 
         if (!string.IsNullOrEmpty(accessToken) && !string.IsNullOrEmpty(refreshToken))
@@ -90,21 +100,20 @@ public sealed class SessionAuthService
             }
         }
 
-        InvalidateSession();
+        _sessionStore.Clear();
+        SessionExpired?.Invoke();
     }
 
     /// <summary>
-    /// Должен вызываться из любого места, получившего 401 или 403 от API.
-    /// Очищает сессию и уведомляет подписчиков о необходимости redirect на login.
+    /// Вызывается из API-сервисов при получении 401/403.
+    /// Очищает токены в store (следующий запрос с уже невалидным токеном не пройдёт),
+    /// НО не поднимает SessionExpired — вызывающий код сам показывает ошибку пользователю.
+    /// Используй TryRefreshAsync() если хочешь попытаться продлить сессию автоматически.
     /// </summary>
     public void HandleUnauthorized()
     {
-        InvalidateSession();
-    }
-
-    private void InvalidateSession()
-    {
         _sessionStore.Clear();
-        SessionExpired?.Invoke();
+        // НЕ вызываем SessionExpired здесь — это приводило к принудительному
+        // logout при любой 401, включая бизнес-ошибки (папка, настройки).
     }
 }

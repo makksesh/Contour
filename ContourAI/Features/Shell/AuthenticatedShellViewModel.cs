@@ -1,7 +1,7 @@
 /// <summary>
 /// ViewModel авторизованного shell-экрана.
 /// Управляет навигацией: Dashboard, Projects, Chat, Documents.
-/// Фаза 3-6: session lifecycle + все основные разделы.
+/// Подписывается на Projects.ProjectOpened — при нажатии Open переходит на Documents.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -23,25 +23,25 @@ namespace ContourAI.Features.Shell;
 public sealed class AuthenticatedShellViewModel : ViewModelBase
 {
     private readonly ConnectionSettingsStore _connectionSettingsStore;
-    private readonly AuthSessionStore _sessionStore;
-    private readonly SessionAuthService _sessionAuthService;
-    private readonly ProjectContextStore _projectContextStore;
+    private readonly AuthSessionStore        _sessionStore;
+    private readonly SessionAuthService      _sessionAuthService;
+    private readonly ProjectContextStore     _projectContextStore;
     private object? _currentContent;
 
     public AuthenticatedShellViewModel(
         ConnectionSettingsStore connectionSettingsStore,
-        AuthSessionStore sessionStore,
-        SessionAuthService sessionAuthService,
-        ProjectContextStore projectContextStore,
-        DashboardViewModel dashboardViewModel,
-        ProjectsViewModel projectsViewModel,
-        ChatViewModel chatViewModel,
-        DocumentsViewModel documentsViewModel)
+        AuthSessionStore        sessionStore,
+        SessionAuthService      sessionAuthService,
+        ProjectContextStore     projectContextStore,
+        DashboardViewModel      dashboardViewModel,
+        ProjectsViewModel       projectsViewModel,
+        ChatViewModel           chatViewModel,
+        DocumentsViewModel      documentsViewModel)
     {
         _connectionSettingsStore = connectionSettingsStore;
-        _sessionStore = sessionStore;
-        _sessionAuthService = sessionAuthService;
-        _projectContextStore = projectContextStore;
+        _sessionStore            = sessionStore;
+        _sessionAuthService      = sessionAuthService;
+        _projectContextStore     = projectContextStore;
 
         Dashboard = dashboardViewModel;
         Projects  = projectsViewModel;
@@ -53,6 +53,9 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         ShowProjectsCommand  = new AsyncRelayCommand(ShowProjectsAsync);
         ShowChatCommand      = new AsyncRelayCommand(ShowChatAsync);
         ShowDocumentsCommand = new AsyncRelayCommand(ShowDocumentsAsync);
+
+        // Кнопка "Open" на карточке проекта — переходим на Documents этого проекта
+        Projects.ProjectOpened += OnProjectOpened;
 
         _connectionSettingsStore.PropertyChanged += (_, args) =>
         {
@@ -110,6 +113,20 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         RaiseActiveFlags();
         await Dashboard.LoadAsync(authToken.AccessToken, cancellationToken);
     }
+
+    // ─── Обработчик кнопки Open ───────────────────────────────────────────────
+
+    /// <summary>
+    /// Вызывается когда пользователь нажал Open на карточке проекта.
+    /// ProjectContextStore уже обновлён внутри ProjectsViewModel.OnOpenProject().
+    /// Переходим на Documents и загружаем документы выбранного проекта.
+    /// </summary>
+    private void OnProjectOpened(Guid _)
+    {
+        _ = ShowDocumentsAsync();
+    }
+
+    // ─── Навигация ────────────────────────────────────────────────────────────
 
     private void ShowSection(object section)
     {

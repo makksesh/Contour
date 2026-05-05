@@ -1,6 +1,9 @@
 /// <summary>
-/// Вспомогательный factory для создания HttpClient с уже подставленным Bearer-токеном.
-/// Читает токен из AuthSessionStore — никакой ViewModel не нужно знать о токене напрямую.
+/// Фабрика авторизованных HttpClient.
+/// ВАЖНО: HttpClient — singleton на весь lifetime фабрики.
+/// .NET рекомендует переиспользовать HttpClient: создание нового экземпляра
+/// при каждом запросе исчерпывает пул сокетов (SocketException) со временем.
+/// Токен обновляется через DefaultRequestHeaders перед каждым использованием.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -11,45 +14,62 @@ using ContourAI.Shared.State;
 
 namespace ContourAI.Shared.Api;
 
-public sealed class AuthorizedHttpClientFactory
+public sealed class AuthorizedHttpClientFactory : IDisposable
 {
     private readonly ConnectionSettingsStore _connectionSettings;
-    private readonly AuthSessionStore _sessionStore;
+    private readonly AuthSessionStore        _sessionStore;
+
+    /// <summary>
+    /// Единственный экземпляр HttpClient — переиспользуется для всех запросов.
+    /// BaseAddress выставляется один раз при создании фабрики.
+    /// </summary>
+    private readonly HttpClient _authorizedClient;
+
+    /// <summary>
+    /// Анонимный клиент — для публичных эндпоинтов (login, register, health).
+    /// </summary>
+    private readonly HttpClient _anonymousClient;
 
     public AuthorizedHttpClientFactory(
         ConnectionSettingsStore connectionSettings,
         AuthSessionStore sessionStore)
     {
         _connectionSettings = connectionSettings;
-        _sessionStore = sessionStore;
+        _sessionStore        = sessionStore;
+
+        var baseUri = new Uri(_connectionSettings.ServerBaseAddress, UriKind.Absolute);
+
+        _authorizedClient = new HttpClient { BaseAddress = baseUri };
+        _anonymousClient  = new HttpClient { BaseAddress = baseUri };
     }
 
     /// <summary>
-    /// Создаёт HttpClient с BaseAddress и Authorization: Bearer header.
+    /// Возвращает переиспользуемый HttpClient с актуальным Bearer-токеном.
+    /// Токен читается из AuthSessionStore перед каждым вызовом,
+    /// поэтому после refresh токен автоматически подхватывается.
     /// Бросает InvalidOperationException, если сессия не активна.
+    /// НЕ оборачивать в using — клиент singleton и не должен Dispose-иться.
     /// </summary>
     public HttpClient CreateAuthorized()
     {
         var token = _sessionStore.AccessToken
             ?? throw new InvalidOperationException("No active session. AccessToken is null.");
 
-        var client = new HttpClient
-        {
-            BaseAddress = new Uri(_connectionSettings.ServerBaseAddress, UriKind.Absolute)
-        };
-        client.DefaultRequestHeaders.Authorization =
+        _authorizedClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
-        return client;
+
+        return _authorizedClient;
     }
 
     /// <summary>
-    /// Создаёт HttpClient только с BaseAddress, без токена — для публичных эндпоинтов.
+    /// Возвращает переиспользуемый HttpClient без токена — для публичных эндпоинтов.
+    /// НЕ оборачивать в using.
     /// </summary>
-    public HttpClient CreateAnonymous()
+    public HttpClient CreateAnonymous() => _anonymousClient;
+
+    public void Dispose()
     {
-        return new HttpClient
-        {
-            BaseAddress = new Uri(_connectionSettings.ServerBaseAddress, UriKind.Absolute)
-        };
+        _authorizedClient.Dispose();
+        _anonymousClient.Dispose();
     }
 }
