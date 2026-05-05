@@ -16,7 +16,13 @@ public sealed class MessageItemViewModel : ChatMessageViewModel
 
     /// <summary>Создаёт placeholder-сообщение ассистента в состоянии стриминга.</summary>
     public static MessageItemViewModel CreatePending()
-        => new(new ChatMessageDto(Guid.NewGuid(), Guid.Empty,
-            MessageRole.Assistant, string.Empty, DateTime.UtcNow))
+        => new(new ChatMessageDto(
+            Id:             Guid.NewGuid(),
+            ThreadId:       Guid.Empty,
+            SequenceNumber: 0,
+            Role:           MessageRole.Assistant,
+            Content:        string.Empty,
+            TokenCount:     null,
+            CreatedAtUtc:   DateTime.UtcNow))
         { IsStreaming = true };
 }
