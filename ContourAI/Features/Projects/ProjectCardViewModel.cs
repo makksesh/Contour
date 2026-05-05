@@ -1,25 +1,51 @@
 /// <summary>
-/// ViewModel одной карточки проекта в списке.
-/// Хранит данные для отображения и ID для открытия проекта.
+/// ViewModel карточки проекта в списке.
+/// Содержит команды Delete и OpenSettings.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
 using System;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using ContourAI.Entities.Projects;
 
 namespace ContourAI.Features.Projects;
 
-public sealed class ProjectCardViewModel
+public sealed partial class ProjectCardViewModel : ObservableObject
 {
-    public ProjectCardViewModel(Guid id, string name, string? description, string updatedAtText)
+    public Guid              Id          { get; }
+    public string            Name        { get; }
+    public string            Description { get; }
+    public ProjectAccessMode AccessMode  { get; }
+    public DateTime          CreatedAt   { get; }
+    public int               FolderCount { get; }
+
+    public string AccessModeLabel => AccessMode == ProjectAccessMode.Shared ? "Shared" : "Private";
+    public string FolderCountLabel => FolderCount == 1 ? "1 folder" : $"{FolderCount} folders";
+
+    /// <summary>Открыть экран проекта (Documents / Chat).</summary>
+    public event Action<ProjectCardViewModel>? OpenRequested;
+    /// <summary>Открыть диалог настроек проекта.</summary>
+    public event Action<ProjectCardViewModel>? SettingsRequested;
+    /// <summary>Запрос на удаление проекта.</summary>
+    public event Action<ProjectCardViewModel>? DeleteRequested;
+
+    public ProjectCardViewModel(ProjectSummaryDto dto)
     {
-        Id = id;
-        Name = name;
-        Description = string.IsNullOrWhiteSpace(description) ? "Без описания" : description;
-        UpdatedAtText = updatedAtText;
+        Id          = dto.Id;
+        Name        = dto.Name;
+        Description = dto.Description ?? string.Empty;
+        AccessMode  = dto.AccessMode;
+        CreatedAt   = dto.CreatedAtUtc;
+        FolderCount = dto.FolderCount;
     }
 
-    public Guid Id { get; }
-    public string Name { get; }
-    public string Description { get; }
-    public string UpdatedAtText { get; }
+    [RelayCommand]
+    private void Open()     => OpenRequested?.Invoke(this);
+
+    [RelayCommand]
+    private void Settings() => SettingsRequested?.Invoke(this);
+
+    [RelayCommand]
+    private void Delete()   => DeleteRequested?.Invoke(this);
 }

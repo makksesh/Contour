@@ -1,212 +1,300 @@
-<!--
-  Экран списка проектов.
-  Master-detail: сетка карточек слева, панель выбранного проекта справа.
-  Диалог создания отображается как overlay поверх контента.
-  Проект: DevAssistant / ContourAI.
--->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:ContourAI.Features.Projects"
-             x:DataType="vm:ProjectsViewModel"
-             mc:Ignorable="d"
-             x:Class="ContourAI.Features.Projects.ProjectsView">
-  <Grid RowDefinitions="Auto,*">
+             x:Class="ContourAI.Features.Projects.ProjectsView"
+             x:DataType="vm:ProjectsViewModel">
 
-    <!-- Заголовок и кнопка создания -->
-    <Grid Grid.Row="0"
-          ColumnDefinitions="*,Auto"
-          Margin="0,0,0,20">
-      <StackPanel Spacing="4">
-        <TextBlock Text="Projects"
-                   FontSize="22"
-                   FontWeight="SemiBold"
-                   Foreground="#F9FAFB" />
-        <TextBlock Text="Manage your knowledge base projects"
-                   FontSize="13"
-                   Foreground="#64748B" />
-      </StackPanel>
-      <Button Grid.Column="1"
-              Content="+ New Project"
-              Command="{Binding OpenCreateDialogCommand}"
-              Background="#0D9488"
-              Foreground="White"
-              Padding="16,10"
-              CornerRadius="8" />
+  <UserControl.Styles>
+    <Style Selector="Button.primary">
+      <Setter Property="Background" Value="#01696f"/>
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="Padding" Value="16 8"/>
+      <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    <Style Selector="Button.danger">
+      <Setter Property="Background" Value="#a12c7b"/>
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="Padding" Value="12 6"/>
+      <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    <Style Selector="Button.ghost">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Foreground" Value="#7a7974"/>
+      <Setter Property="Padding" Value="12 6"/>
+      <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    <Style Selector="TextBox.settings-input">
+      <Setter Property="Background" Value="#1c1b19"/>
+      <Setter Property="Foreground" Value="#cdccca"/>
+      <Setter Property="BorderBrush" Value="#393836"/>
+      <Setter Property="CornerRadius" Value="6"/>
+      <Setter Property="Padding" Value="8 6"/>
+    </Style>
+  </UserControl.Styles>
+
+  <Grid>
+    <!-- ═══ MAIN CONTENT ═══ -->
+    <Grid RowDefinitions="Auto,*" Margin="32 24">
+      <!-- Header -->
+      <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0 0 0 20">
+        <StackPanel Grid.Column="0" Spacing="4">
+          <TextBlock Text="Projects" FontSize="22" FontWeight="SemiBold" Foreground="#cdccca"/>
+          <TextBlock Text="Manage your projects and connected folders" FontSize="13" Foreground="#797876"/>
+        </StackPanel>
+        <Button Grid.Column="1" Classes="primary"
+                Command="{Binding OpenCreateDialogCommand}">
+          + New Project
+        </Button>
+      </Grid>
+
+      <!-- States -->
+      <Grid Grid.Row="1">
+        <!-- Loading -->
+        <StackPanel IsVisible="{Binding IsLoading}" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+          <TextBlock Text="Loading projects..." Foreground="#797876" HorizontalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- Error -->
+        <StackPanel IsVisible="{Binding HasError}" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+          <TextBlock Text="{Binding ErrorMessage}" Foreground="#dd6974" HorizontalAlignment="Center"/>
+          <Button Classes="primary" Command="{Binding LoadCommand}" HorizontalAlignment="Center">Retry</Button>
+        </StackPanel>
+
+        <!-- Empty -->
+        <StackPanel IsVisible="{Binding IsEmpty}" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+          <TextBlock Text="No projects yet" FontSize="16" FontWeight="Medium" Foreground="#cdccca" HorizontalAlignment="Center"/>
+          <TextBlock Text="Create your first project to get started" FontSize="13" Foreground="#797876" HorizontalAlignment="Center"/>
+          <Button Classes="primary" Command="{Binding OpenCreateDialogCommand}" HorizontalAlignment="Center">Create Project</Button>
+        </StackPanel>
+
+        <!-- Project grid -->
+        <ScrollViewer IsVisible="{Binding !IsLoading}">
+          <ItemsControl ItemsSource="{Binding Projects}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Left"/>
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:ProjectCardViewModel">
+                <Border Width="260" Height="160" Margin="0 0 16 16"
+                        Background="#1c1b19" CornerRadius="10"
+                        BorderBrush="#393836" BorderThickness="1">
+                  <Grid RowDefinitions="*,Auto" Margin="16 14">
+                    <!-- Info -->
+                    <StackPanel Grid.Row="0" Spacing="6">
+                      <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold" Foreground="#cdccca"
+                                 TextTrimming="CharacterEllipsis"/>
+                      <TextBlock Text="{Binding Description}" FontSize="12" Foreground="#797876"
+                                 TextTrimming="CharacterEllipsis" MaxLines="2"/>
+                      <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Border Background="#313b3b" CornerRadius="4" Padding="6 2">
+                          <TextBlock Text="{Binding AccessModeLabel}" FontSize="11" Foreground="#4f98a3"/>
+                        </Border>
+                        <Border Background="#22211f" CornerRadius="4" Padding="6 2">
+                          <TextBlock Text="{Binding FolderCountLabel}" FontSize="11" Foreground="#797876"/>
+                        </Border>
+                      </StackPanel>
+                    </StackPanel>
+
+                    <!-- Actions -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
+                      <Button Classes="ghost" FontSize="12"
+                              Command="{Binding SettingsCommand}">⚙</Button>
+                      <Button Classes="danger" FontSize="12"
+                              Command="{Binding DeleteCommand}">✕</Button>
+                      <Button Classes="primary" FontSize="12"
+                              Command="{Binding OpenCommand}">Open →</Button>
+                    </StackPanel>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </Grid>
     </Grid>
 
-    <!-- Основной контент -->
-    <Grid Grid.Row="1">
+    <!-- ═══ CREATE DIALOG OVERLAY ═══ -->
+    <Grid IsVisible="{Binding IsCreateDialogOpen}">
+      <Border Background="#80000000"/>
+      <Border Width="400" MaxHeight="380"
+              Background="#1c1b19" CornerRadius="12"
+              BorderBrush="#393836" BorderThickness="1"
+              HorizontalAlignment="Center" VerticalAlignment="Center"
+              Padding="28 24"
+              DataContext="{Binding CreateDialog}">
+        <StackPanel Spacing="16">
+          <TextBlock Text="New Project" FontSize="18" FontWeight="SemiBold" Foreground="#cdccca"/>
 
-      <!-- Loading state -->
-      <StackPanel IsVisible="{Binding IsLoading}"
-                  HorizontalAlignment="Center"
-                  VerticalAlignment="Center"
-                  Spacing="12">
-        <TextBlock Text="Loading projects..."
-                   Foreground="#64748B"
-                   HorizontalAlignment="Center" />
-      </StackPanel>
+          <StackPanel Spacing="6">
+            <TextBlock Text="Name *" FontSize="12" Foreground="#797876"/>
+            <TextBox Classes="settings-input" Text="{Binding Name}" Watermark="My Project"/>
+          </StackPanel>
 
-      <!-- Error state -->
-      <Border IsVisible="{Binding HasError}"
-              Background="#1E1B1B"
-              BorderBrush="#7F1D1D"
-              BorderThickness="1"
-              CornerRadius="8"
-              Padding="16"
-              VerticalAlignment="Top">
-        <TextBlock Text="{Binding ErrorMessage}"
-                   Foreground="#FCA5A5"
-                   TextWrapping="Wrap" />
+          <StackPanel Spacing="6">
+            <TextBlock Text="Description" FontSize="12" Foreground="#797876"/>
+            <TextBox Classes="settings-input" Text="{Binding Description}" Watermark="Optional description"/>
+          </StackPanel>
+
+          <StackPanel Spacing="6">
+            <TextBlock Text="Access" FontSize="12" Foreground="#797876"/>
+            <ComboBox SelectedIndex="{Binding AccessModeIndex}"
+                      Background="#1c1b19" Foreground="#cdccca"
+                      BorderBrush="#393836" HorizontalAlignment="Stretch">
+              <ComboBoxItem>Private</ComboBoxItem>
+              <ComboBoxItem>Shared</ComboBoxItem>
+            </ComboBox>
+          </StackPanel>
+
+          <TextBlock IsVisible="{Binding HasError}" Text="{Binding ErrorMessage}" Foreground="#dd6974" FontSize="12"/>
+
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Classes="ghost" Command="{Binding CancelCommand}">Cancel</Button>
+            <Button Classes="primary" Command="{Binding ConfirmCommand}"
+                    IsEnabled="{Binding !IsBusy}">
+              <Panel>
+                <TextBlock Text="Create" IsVisible="{Binding !IsBusy}"/>
+                <TextBlock Text="Creating..." IsVisible="{Binding IsBusy}"/>
+              </Panel>
+            </Button>
+          </StackPanel>
+        </StackPanel>
       </Border>
+    </Grid>
 
-      <!-- Empty state -->
-      <StackPanel IsVisible="{Binding IsEmpty}"
-                  HorizontalAlignment="Center"
-                  VerticalAlignment="Center"
-                  Spacing="12">
-        <TextBlock Text="No projects yet"
-                   FontSize="18"
-                   FontWeight="Medium"
-                   Foreground="#94A3B8"
-                   HorizontalAlignment="Center" />
-        <TextBlock Text="Create your first project to get started"
-                   Foreground="#475569"
-                   HorizontalAlignment="Center" />
-        <Button Content="Create Project"
-                Command="{Binding OpenCreateDialogCommand}"
-                HorizontalAlignment="Center"
-                Background="#0D9488"
-                Foreground="White"
-                Padding="20,10"
-                CornerRadius="8" />
-      </StackPanel>
-
-      <!-- Project cards grid -->
-      <ScrollViewer IsVisible="{Binding !IsLoading}">
-        <ItemsControl ItemsSource="{Binding Projects}">
-          <ItemsControl.ItemsPanel>
-            <ItemsPanelTemplate>
-              <WrapPanel Orientation="Horizontal" />
-            </ItemsPanelTemplate>
-          </ItemsControl.ItemsPanel>
-          <ItemsControl.ItemTemplate>
-            <DataTemplate DataType="vm:ProjectCardViewModel">
-              <Border Background="#0F172A"
-                      BorderBrush="#1E293B"
-                      BorderThickness="1"
-                      CornerRadius="10"
-                      Padding="18"
-                      Margin="0,0,16,16"
-                      Width="260"
-                      Cursor="Hand">
-                <Border.Styles>
-                  <Style Selector="Border:pointerover">
-                    <Setter Property="BorderBrush" Value="#0D9488" />
-                  </Style>
-                </Border.Styles>
-                <StackPanel Spacing="8">
-                  <TextBlock Text="{Binding Name}"
-                             FontSize="15"
-                             FontWeight="SemiBold"
-                             Foreground="#F1F5F9"
-                             TextTrimming="CharacterEllipsis" />
-                  <TextBlock Text="{Binding Description}"
-                             FontSize="12"
-                             Foreground="#64748B"
-                             TextWrapping="Wrap"
-                             MaxLines="2" />
-                  <TextBlock Text="{Binding UpdatedAtText}"
-                             FontSize="11"
-                             Foreground="#334155" />
-                </StackPanel>
-              </Border>
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-      </ScrollViewer>
-
-      <!-- Create project dialog overlay -->
-      <Border IsVisible="{Binding IsDialogOpen}"
-              Background="#80020617"
-              HorizontalAlignment="Stretch"
-              VerticalAlignment="Stretch">
-        <Border Background="#0F172A"
-                BorderBrush="#1E293B"
-                BorderThickness="1"
-                CornerRadius="12"
-                Padding="28"
-                Width="420"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                DataContext="{Binding CreateDialog}">
+    <!-- ═══ SETTINGS DIALOG OVERLAY ═══ -->
+    <Grid IsVisible="{Binding IsSettingsDialogOpen}">
+      <Border Background="#80000000"/>
+      <Border Width="480" MaxHeight="560"
+              Background="#1c1b19" CornerRadius="12"
+              BorderBrush="#393836" BorderThickness="1"
+              HorizontalAlignment="Center" VerticalAlignment="Center"
+              Padding="28 24"
+              DataContext="{Binding SettingsDialog}">
+        <ScrollViewer>
           <StackPanel Spacing="16">
-            <TextBlock Text="New Project"
-                       FontSize="18"
-                       FontWeight="SemiBold"
-                       Foreground="#F9FAFB" />
+            <TextBlock Text="Project Settings" FontSize="18" FontWeight="SemiBold" Foreground="#cdccca"/>
 
-            <!-- Name field -->
+            <!-- System Prompt -->
             <StackPanel Spacing="6">
-              <TextBlock Text="Name *"
-                         FontSize="12"
-                         Foreground="#94A3B8" />
-              <TextBox Text="{Binding ProjectName}"
-                       Watermark="Enter project name"
-                       Background="#020617"
-                       Foreground="#F1F5F9"
-                       BorderBrush="#1E293B"
-                       Padding="10,8"
-                       CornerRadius="6" />
+              <TextBlock Text="System Prompt" FontSize="12" Foreground="#797876"/>
+              <TextBox Classes="settings-input" Text="{Binding SystemPrompt}"
+                       AcceptsReturn="True" Height="80"
+                       Watermark="You are a helpful assistant..."/>
             </StackPanel>
 
-            <!-- Description field -->
-            <StackPanel Spacing="6">
-              <TextBlock Text="Description"
-                         FontSize="12"
-                         Foreground="#94A3B8" />
-              <TextBox Text="{Binding Description}"
-                       Watermark="Optional description"
-                       Background="#020617"
-                       Foreground="#F1F5F9"
-                       BorderBrush="#1E293B"
-                       Padding="10,8"
-                       CornerRadius="6"
-                       AcceptsReturn="True"
-                       Height="72" />
-            </StackPanel>
+            <!-- Numeric settings -->
+            <Grid ColumnDefinitions="*,16,*">
+              <StackPanel Grid.Column="0" Spacing="6">
+                <TextBlock Text="Max Tokens" FontSize="12" Foreground="#797876"/>
+                <NumericUpDown Value="{Binding MaxTokens}" Minimum="1" Maximum="32768"
+                               Background="#1c1b19" Foreground="#cdccca" BorderBrush="#393836"/>
+              </StackPanel>
+              <StackPanel Grid.Column="2" Spacing="6">
+                <TextBlock Text="Temperature" FontSize="12" Foreground="#797876"/>
+                <NumericUpDown Value="{Binding Temperature}" Minimum="0" Maximum="2"
+                               Increment="0.1" FormatString="0.0#"
+                               Background="#1c1b19" Foreground="#cdccca" BorderBrush="#393836"/>
+              </StackPanel>
+            </Grid>
 
-            <!-- Error -->
-            <TextBlock IsVisible="{Binding HasError}"
-                       Text="{Binding ErrorMessage}"
-                       Foreground="#FCA5A5"
-                       FontSize="12"
-                       TextWrapping="Wrap" />
+            <Grid ColumnDefinitions="*,16,*">
+              <StackPanel Grid.Column="0" Spacing="6">
+                <TextBlock Text="RAG Top-K" FontSize="12" Foreground="#797876"/>
+                <NumericUpDown Value="{Binding RagTopK}" Minimum="1" Maximum="20"
+                               Background="#1c1b19" Foreground="#cdccca" BorderBrush="#393836"/>
+              </StackPanel>
+              <StackPanel Grid.Column="2" Spacing="6">
+                <TextBlock Text="Context Window" FontSize="12" Foreground="#797876"/>
+                <NumericUpDown Value="{Binding ContextWindowSize}" Minimum="1" Maximum="50"
+                               Background="#1c1b19" Foreground="#cdccca" BorderBrush="#393836"/>
+              </StackPanel>
+            </Grid>
 
-            <!-- Buttons -->
-            <StackPanel Orientation="Horizontal"
-                        HorizontalAlignment="Right"
-                        Spacing="10">
-              <Button Content="Cancel"
-                      Command="{Binding CancelCommand}"
-                      Background="Transparent"
-                      Foreground="#94A3B8"
-                      Padding="14,8"
-                      CornerRadius="6" />
-              <Button Content="Create"
-                      Command="{Binding ConfirmCommand}"
-                      IsEnabled="{Binding CanConfirm}"
-                      Background="#0D9488"
-                      Foreground="White"
-                      Padding="14,8"
-                      CornerRadius="6" />
+            <CheckBox IsChecked="{Binding UseRagContext}" Foreground="#cdccca">Use RAG Context</CheckBox>
+
+            <!-- Folder section -->
+            <Border BorderBrush="#393836" BorderThickness="0 1 0 0" Padding="0 12 0 0">
+              <StackPanel Spacing="10">
+                <TextBlock Text="Folder" FontSize="14" FontWeight="SemiBold" Foreground="#cdccca"/>
+
+                <!-- No folder attached -->
+                <StackPanel IsVisible="{Binding !HasFolderAttached}" Spacing="8">
+                  <TextBlock Text="No folder connected" FontSize="12" Foreground="#797876"/>
+                  <StackPanel Spacing="6">
+                    <TextBox Classes="settings-input" Text="{Binding FolderPath}" Watermark="/path/to/folder"/>
+                    <Grid ColumnDefinitions="*,*,*">
+                      <CheckBox Grid.Column="0" IsChecked="{Binding PermRead}" Foreground="#cdccca" FontSize="12">Read</CheckBox>
+                      <CheckBox Grid.Column="1" IsChecked="{Binding PermEdit}" Foreground="#cdccca" FontSize="12">Edit</CheckBox>
+                      <CheckBox Grid.Column="2" IsChecked="{Binding PermDelete}" Foreground="#cdccca" FontSize="12">Delete</CheckBox>
+                    </Grid>
+                    <Button Classes="primary" FontSize="12" Command="{Binding AttachFolderCommand}">
+                      Attach Folder
+                    </Button>
+                  </StackPanel>
+                </StackPanel>
+
+                <!-- Folder attached -->
+                <StackPanel IsVisible="{Binding HasFolderAttached}" Spacing="8">
+                  <Border Background="#22211f" CornerRadius="6" Padding="10 8">
+                    <TextBlock Text="{Binding FolderPath}" Foreground="#cdccca" FontSize="12"
+                               TextTrimming="CharacterEllipsis"/>
+                  </Border>
+                  <StackPanel Spacing="4">
+                    <TextBlock Text="Permissions" FontSize="12" Foreground="#797876"/>
+                    <Grid ColumnDefinitions="*,*,*">
+                      <CheckBox Grid.Column="0" IsChecked="{Binding PermRead}" Foreground="#cdccca" FontSize="12">Read</CheckBox>
+                      <CheckBox Grid.Column="1" IsChecked="{Binding PermEdit}" Foreground="#cdccca" FontSize="12">Edit</CheckBox>
+                      <CheckBox Grid.Column="2" IsChecked="{Binding PermDelete}" Foreground="#cdccca" FontSize="12">Delete</CheckBox>
+                    </Grid>
+                  </StackPanel>
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Classes="primary" FontSize="12" Command="{Binding SaveFolderPermissionsCommand}">Save Permissions</Button>
+                    <Button Classes="ghost" FontSize="12" Command="{Binding DetachFolderCommand}">Detach</Button>
+                  </StackPanel>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+
+            <TextBlock IsVisible="{Binding HasError}" Text="{Binding ErrorMessage}" Foreground="#dd6974" FontSize="12"/>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+              <Button Classes="ghost" Command="{Binding CancelCommand}">Close</Button>
+              <Button Classes="primary" Command="{Binding SaveSettingsCommand}"
+                      IsEnabled="{Binding !IsBusy}">
+                <Panel>
+                  <TextBlock Text="Save" IsVisible="{Binding !IsBusy}"/>
+                  <TextBlock Text="Saving..." IsVisible="{Binding IsBusy}"/>
+                </Panel>
+              </Button>
             </StackPanel>
           </StackPanel>
-        </Border>
+        </ScrollViewer>
       </Border>
+    </Grid>
 
+    <!-- ═══ DELETE CONFIRM OVERLAY ═══ -->
+    <Grid IsVisible="{Binding IsDeleteConfirmOpen}">
+      <Border Background="#80000000"/>
+      <Border Width="360"
+              Background="#1c1b19" CornerRadius="12"
+              BorderBrush="#393836" BorderThickness="1"
+              HorizontalAlignment="Center" VerticalAlignment="Center"
+              Padding="28 24">
+        <StackPanel Spacing="16">
+          <TextBlock Text="Delete Project" FontSize="18" FontWeight="SemiBold" Foreground="#cdccca"/>
+          <TextBlock TextWrapping="Wrap" Foreground="#797876" FontSize="13">
+            <Run Text="Are you sure you want to delete "/>
+            <Run Text="{Binding DeleteConfirmName}" FontWeight="SemiBold" Foreground="#cdccca"/>
+            <Run Text="? This action cannot be undone."/>
+          </TextBlock>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Classes="ghost" Command="{Binding CancelDeleteCommand}">Cancel</Button>
+            <Button Classes="danger" Command="{Binding ConfirmDeleteCommand}">Delete</Button>
+          </StackPanel>
+        </StackPanel>
+      </Border>
     </Grid>
   </Grid>
 </UserControl>
