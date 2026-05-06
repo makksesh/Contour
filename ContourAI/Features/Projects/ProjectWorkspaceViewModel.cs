@@ -2,7 +2,7 @@
 /// ViewModel рабочего пространства проекта.
 /// Открывается по клику на проект из SidebarView.
 /// Содержит четыре вкладки: Settings, Folder, Documents, Chat.
-/// Загружает ProjectDto по projectId через ProjectsService.
+/// Загружает ProjectDto через ProjectsService.GetProjectByIdAsync.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -81,16 +81,16 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         _cts.Cancel();
         _cts = new CancellationTokenSource();
 
-        ProjectId    = projectId;
-        ProjectName  = projectName;
+        ProjectId        = projectId;
+        ProjectName      = projectName;
         SelectedTabIndex = (int)WorkspaceTab.Settings;
-        HasError     = false;
-        ErrorMessage = string.Empty;
+        HasError         = false;
+        ErrorMessage     = string.Empty;
 
         // Пересоздаём SettingsViewModel для нового проекта
-        var settingsVm = new ProjectSettingsDialogViewModel(projectId, _projectsService);
-        settingsVm.Saved   += () => { /* можно показать уведомление */ };
-        settingsVm.Closed  += () => BackRequested?.Invoke();
+        var settingsVm    = new ProjectSettingsDialogViewModel(projectId, _projectsService);
+        settingsVm.Saved  += () => { /* можно показать уведомление */ };
+        settingsVm.Closed += () => BackRequested?.Invoke();
         SettingsViewModel  = settingsVm;
 
         // Загружаем полный DTO, чтобы заполнить поля настроек
@@ -106,17 +106,18 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         HasError  = false;
         try
         {
-            var dto = await _projectsService.GetProjectAsync(ProjectId, ct);
+            // Используем правильное имя метода из ProjectsService
+            var dto = await _projectsService.GetProjectByIdAsync(ProjectId, ct);
             if (dto == null) return;
 
-            // Передаём данные в SettingsViewModel
-            if (SettingsViewModel != null)
-            {
-                SettingsViewModel.SystemPrompt      = string.Empty; // сервер не возвращает prompt в GET /projects/{id}
-                SettingsViewModel.HasFolderAttached = dto.FolderCount > 0;
-            }
-
             ProjectName = dto.Name;
+
+            // Передаём данные в SettingsViewModel
+            // Примечание: GET /api/projects/{id} возвращает ProjectDto без полей настроек
+            // (SystemPrompt, Temperature и т.д. — отдельный эндпоинт).
+            // Поэтому заполняем только FolderCount.
+            if (SettingsViewModel != null)
+                SettingsViewModel.HasFolderAttached = dto.FolderCount > 0;
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)
