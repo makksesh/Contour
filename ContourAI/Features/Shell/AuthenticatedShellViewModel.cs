@@ -116,6 +116,13 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         };
 
         Workspace.BackRequested += OnWorkspaceBackRequested;
+        Workspace.SettingsViewModel.Deleted += () =>
+        {
+            CurrentContent   = _previousContent ?? Dashboard;
+            _previousContent = null;
+            // Обновить список проектов в Sidebar
+            _ = Projects.LoadProjectsAsync();
+        };
 
         /// <summary>
         /// После успешного DELETE /api/projects/{id}:
@@ -439,7 +446,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         _previousContent = CurrentContent;          // запоминаем для «Назад»
         CurrentContent   = Workspace;
         RaiseActiveFlags();
-        await Workspace.OpenAsync(card.Id, card.Name);
+        await Workspace.OpenAsync(card.Id, card.Name, card.FolderCount);
     }
 
     /// <summary>

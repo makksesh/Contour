@@ -284,22 +284,21 @@
 
         <!-- ── DOCUMENTS TAB ──────────────────────────────────────────────── -->
         <Grid IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsDocuments}}"
-              RowDefinitions="Auto,*,Auto"
-              DataContext="{Binding DocumentsViewModel}">
+              RowDefinitions="Auto,*,Auto">
 
           <!-- Топ-бар: кнопки Upload + Refresh -->
           <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0 0 0 12">
             <Button Classes="primary"
-                    Command="{Binding UploadCommand}"
-                    IsEnabled="{Binding !IsUploading}">
+                    Command="{Binding DocumentsViewModel.UploadCommand}"
+                    IsEnabled="{Binding !DocumentsViewModel.IsUploading}">
               Upload File
             </Button>
             <Button Classes="ghost"
-                    Command="{Binding RefreshCommand}"
-                    IsEnabled="{Binding !IsLoading}">
+                    Command="{Binding DocumentsViewModel.RefreshCommand}"
+                    IsEnabled="{Binding !DocumentsViewModel.IsLoading}">
               ↺ Refresh
             </Button>
-            <TextBlock IsVisible="{Binding IsUploading}"
+            <TextBlock IsVisible="{Binding DocumentsViewModel.IsUploading}"
                        Text="Uploading…" Foreground="#4f98a3" FontSize="12"
                        VerticalAlignment="Center" Margin="4 0"/>
             <TextBlock IsVisible="{Binding IsLoading}"
@@ -311,7 +310,7 @@
           <Panel Grid.Row="1">
 
             <!-- Empty state -->
-            <StackPanel IsVisible="{Binding IsEmpty}"
+            <StackPanel IsVisible="{Binding DocumentsViewModel.IsEmpty}"
                         HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
               <TextBlock Text="No documents yet."
                          Foreground="#334155" FontSize="13" HorizontalAlignment="Center"/>
@@ -320,9 +319,9 @@
             </StackPanel>
 
             <!-- Список документов -->
-            <ScrollViewer IsVisible="{Binding !IsEmpty}"
+            <ScrollViewer IsVisible="{Binding !DocumentsViewModel.IsEmpty}"
                           VerticalScrollBarVisibility="Auto">
-              <ItemsControl ItemsSource="{Binding Documents}">
+              <ItemsControl ItemsSource="{Binding DocumentsViewModel.Documents}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="vm:DocumentItemViewModel">
                     <Border Background="#111827"

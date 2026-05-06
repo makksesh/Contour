@@ -66,6 +66,7 @@ internal static class Program
         services.AddSingleton<ProjectsService>();
         services.AddSingleton<DocumentsService>();
         services.AddSingleton<ChatService>();       
+        services.AddSingleton<IndexingService>(); 
 
         // ViewModels
         services.AddTransient<LoginViewModel>();
@@ -77,7 +78,9 @@ internal static class Program
         services.AddSingleton<ChatViewModel>();     
         services.AddSingleton<AuthenticatedShellViewModel>();
         services.AddSingleton<MainWindowViewModel>();
+        services.AddSingleton<ProjectDocumentsViewModel>();
         services.AddSingleton<ProjectWorkspaceViewModel>();
+        
 
         // Window
         services.AddSingleton<MainWindow>();
