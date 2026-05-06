@@ -52,6 +52,13 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
         _projectId       = projectId;
         _projectsService = projectsService;
     }
+    
+    // public void LoadFrom(ProjectDto project, bool folderAttached)
+    // {
+    //     HasFolderAttached = folderAttached;
+    //     if (!folderAttached)
+    //         FolderPath = null;
+    // }
 
     // ─── Save settings ────────────────────────────────────────────────────────
 

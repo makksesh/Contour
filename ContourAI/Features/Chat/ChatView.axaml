@@ -57,8 +57,8 @@
 
     <!-- ─── Хедер: название активного треда ─────────────────────── -->
     <Border Grid.Row="0"
-            Background="#1c1b19"
-            BorderBrush="#262523"
+            Background="Transparent"
+            BorderBrush="White"
             BorderThickness="0 0 0 1"
             Padding="20 12">
       <TextBlock Text="{Binding SelectedThreadTitle}"
@@ -121,7 +121,7 @@
 
                 <!-- Сообщение пользователя — справа -->
                 <Border IsVisible="{Binding IsUser}"
-                        Background="#313b3b"
+                        Background="Transparent"
                         CornerRadius="10 10 2 10"
                         Padding="12 8"
                         MaxWidth="560"
@@ -134,7 +134,7 @@
 
                 <!-- Ответ ассистента — слева (Markdown) -->
                 <Border IsVisible="{Binding IsAssistant}"
-                        Background="#1c1b19"
+                        Background="Transparent"
                         CornerRadius="10 10 10 2"
                         BorderBrush="#393836"
                         BorderThickness="1"
@@ -178,8 +178,8 @@
 
     <!-- ─── Панель ввода ──────────────────────────────────────────── -->
     <Border Grid.Row="2"
-            Background="#1c1b19"
-            BorderBrush="#262523"
+            Background="Transparent"
+            BorderBrush="White"
             BorderThickness="0 1 0 0"
             Padding="16 12">
       <Grid ColumnDefinitions="*,Auto,Auto">

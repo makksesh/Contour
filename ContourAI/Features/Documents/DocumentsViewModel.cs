@@ -86,7 +86,7 @@ public sealed partial class DocumentsViewModel : ObservableObject
 
         try
         {
-            var list = await _documentsService.GetProjectDocumentsAsync(projectId);
+            var list = await _documentsService.GetProjectDocumentsAsync(projectId.Value);
             if (list == null) return;
 
             foreach (var dto in list)
@@ -172,7 +172,7 @@ public sealed partial class DocumentsViewModel : ObservableObject
         HasError     = false;
         try
         {
-            var dto = await _documentsService.UploadDocumentAsync(projectId, localPath);
+            var dto = await _documentsService.UploadDocumentAsync(projectId.Value, localPath);
             if (dto == null)
             {
                 ErrorMessage = "Upload failed. Please try again.";

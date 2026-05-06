@@ -10,7 +10,7 @@ using ContourAI.Entities.Chat;
 
 namespace ContourAI.Features.Chat;
 
-public sealed partial class ChatMessageViewModel : ObservableObject
+public partial class ChatMessageViewModel : ObservableObject
 {
     /// <summary>Роль автора: User / Assistant / System.</summary>
     public MessageRole Role { get; }

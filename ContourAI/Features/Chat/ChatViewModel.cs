@@ -10,6 +10,7 @@
 /// </summary>
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
@@ -381,4 +382,6 @@ public sealed partial class ChatViewModel : ObservableObject
         else
             Threads.Add(item);
     }
+    
+
 }

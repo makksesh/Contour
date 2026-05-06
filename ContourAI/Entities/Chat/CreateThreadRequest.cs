@@ -1,3 +1,5 @@
+using System;
+
 namespace ContourAI.Entities.Chat;
 
 /// <summary>POST /api/chat/threads — создание треда проекта.</summary>
