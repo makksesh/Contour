@@ -1,52 +1,53 @@
 /// <summary>
-/// Конвертеры для проверки активной вкладки в ProjectWorkspaceView.
-/// Используются в XAML через Classes.active и IsVisible.
+/// Конвертеры для вкладок ProjectWorkspaceView.
+/// IsSettings, IsFolder, IsDocuments, IsChat — преобразуют int в bool.
+/// IsNotNull   — true если значение не null.
+/// IsTaskFailed — true если IndexingTaskStatus == Failed.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
 using System;
 using System.Globalization;
 using Avalonia.Data.Converters;
+using ContourAI.Entities.Indexing;
 
 namespace ContourAI.Features.Projects;
 
-/// <summary>
-/// Синглтон-конвертер для каждой вкладки: int -> bool.
-/// </summary>
-public sealed class WorkspaceTabIndexConverter : IValueConverter
+/// <summary>Проверяет int ≠ 0 (Settings).</summary>
+public sealed class IsTabConverter : IValueConverter
 {
-    private readonly int _tabIndex;
-
-    public WorkspaceTabIndexConverter(int tabIndex) => _tabIndex = tabIndex;
-
-    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => value is int idx && idx == _tabIndex;
-
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    private readonly int _tab;
+    public IsTabConverter(int tab) => _tab = tab;
+    public object Convert(object? v, Type t, object? p, CultureInfo c)
+        => v is int i && i == _tab;
+    public object ConvertBack(object? v, Type t, object? p, CultureInfo c)
         => throw new NotSupportedException();
 }
 
-/// <summary>
-/// Статические экземпляры конвертеров, подключаемых в XAML через x:Static.
-/// </summary>
-public static class WorkspaceTabConverter
-{
-    public static readonly IValueConverter IsSettings  = new WorkspaceTabIndexConverter((int)WorkspaceTab.Settings);
-    public static readonly IValueConverter IsFolder    = new WorkspaceTabIndexConverter((int)WorkspaceTab.Folder);
-    public static readonly IValueConverter IsDocuments = new WorkspaceTabIndexConverter((int)WorkspaceTab.Documents);
-    public static readonly IValueConverter IsChat      = new WorkspaceTabIndexConverter((int)WorkspaceTab.Chat);
-}
-
-/// <summary>
-/// Конвертер «значение != null → true» для IsVisible на вложенном DataContext.
-/// </summary>
+/// <summary>true если значение != null.</summary>
 public sealed class NotNullConverter : IValueConverter
 {
-    public static readonly NotNullConverter Instance = new();
-
-    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => value is not null;
-
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object Convert(object? v, Type t, object? p, CultureInfo c) => v is not null;
+    public object ConvertBack(object? v, Type t, object? p, CultureInfo c)
         => throw new NotSupportedException();
+}
+
+/// <summary>true если IndexingTaskStatus? == Failed.</summary>
+public sealed class TaskFailedConverter : IValueConverter
+{
+    public object Convert(object? v, Type t, object? p, CultureInfo c)
+        => v is IndexingTaskStatus s && s == IndexingTaskStatus.Failed;
+    public object ConvertBack(object? v, Type t, object? p, CultureInfo c)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Статические синглтоны — используются в AXAML через {x:Static}.</summary>
+public static class WorkspaceTabConverter
+{
+    public static readonly IsTabConverter IsSettings  = new((int)WorkspaceTab.Settings);
+    public static readonly IsTabConverter IsFolder    = new((int)WorkspaceTab.Folder);
+    public static readonly IsTabConverter IsDocuments = new((int)WorkspaceTab.Documents);
+    public static readonly IsTabConverter IsChat      = new((int)WorkspaceTab.Chat);
+    public static readonly NotNullConverter  IsNotNull   = new();
+    public static readonly TaskFailedConverter IsTaskFailed = new();
 }
