@@ -106,7 +106,7 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         HasError  = false;
         try
         {
-            var dto = await _projectsService.GetProjectAsync(ProjectId, ct);
+            var dto = await _projectsService.GetProjectByIdAsync(ProjectId, ct);
             if (dto == null) return;
 
             // Передаём данные в SettingsViewModel

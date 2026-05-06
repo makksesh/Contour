@@ -65,7 +65,7 @@ internal static class Program
         services.AddSingleton<DashboardService>();
         services.AddSingleton<ProjectsService>();
         services.AddSingleton<DocumentsService>();
-        services.AddSingleton<ChatService>();       // Фаза 5
+        services.AddSingleton<ChatService>();       
 
         // ViewModels
         services.AddTransient<LoginViewModel>();
@@ -74,9 +74,10 @@ internal static class Program
         services.AddSingleton<CreateProjectDialogViewModel>();
         services.AddSingleton<ProjectsViewModel>();
         services.AddSingleton<DocumentsViewModel>();
-        services.AddSingleton<ChatViewModel>();     // Фаза 5
+        services.AddSingleton<ChatViewModel>();     
         services.AddSingleton<AuthenticatedShellViewModel>();
         services.AddSingleton<MainWindowViewModel>();
+        services.AddSingleton<ProjectWorkspaceViewModel>();
 
         // Window
         services.AddSingleton<MainWindow>();

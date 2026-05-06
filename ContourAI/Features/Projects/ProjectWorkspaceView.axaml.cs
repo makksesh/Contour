@@ -1,6 +1,5 @@
-// ProjectWorkspaceView code-behind.
-// Проект: DevAssistant / ContourAI.
 using Avalonia.Controls;
+using Avalonia.Markup.Xaml;
 
 namespace ContourAI.Features.Projects;
 
@@ -8,6 +7,6 @@ public partial class ProjectWorkspaceView : UserControl
 {
     public ProjectWorkspaceView()
     {
-        InitializeComponent();
+        AvaloniaXamlLoader.Load(this);
     }
 }

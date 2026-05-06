@@ -23,6 +23,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -36,6 +37,7 @@ using ContourAI.Features.Documents;
 using ContourAI.Features.Projects;
 using ContourAI.Shared.Api;
 using ContourAI.Shared.State;
+using ContourAI.Features.Projects;
 
 namespace ContourAI.Features.Shell;
 
@@ -48,6 +50,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
     private readonly ChatService             _chatService;
     private readonly ProjectsService         _projectsService;
     private object?                          _currentContent;
+    private object? _previousContent;
 
     public AuthenticatedShellViewModel(
         ConnectionSettingsStore connectionSettingsStore,
@@ -59,7 +62,8 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         DashboardViewModel      dashboardViewModel,
         ProjectsViewModel       projectsViewModel,
         ChatViewModel           chatViewModel,
-        DocumentsViewModel      documentsViewModel)
+        DocumentsViewModel      documentsViewModel,
+        ProjectWorkspaceViewModel  projectWorkspaceViewModel)
     {
         _connectionSettingsStore = connectionSettingsStore;
         _sessionStore            = sessionStore;
@@ -72,6 +76,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         Projects  = projectsViewModel;
         Chat      = chatViewModel;
         Documents = documentsViewModel;
+        Workspace = projectWorkspaceViewModel;
 
         LogoutCommand        = new RelayCommand(() => _ = LogoutAsync());
         ShowDashboardCommand = new RelayCommand(() => ShowSection(Dashboard));
@@ -109,6 +114,8 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
             if (args.PropertyName == nameof(AuthSessionStore.CurrentUsername))
                 RaisePropertyChanged(nameof(Username));
         };
+        
+        Workspace.BackRequested += OnWorkspaceBackRequested;
 
         _currentContent = Dashboard;
     }
@@ -120,7 +127,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
     public ProjectsViewModel  Projects  { get; }
     public ChatViewModel      Chat      { get; }
     public DocumentsViewModel Documents { get; }
-
+    public ProjectWorkspaceViewModel Workspace { get; }
     // ── Sidebar коллекции ─────────────────────────────────────────────────────
 
     /// <summary>Все глобальные чаты текущего пользователя (с прокруткой).</summary>
@@ -348,7 +355,11 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
     // ── Обработчик кнопки Open ────────────────────────────────────────────────
 
     private void OnProjectOpened(Guid projectId)
-        => _ = ShowDocumentsAsync();
+    {
+        var card = Projects.Projects.FirstOrDefault(c => c.Id == projectId);
+        if (card == null) return;
+        _ = OpenProjectFromSidebarAsync(card);
+    }
 
     // ── Навигация ─────────────────────────────────────────────────────────────
 
@@ -405,11 +416,30 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         await Chat.OpenThreadByIdAsync(thread.Id);
     }
 
+    /// <summary>
+    /// Открывает ProjectWorkspaceView по клику на проект из Sidebar.
+    /// Сохраняет предыдущий экран для кнопки «Назад».
+    /// GET /api/projects/{id} загружается внутри Workspace.OpenAsync.
+    /// </summary>
     private async Task OpenProjectFromSidebarAsync(ProjectCardViewModel? card)
     {
         if (card == null) return;
         _projectContextStore.Select(card.Id, card.Name);
-        await ShowDocumentsAsync();
+        _previousContent = CurrentContent;          // запоминаем для «Назад»
+        CurrentContent   = Workspace;
+        RaiseActiveFlags();
+        await Workspace.OpenAsync(card.Id, card.Name);
+    }
+    
+    /// <summary>
+    /// Возвращает пользователя на экран, с которого он открыл проект.
+    /// Если предыдущего экрана нет — Dashboard.
+    /// </summary>
+    private void OnWorkspaceBackRequested()
+    {
+        CurrentContent   = _previousContent ?? Dashboard;
+        _previousContent = null;
+        RaiseActiveFlags();
     }
 
     private void RaiseActiveFlags()
