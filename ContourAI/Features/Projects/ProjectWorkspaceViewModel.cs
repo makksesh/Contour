@@ -6,6 +6,9 @@
 /// Documents: при переключении на вкладку Documents
 /// загружается список документов (один раз за жизнь проекта,
 /// Refresh — вручную по кнопке).
+///
+/// ProjectDeleted — пробрасывает Deleted из ProjectSettingsDialogViewModel
+/// наружу, чтобы Shell мог подписаться без обращения к null SettingsViewModel.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -33,9 +36,6 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
     private readonly ProjectsService  _projectsService;
     private CancellationTokenSource   _cts = new();
     private bool                      _documentsLoaded;
-    
-    /// <summary>Проект был удалён из вкладки Settings.</summary>
-    public event Action? ProjectDeleted;
 
     // ─── Идентификация ─────────────────────────────────────────────────────────────
 
@@ -59,23 +59,31 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
 
     [ObservableProperty] private ProjectSettingsDialogViewModel? _settingsViewModel;
 
-    /// <summary>ViewModel вкладки Documents. Создаётся один раз, живёт всё время Workspace.</summary>
+    /// <summary>ViewModel вкладки Documents.</summary>
     public ProjectDocumentsViewModel DocumentsViewModel { get; }
 
-    // ─── Событие «назад» ────────────────────────────────────────────────────────
+    // ─── События ────────────────────────────────────────────────────────────
 
+    /// <summary>Кнопка «Назад».</summary>
     public event Action? BackRequested;
 
+    /// <summary>
+    /// Проект удалён. Пробрасывает Deleted из ProjectSettingsDialogViewModel.
+    /// Shell подписывается на это событие в конструкторе (не null).
+    /// </summary>
+    public event Action? ProjectDeleted;
+
     public ProjectWorkspaceViewModel(
-        ProjectsService         projectsService,
+        ProjectsService           projectsService,
         ProjectDocumentsViewModel documentsViewModel)
     {
-        _projectsService  = projectsService;
+        _projectsService   = projectsService;
         DocumentsViewModel = documentsViewModel;
     }
 
     // ─── Инициализация ──────────────────────────────────────────────────────────────
 
+    /// <summary>Вызывается из Shell при клике на проект в Sidebar.</summary>
     public async Task OpenAsync(Guid projectId, string projectName, int folderCount = 0)
     {
         _cts.Cancel();
@@ -88,12 +96,17 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         HasError         = false;
         ErrorMessage     = string.Empty;
 
-        var settingsVm           = new ProjectSettingsDialogViewModel(projectId, _projectsService);
-        settingsVm.Saved        += () => { };
-        settingsVm.Closed       += () => BackRequested?.Invoke();
-        settingsVm.Deleted += () => ProjectDeleted?.Invoke();
+        var settingsVm            = new ProjectSettingsDialogViewModel(projectId, _projectsService);
+        settingsVm.Closed        += () => BackRequested?.Invoke();
         settingsVm.HasFolderAttached = folderCount > 0;
-        SettingsViewModel        = settingsVm;
+
+        /// <summary>
+        /// Пробрасываем Deleted из settingsVm через ProjectDeleted,
+        /// чтобы Shell не обращался к SettingsViewModel в конструкторе (null).
+        /// </summary>
+        settingsVm.Deleted += () => ProjectDeleted?.Invoke();
+
+        SettingsViewModel = settingsVm;
 
         await LoadSettingsAsync(_cts.Token);
     }
