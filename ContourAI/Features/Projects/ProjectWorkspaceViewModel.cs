@@ -2,7 +2,8 @@
 /// ViewModel рабочего пространства проекта.
 /// Открывается по клику на проект из SidebarView.
 /// Содержит четыре вкладки: Settings, Folder, Documents, Chat.
-/// Загружает ProjectDto через ProjectsService.GetProjectByIdAsync.
+/// Загружает ProjectSettingsDto через GET /api/projects/{id}/settings
+/// и ProjectDto через GET /api/projects/{id} параллельно.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -34,7 +35,6 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
 
     // ─── Идентификация ───────────────────────────────────────────────────────
 
-    /// <summary>Id проекта, полученный от Sidebar при открытии.</summary>
     public Guid ProjectId { get; private set; }
 
     // ─── Заголовок ───────────────────────────────────────────────────────────
@@ -73,11 +73,11 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
 
     /// <summary>
     /// Открывает проект по id и имени (известны из Sidebar без доп. запроса).
-    /// Сразу показывает вкладку Settings и асинхронно подгружает полный ProjectDto.
+    /// Параллельно загружает GET /api/projects/{id}
+    /// и GET /api/projects/{id}/settings, затем применяет значения.
     /// </summary>
     public async Task OpenAsync(Guid projectId, string projectName)
     {
-        // Отменяем предыдущую загрузку, если была
         _cts.Cancel();
         _cts = new CancellationTokenSource();
 
@@ -87,17 +87,16 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         HasError         = false;
         ErrorMessage     = string.Empty;
 
-        // Пересоздаём SettingsViewModel для нового проекта
+        // Пересоздаём SettingsViewModel с дефолтами
         var settingsVm    = new ProjectSettingsDialogViewModel(projectId, _projectsService);
-        settingsVm.Saved  += () => { /* можно показать уведомление */ };
+        settingsVm.Saved  += () => { };
         settingsVm.Closed += () => BackRequested?.Invoke();
         SettingsViewModel  = settingsVm;
 
-        // Загружаем полный DTO, чтобы заполнить поля настроек
         await LoadProjectAsync(_cts.Token);
     }
 
-    // ─── Загрузка ProjectDto ─────────────────────────────────────────────────
+    // ─── Загрузка ────────────────────────────────────────────────────────────
 
     [RelayCommand]
     private async Task LoadProjectAsync(CancellationToken ct = default)
@@ -106,18 +105,24 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         HasError  = false;
         try
         {
-            // Используем правильное имя метода из ProjectsService
-            var dto = await _projectsService.GetProjectByIdAsync(ProjectId, ct);
-            if (dto == null) return;
+            // Параллельный запрос: GET /projects/{id} + GET /projects/{id}/settings
+            var projectTask  = _projectsService.GetProjectByIdAsync(ProjectId, ct);
+            var settingsTask = _projectsService.GetProjectSettingsAsync(ProjectId, ct);
+            await Task.WhenAll(projectTask, settingsTask);
 
-            ProjectName = dto.Name;
+            var dto      = projectTask.Result;
+            var settings = settingsTask.Result;
 
-            // Передаём данные в SettingsViewModel
-            // Примечание: GET /api/projects/{id} возвращает ProjectDto без полей настроек
-            // (SystemPrompt, Temperature и т.д. — отдельный эндпоинт).
-            // Поэтому заполняем только FolderCount.
-            if (SettingsViewModel != null)
-                SettingsViewModel.HasFolderAttached = dto.FolderCount > 0;
+            if (dto != null)
+            {
+                ProjectName = dto.Name;
+                if (SettingsViewModel != null)
+                    SettingsViewModel.HasFolderAttached = dto.FolderCount > 0;
+            }
+
+            // Заполняем поля настроек реальными значениями с сервера
+            if (settings != null && SettingsViewModel != null)
+                ApplySettings(settings, SettingsViewModel);
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)
@@ -126,6 +131,19 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
             ErrorMessage = ex.Message;
         }
         finally { IsLoading = false; }
+    }
+
+    /// <summary>
+    /// Переносит значения из ProjectSettingsDto в поля SettingsViewModel.
+    /// </summary>
+    private static void ApplySettings(ProjectSettingsDto dto, ProjectSettingsDialogViewModel vm)
+    {
+        vm.SystemPrompt      = dto.SystemPrompt;
+        vm.MaxTokens         = dto.MaxTokens;
+        vm.Temperature       = dto.Temperature;
+        vm.RagTopK           = dto.RagTopK;
+        vm.UseRagContext     = dto.UseRagContext;
+        vm.ContextWindowSize = dto.ContextWindowSize;
     }
 
     // ─── Навигация по вкладкам ───────────────────────────────────────────────

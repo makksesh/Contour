@@ -1,8 +1,8 @@
 <!--
   ProjectWorkspaceView — workspace проекта.
-  Открывается при клике на проект из SidebarView.
-  Вкладки: Settings (настройки), Folder (подключённая папка),
-           Documents (реализация позже), Chat (реализация позже).
+  Header: кнопка Back + название проекта + вкладки — всё в одну строку.
+  Вкладки: Settings, Folder, Documents, Chat.
+  Ошибка загрузки отображается встроенным баннером внутри вкладки.
   Проект: DevAssistant / ContourAI.
 -->
 <UserControl xmlns="https://github.com/avaloniaui"
@@ -13,365 +13,334 @@
 
   <UserControl.Styles>
 
-    <!-- Кнопка вкладки -->
-    <Style Selector="Button.tab-btn">
-      <Setter Property="Background"  Value="Transparent"/>
-      <Setter Property="Foreground"  Value="#64748B"/>
-      <Setter Property="Padding"     Value="16 8"/>
-      <Setter Property="CornerRadius" Value="6 6 0 0"/>
-      <Setter Property="FontSize"    Value="13"/>
-      <Setter Property="FontWeight"  Value="Medium"/>
-      <Setter Property="Cursor"      Value="Hand"/>
-      <Setter Property="BorderThickness" Value="0"/>
-    </Style>
-    <Style Selector="Button.tab-btn:pointerover /template/ ContentPresenter">
-      <Setter Property="Background" Value="#1E293B"/>
-      <Setter Property="TextBlock.Foreground" Value="#94A3B8"/>
-    </Style>
-    <!-- Активная вкладка -->
-    <Style Selector="Button.tab-btn.active /template/ ContentPresenter">
-      <Setter Property="Background" Value="#0F172A"/>
-      <Setter Property="TextBlock.Foreground" Value="#5EEAD4"/>
-    </Style>
-
-    <!-- Кнопка «Назад» -->
+    <!-- Кнопка Back -->
     <Style Selector="Button.back-btn">
       <Setter Property="Background"  Value="Transparent"/>
       <Setter Property="Foreground"  Value="#64748B"/>
-      <Setter Property="Padding"     Value="8 6"/>
-      <Setter Property="CornerRadius" Value="6"/>
-      <Setter Property="FontSize"    Value="13"/>
+      <Setter Property="Padding"     Value="6 4"/>
+      <Setter Property="CornerRadius" Value="5"/>
+      <Setter Property="FontSize"    Value="12"/>
       <Setter Property="Cursor"      Value="Hand"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
     <Style Selector="Button.back-btn:pointerover /template/ ContentPresenter">
       <Setter Property="Background" Value="#1E293B"/>
       <Setter Property="TextBlock.Foreground" Value="#94A3B8"/>
     </Style>
 
-    <!-- Общая кнопка primary -->
+    <!-- Кнопка вкладки -->
+    <Style Selector="Button.tab-btn">
+      <Setter Property="Background"  Value="Transparent"/>
+      <Setter Property="Foreground"  Value="#64748B"/>
+      <Setter Property="Padding"     Value="12 6"/>
+      <Setter Property="CornerRadius" Value="6 6 0 0"/>
+      <Setter Property="FontSize"    Value="12"/>
+      <Setter Property="FontWeight"  Value="Medium"/>
+      <Setter Property="Cursor"      Value="Hand"/>
+      <Setter Property="VerticalAlignment" Value="Bottom"/>
+    </Style>
+    <Style Selector="Button.tab-btn:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#1E293B"/>
+      <Setter Property="TextBlock.Foreground" Value="#94A3B8"/>
+    </Style>
+    <Style Selector="Button.tab-btn.active /template/ ContentPresenter">
+      <Setter Property="Background" Value="#0F172A"/>
+      <Setter Property="TextBlock.Foreground" Value="#5EEAD4"/>
+    </Style>
+
+    <!-- Кнопка primary -->
     <Style Selector="Button.primary">
       <Setter Property="Background"  Value="#01696f"/>
       <Setter Property="Foreground"  Value="White"/>
-      <Setter Property="Padding"     Value="16 8"/>
+      <Setter Property="Padding"     Value="14 6"/>
       <Setter Property="CornerRadius" Value="6"/>
-      <Setter Property="FontSize"    Value="13"/>
+      <Setter Property="FontSize"    Value="12"/>
       <Setter Property="Cursor"      Value="Hand"/>
     </Style>
     <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
       <Setter Property="Background" Value="#0c4e54"/>
     </Style>
+    <Style Selector="Button.primary:disabled /template/ ContentPresenter">
+      <Setter Property="Background" Value="#1c3537"/>
+      <Setter Property="TextBlock.Foreground" Value="#4a7a7e"/>
+    </Style>
 
     <!-- Кнопка danger -->
     <Style Selector="Button.danger">
-      <Setter Property="Background"  Value="#a12c7b"/>
+      <Setter Property="Background"  Value="#7f1d4b"/>
       <Setter Property="Foreground"  Value="White"/>
       <Setter Property="Padding"     Value="12 6"/>
       <Setter Property="CornerRadius" Value="6"/>
-      <Setter Property="FontSize"    Value="13"/>
+      <Setter Property="FontSize"    Value="12"/>
       <Setter Property="Cursor"      Value="Hand"/>
     </Style>
+    <Style Selector="Button.danger:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#9d1f5e"/>
+    </Style>
 
-    <!-- Поле ввода настроек -->
+    <!-- Поле ввода -->
     <Style Selector="TextBox.settings-input">
       <Setter Property="Background"   Value="#1c1b19"/>
       <Setter Property="Foreground"   Value="#cdccca"/>
-      <Setter Property="BorderBrush"  Value="#393836"/>
-      <Setter Property="CornerRadius" Value="6"/>
-      <Setter Property="Padding"      Value="8 6"/>
+      <Setter Property="BorderBrush"  Value="#2d2c2a"/>
+      <Setter Property="CornerRadius" Value="5"/>
+      <Setter Property="Padding"      Value="8 5"/>
+      <Setter Property="FontSize"     Value="12"/>
     </Style>
 
     <!-- Метка поля -->
     <Style Selector="TextBlock.field-label">
-      <Setter Property="FontSize"   Value="11"/>
-      <Setter Property="Foreground" Value="#64748B"/>
-      <Setter Property="Margin"     Value="0 0 0 4"/>
+      <Setter Property="FontSize"   Value="10"/>
+      <Setter Property="Foreground" Value="#475569"/>
+      <Setter Property="Margin"     Value="0 0 0 3"/>
     </Style>
 
   </UserControl.Styles>
 
-  <!-- Корневая сетка -->
-  <Grid RowDefinitions="Auto,Auto,*">
+  <Grid RowDefinitions="Auto,*">
 
-    <!-- ═══ ЗАГОЛОВОК СТРАНИЦЫ ═══ -->
-    <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="24 20 24 0">
+    <!-- ═══ HEADER: Back | Название | │ Вкладки ═══ -->
+    <Border Grid.Row="0"
+            BorderBrush="#1E293B" BorderThickness="0 0 0 1"
+            Padding="12 0">
+      <StackPanel Orientation="Horizontal" Spacing="4" Height="40">
 
-      <!-- Кнопка «Назад» -->
-      <Button Grid.Column="0"
-              Classes="back-btn"
-              Command="{Binding GoBackCommand}"
-              ToolTip.Tip="Back to projects"
-              Margin="0 0 12 0">
-        ← Back
-      </Button>
+        <!-- Back -->
+        <Button Classes="back-btn"
+                Command="{Binding GoBackCommand}">
+          ← Back
+        </Button>
 
-      <!-- Название проекта -->
-      <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+        <!-- Разделитель -->
+        <Border Width="1" Background="#1E293B" Margin="4 8"/>
+
+        <!-- Название проекта -->
         <TextBlock Text="{Binding ProjectName}"
-                   FontSize="20" FontWeight="SemiBold" Foreground="#E2E8F0"/>
-        <TextBlock Text="Project workspace"
-                   FontSize="12" Foreground="#475569"/>
+                   FontSize="13" FontWeight="SemiBold" Foreground="#CBD5E1"
+                   VerticalAlignment="Center" Margin="4 0"/>
+
+        <!-- Разделитель -->
+        <Border Width="1" Background="#1E293B" Margin="4 8"/>
+
+        <!-- Вкладки -->
+        <Button Classes="tab-btn"
+                Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsSettings}}"
+                Command="{Binding SelectTabCommand}"
+                CommandParameter="{x:Static vm:WorkspaceTab.Settings}">
+          Settings
+        </Button>
+        <Button Classes="tab-btn"
+                Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsFolder}}"
+                Command="{Binding SelectTabCommand}"
+                CommandParameter="{x:Static vm:WorkspaceTab.Folder}">
+          Folder
+        </Button>
+        <Button Classes="tab-btn"
+                Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsDocuments}}"
+                Command="{Binding SelectTabCommand}"
+                CommandParameter="{x:Static vm:WorkspaceTab.Documents}">
+          Documents
+        </Button>
+        <Button Classes="tab-btn"
+                Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsChat}}"
+                Command="{Binding SelectTabCommand}"
+                CommandParameter="{x:Static vm:WorkspaceTab.Chat}">
+          Chat
+        </Button>
+
+        <!-- Индикатор загрузки -->
+        <TextBlock IsVisible="{Binding IsLoading}"
+                   Text="…" Foreground="#475569" FontSize="12"
+                   VerticalAlignment="Center" Margin="8 0 0 0"/>
+
       </StackPanel>
-    </Grid>
+    </Border>
 
-    <!-- ═══ ВКЛАДКИ ═══ -->
-    <StackPanel Grid.Row="1"
-                Orientation="Horizontal"
-                Margin="24 12 24 0"
-                Spacing="4">
-
-      <!-- Settings -->
-      <Button Classes="tab-btn"
-              Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsSettings}}"
-              Command="{Binding SelectTabCommand}"
-              CommandParameter="{x:Static vm:WorkspaceTab.Settings}">
-        ⚙ Settings
-      </Button>
-
-      <!-- Folder -->
-      <Button Classes="tab-btn"
-              Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsFolder}}"
-              Command="{Binding SelectTabCommand}"
-              CommandParameter="{x:Static vm:WorkspaceTab.Folder}">
-        📁 Folder
-      </Button>
-
-      <!-- Documents -->
-      <Button Classes="tab-btn"
-              Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsDocuments}}"
-              Command="{Binding SelectTabCommand}"
-              CommandParameter="{x:Static vm:WorkspaceTab.Documents}">
-        📄 Documents
-      </Button>
-
-      <!-- Chat -->
-      <Button Classes="tab-btn"
-              Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsChat}}"
-              Command="{Binding SelectTabCommand}"
-              CommandParameter="{x:Static vm:WorkspaceTab.Chat}">
-        💬 Chat
-      </Button>
-    </StackPanel>
-
-    <!-- ═══ КОНТЕНТ ВКЛАДОК ═══ -->
-    <Border Grid.Row="2"
-            Margin="24 8 24 24"
-            Background="#0F172A"
-            CornerRadius="0 8 8 8"
-            Padding="24">
-
-      <!-- Loading overlay -->
+    <!-- ═══ КОНТEНТ ВКЛАДОК ═══ -->
+    <Border Grid.Row="1" Background="#0B1120" Padding="20 14">
       <Panel>
-        <StackPanel IsVisible="{Binding IsLoading}"
-                    HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-          <TextBlock Text="Loading project…" Foreground="#64748B" HorizontalAlignment="Center"/>
-        </StackPanel>
 
-        <!-- Error overlay -->
-        <StackPanel IsVisible="{Binding HasError}"
-                    HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-          <TextBlock Text="{Binding ErrorMessage}" Foreground="#dd6974" HorizontalAlignment="Center"/>
-          <Button Classes="primary" Command="{Binding LoadProjectCommand}" HorizontalAlignment="Center">Retry</Button>
-        </StackPanel>
+        <!-- Баннер ошибки загрузки (IsLoading или HasError) -->
+        <Border IsVisible="{Binding HasError}"
+                Background="#1a0a0d" BorderBrush="#5c1c2e" BorderThickness="1"
+                CornerRadius="6" Padding="12 8" Margin="0 0 0 12"
+                VerticalAlignment="Top">
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBlock Grid.Column="0"
+                       Text="{Binding ErrorMessage}"
+                       Foreground="#f87171" FontSize="12"
+                       TextWrapping="Wrap"/>
+            <Button Grid.Column="1"
+                    Classes="primary"
+                    Command="{Binding LoadProjectCommand}"
+                    Margin="8 0 0 0">
+              Retry
+            </Button>
+          </Grid>
+        </Border>
 
-        <!-- Содержимое вкладок (переключается через IsVisible) -->
-        <Grid IsVisible="{Binding !IsLoading}">
+        <!-- ── SETTINGS TAB ───────────────────────────────────────────── -->
+        <ScrollViewer IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsSettings}}"
+                      VerticalScrollBarVisibility="Auto">
+          <StackPanel Spacing="14" MaxWidth="580"
+                      DataContext="{Binding SettingsViewModel}">
 
-          <!-- ── SETTINGS TAB ──────────────────────────────────────────────── -->
-          <ScrollViewer IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsSettings}}"
-                        VerticalScrollBarVisibility="Auto">
-            <StackPanel Spacing="20" MaxWidth="640">
+            <!-- Ошибка сохранения -->
+            <Border IsVisible="{Binding HasError}"
+                    Background="#1a0a0d" BorderBrush="#5c1c2e" BorderThickness="1"
+                    CornerRadius="6" Padding="10 7">
+              <TextBlock Text="{Binding ErrorMessage}"
+                         Foreground="#f87171" FontSize="12" TextWrapping="Wrap"/>
+            </Border>
 
-              <TextBlock Text="Project Settings"
-                         FontSize="16" FontWeight="SemiBold" Foreground="#E2E8F0"/>
-
-              <!-- Settings form (привязан к SettingsViewModel) -->
-              <StackPanel DataContext="{Binding SettingsViewModel}" Spacing="16"
-                          IsVisible="{Binding $parent[StackPanel].DataContext, Converter={x:Static vm:NotNullConverter.Instance}}">
-
-                <!-- System Prompt -->
-                <StackPanel Spacing="4">
-                  <TextBlock Classes="field-label" Text="System Prompt"/>
-                  <TextBox Classes="settings-input"
-                           Text="{Binding SystemPrompt}"
-                           AcceptsReturn="True"
-                           Height="100"
-                           TextWrapping="Wrap"
-                           Watermark="Enter system prompt…"/>
-                </StackPanel>
-
-                <!-- Max Tokens -->
-                <StackPanel Spacing="4">
-                  <TextBlock Classes="field-label" Text="Max Tokens (1–32768)"/>
-                  <NumericUpDown Classes="settings-input"
-                                 Value="{Binding MaxTokens}"
-                                 Minimum="1" Maximum="32768"
-                                 Increment="256"
-                                 FormatString="0"
-                                 Background="#1c1b19" Foreground="#cdccca"
-                                 BorderBrush="#393836"/>
-                </StackPanel>
-
-                <!-- Temperature -->
-                <StackPanel Spacing="4">
-                  <TextBlock Classes="field-label" Text="Temperature (0.0–2.0)"/>
-                  <NumericUpDown Classes="settings-input"
-                                 Value="{Binding Temperature}"
-                                 Minimum="0" Maximum="2"
-                                 Increment="0.1"
-                                 FormatString="0.00"
-                                 Background="#1c1b19" Foreground="#cdccca"
-                                 BorderBrush="#393836"/>
-                </StackPanel>
-
-                <!-- RAG Top-K -->
-                <StackPanel Spacing="4">
-                  <TextBlock Classes="field-label" Text="RAG Top-K (1–20)"/>
-                  <NumericUpDown Classes="settings-input"
-                                 Value="{Binding RagTopK}"
-                                 Minimum="1" Maximum="20"
-                                 Increment="1"
-                                 FormatString="0"
-                                 Background="#1c1b19" Foreground="#cdccca"
-                                 BorderBrush="#393836"/>
-                </StackPanel>
-
-                <!-- Context Window Size -->
-                <StackPanel Spacing="4">
-                  <TextBlock Classes="field-label" Text="Context Window (1–50)"/>
-                  <NumericUpDown Classes="settings-input"
-                                 Value="{Binding ContextWindowSize}"
-                                 Minimum="1" Maximum="50"
-                                 Increment="1"
-                                 FormatString="0"
-                                 Background="#1c1b19" Foreground="#cdccca"
-                                 BorderBrush="#393836"/>
-                </StackPanel>
-
-                <!-- Use RAG Context -->
-                <StackPanel Spacing="4" Orientation="Horizontal">
-                  <CheckBox IsChecked="{Binding UseRagContext}"
-                            Foreground="#cdccca"
-                            Content="Use RAG Context"/>
-                </StackPanel>
-
-                <!-- Ошибка сохранения -->
-                <TextBlock IsVisible="{Binding HasError}"
-                           Text="{Binding ErrorMessage}"
-                           Foreground="#dd6974" FontSize="12"/>
-
-                <!-- Кнопки -->
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                  <Button Classes="primary"
-                          Command="{Binding SaveSettingsCommand}">
-                    Save Settings
-                  </Button>
-                </StackPanel>
-
-              </StackPanel>
+            <!-- System Prompt -->
+            <StackPanel Spacing="3">
+              <TextBlock Classes="field-label" Text="System Prompt"/>
+              <TextBox Classes="settings-input"
+                       Text="{Binding SystemPrompt}"
+                       AcceptsReturn="True" Height="90"
+                       TextWrapping="Wrap"
+                       Watermark="Enter system prompt…"/>
             </StackPanel>
-          </ScrollViewer>
 
-          <!-- ── FOLDER TAB ────────────────────────────────────────────────── -->
-          <ScrollViewer IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsFolder}}"
-                        VerticalScrollBarVisibility="Auto">
-            <StackPanel Spacing="20" MaxWidth="640"
-                        DataContext="{Binding SettingsViewModel}">
+            <!-- Max Tokens -->
+            <StackPanel Spacing="3">
+              <TextBlock Classes="field-label" Text="Max Tokens  (1–32768)"/>
+              <NumericUpDown Value="{Binding MaxTokens}"
+                             Minimum="1" Maximum="32768" Increment="256"
+                             FormatString="0"
+                             Background="#1c1b19" Foreground="#cdccca"
+                             BorderBrush="#2d2c2a" FontSize="12"/>
+            </StackPanel>
 
-              <TextBlock Text="Connected Folder"
-                         FontSize="16" FontWeight="SemiBold" Foreground="#E2E8F0"/>
+            <!-- Temperature -->
+            <StackPanel Spacing="3">
+              <TextBlock Classes="field-label" Text="Temperature  (0.0–2.0)"/>
+              <NumericUpDown Value="{Binding Temperature}"
+                             Minimum="0" Maximum="2" Increment="0.05"
+                             FormatString="0.00"
+                             Background="#1c1b19" Foreground="#cdccca"
+                             BorderBrush="#2d2c2a" FontSize="12"/>
+            </StackPanel>
 
-              <!-- Нет папки → форма подключения -->
-              <StackPanel IsVisible="{Binding !HasFolderAttached}" Spacing="16">
-                <TextBlock Text="No folder connected to this project yet."
-                           Foreground="#64748B" FontSize="13"/>
+            <!-- RAG Top-K -->
+            <StackPanel Spacing="3">
+              <TextBlock Classes="field-label" Text="RAG Top-K  (1–20)"/>
+              <NumericUpDown Value="{Binding RagTopK}"
+                             Minimum="1" Maximum="20" Increment="1"
+                             FormatString="0"
+                             Background="#1c1b19" Foreground="#cdccca"
+                             BorderBrush="#2d2c2a" FontSize="12"/>
+            </StackPanel>
 
-                <!-- Path -->
-                <StackPanel Spacing="4">
-                  <TextBlock Classes="field-label" Text="Folder Path"/>
-                  <TextBox Classes="settings-input"
-                           Text="{Binding FolderPath}"
-                           Watermark="/absolute/path/to/folder"/>
+            <!-- Context Window -->
+            <StackPanel Spacing="3">
+              <TextBlock Classes="field-label" Text="Context Window  (1–50)"/>
+              <NumericUpDown Value="{Binding ContextWindowSize}"
+                             Minimum="1" Maximum="50" Increment="1"
+                             FormatString="0"
+                             Background="#1c1b19" Foreground="#cdccca"
+                             BorderBrush="#2d2c2a" FontSize="12"/>
+            </StackPanel>
+
+            <!-- Use RAG -->
+            <CheckBox IsChecked="{Binding UseRagContext}"
+                      Foreground="#94A3B8" FontSize="12"
+                      Content="Use RAG Context"/>
+
+            <!-- Save -->
+            <Button Classes="primary"
+                    Command="{Binding SaveSettingsCommand}"
+                    IsEnabled="{Binding !IsBusy}">
+              Save Settings
+            </Button>
+
+          </StackPanel>
+        </ScrollViewer>
+
+        <!-- ── FOLDER TAB ──────────────────────────────────────────────── -->
+        <ScrollViewer IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsFolder}}"
+                      VerticalScrollBarVisibility="Auto">
+          <StackPanel Spacing="14" MaxWidth="580"
+                      DataContext="{Binding SettingsViewModel}">
+
+            <!-- Ошибка папки -->
+            <Border IsVisible="{Binding HasError}"
+                    Background="#1a0a0d" BorderBrush="#5c1c2e" BorderThickness="1"
+                    CornerRadius="6" Padding="10 7">
+              <TextBlock Text="{Binding ErrorMessage}"
+                         Foreground="#f87171" FontSize="12" TextWrapping="Wrap"/>
+            </Border>
+
+            <!-- Нет папки -->
+            <StackPanel IsVisible="{Binding !HasFolderAttached}" Spacing="14">
+              <TextBlock Text="No folder connected."
+                         Foreground="#475569" FontSize="12"/>
+              <StackPanel Spacing="3">
+                <TextBlock Classes="field-label" Text="Folder Path"/>
+                <TextBox Classes="settings-input"
+                         Text="{Binding FolderPath}"
+                         Watermark="/absolute/path/to/folder"/>
+              </StackPanel>
+              <StackPanel Spacing="3">
+                <TextBlock Classes="field-label" Text="Permissions"/>
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                  <CheckBox IsChecked="{Binding PermRead}"   Content="Read"   Foreground="#94A3B8" FontSize="12"/>
+                  <CheckBox IsChecked="{Binding PermEdit}"   Content="Edit"   Foreground="#94A3B8" FontSize="12"/>
+                  <CheckBox IsChecked="{Binding PermDelete}" Content="Delete" Foreground="#94A3B8" FontSize="12"/>
                 </StackPanel>
+              </StackPanel>
+              <Button Classes="primary" Command="{Binding AttachFolderCommand}">
+                Connect Folder
+              </Button>
+            </StackPanel>
 
-                <!-- Permissions -->
-                <StackPanel Spacing="4">
-                  <TextBlock Classes="field-label" Text="Permissions"/>
-                  <StackPanel Orientation="Horizontal" Spacing="16">
-                    <CheckBox IsChecked="{Binding PermRead}"   Content="Read"   Foreground="#cdccca"/>
-                    <CheckBox IsChecked="{Binding PermEdit}"   Content="Edit"   Foreground="#cdccca"/>
-                    <CheckBox IsChecked="{Binding PermDelete}" Content="Delete" Foreground="#cdccca"/>
-                  </StackPanel>
+            <!-- Папка подключена -->
+            <StackPanel IsVisible="{Binding HasFolderAttached}" Spacing="14">
+              <StackPanel Spacing="3">
+                <TextBlock Classes="field-label" Text="Connected Path"/>
+                <TextBlock Text="{Binding FolderPath}"
+                           Foreground="#94A3B8" FontSize="12" TextWrapping="Wrap"/>
+              </StackPanel>
+              <StackPanel Spacing="3">
+                <TextBlock Classes="field-label" Text="Permissions"/>
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                  <CheckBox IsChecked="{Binding PermRead}"   Content="Read"   Foreground="#94A3B8" FontSize="12"/>
+                  <CheckBox IsChecked="{Binding PermEdit}"   Content="Edit"   Foreground="#94A3B8" FontSize="12"/>
+                  <CheckBox IsChecked="{Binding PermDelete}" Content="Delete" Foreground="#94A3B8" FontSize="12"/>
                 </StackPanel>
-
-                <!-- Error -->
-                <TextBlock IsVisible="{Binding HasError}"
-                           Text="{Binding ErrorMessage}"
-                           Foreground="#dd6974" FontSize="12"/>
-
-                <Button Classes="primary" Command="{Binding AttachFolderCommand}">
-                  Connect Folder
+              </StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Classes="primary" Command="{Binding SaveFolderPermissionsCommand}">
+                  Save Permissions
+                </Button>
+                <Button Classes="danger" Command="{Binding DetachFolderCommand}">
+                  Disconnect
                 </Button>
               </StackPanel>
-
-              <!-- Папка подключена → управление -->
-              <StackPanel IsVisible="{Binding HasFolderAttached}" Spacing="16">
-
-                <!-- Путь (read-only) -->
-                <StackPanel Spacing="4">
-                  <TextBlock Classes="field-label" Text="Connected Path"/>
-                  <TextBlock Text="{Binding FolderPath}"
-                             Foreground="#94A3B8" FontSize="13"
-                             TextWrapping="Wrap"/>
-                </StackPanel>
-
-                <!-- Permissions -->
-                <StackPanel Spacing="4">
-                  <TextBlock Classes="field-label" Text="Permissions"/>
-                  <StackPanel Orientation="Horizontal" Spacing="16">
-                    <CheckBox IsChecked="{Binding PermRead}"   Content="Read"   Foreground="#cdccca"/>
-                    <CheckBox IsChecked="{Binding PermEdit}"   Content="Edit"   Foreground="#cdccca"/>
-                    <CheckBox IsChecked="{Binding PermDelete}" Content="Delete" Foreground="#cdccca"/>
-                  </StackPanel>
-                </StackPanel>
-
-                <!-- Error -->
-                <TextBlock IsVisible="{Binding HasError}"
-                           Text="{Binding ErrorMessage}"
-                           Foreground="#dd6974" FontSize="12"/>
-
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                  <Button Classes="primary" Command="{Binding SaveFolderPermissionsCommand}">
-                    Save Permissions
-                  </Button>
-                  <Button Classes="danger" Command="{Binding DetachFolderCommand}">
-                    Disconnect
-                  </Button>
-                </StackPanel>
-              </StackPanel>
             </StackPanel>
-          </ScrollViewer>
 
-          <!-- ── DOCUMENTS TAB ─────────────────────────────────────────────── -->
-          <StackPanel IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsDocuments}}"
-                      HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
-            <TextBlock Text="📄" FontSize="48" HorizontalAlignment="Center"/>
-            <TextBlock Text="Documents" FontSize="16" FontWeight="Medium"
-                       Foreground="#E2E8F0" HorizontalAlignment="Center"/>
-            <TextBlock Text="Documents feature coming soon."
-                       Foreground="#475569" FontSize="13" HorizontalAlignment="Center"/>
           </StackPanel>
+        </ScrollViewer>
 
-          <!-- ── CHAT TAB ──────────────────────────────────────────────────── -->
-          <StackPanel IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsChat}}"
-                      HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
-            <TextBlock Text="💬" FontSize="48" HorizontalAlignment="Center"/>
-            <TextBlock Text="Chat" FontSize="16" FontWeight="Medium"
-                       Foreground="#E2E8F0" HorizontalAlignment="Center"/>
-            <TextBlock Text="Project chat coming soon."
-                       Foreground="#475569" FontSize="13" HorizontalAlignment="Center"/>
-          </StackPanel>
+        <!-- ── DOCUMENTS TAB ───────────────────────────────────────────── -->
+        <StackPanel IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsDocuments}}"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+          <TextBlock Text="Documents" FontSize="14" FontWeight="Medium"
+                     Foreground="#CBD5E1" HorizontalAlignment="Center"/>
+          <TextBlock Text="Coming soon."
+                     Foreground="#334155" FontSize="12" HorizontalAlignment="Center"/>
+        </StackPanel>
 
-        </Grid>
+        <!-- ── CHAT TAB ─────────────────────────────────────────────────── -->
+        <StackPanel IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsChat}}"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+          <TextBlock Text="Chat" FontSize="14" FontWeight="Medium"
+                     Foreground="#CBD5E1" HorizontalAlignment="Center"/>
+          <TextBlock Text="Coming soon."
+                     Foreground="#334155" FontSize="12" HorizontalAlignment="Center"/>
+        </StackPanel>
+
       </Panel>
     </Border>
 

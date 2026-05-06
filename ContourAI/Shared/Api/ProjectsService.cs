@@ -38,7 +38,7 @@ public sealed class ProjectsService
         _sessionAuthService = sessionAuthService;
     }
 
-    // ─── helpers ─────────────────────────────────────────────────────────────────
+    // ─── helpers ─────────────────────────────────────────────────────────────────────────────
 
     private bool HandleAuth(HttpStatusCode code)
     {
@@ -54,7 +54,7 @@ public sealed class ProjectsService
     private static bool IsSuccess(HttpStatusCode code) =>
         code == HttpStatusCode.OK || code == HttpStatusCode.NoContent;
 
-    // ─── GET /api/projects ────────────────────────────────────────────────────
+    // ─── GET /api/projects ────────────────────────────────────────────────────────
 
     public async Task<List<ProjectSummaryDto>?> GetProjectsAsync(CancellationToken ct = default)
     {
@@ -65,7 +65,7 @@ public sealed class ProjectsService
         return await response.Content.ReadFromJsonAsync<List<ProjectSummaryDto>>(JsonOptions, ct);
     }
 
-    // ─── GET /api/projects/{id} ───────────────────────────────────────────────
+    // ─── GET /api/projects/{id} ───────────────────────────────────────────────────
 
     public async Task<ProjectDto?> GetProjectByIdAsync(Guid projectId, CancellationToken ct = default)
     {
@@ -77,7 +77,23 @@ public sealed class ProjectsService
         return await response.Content.ReadFromJsonAsync<ProjectDto>(JsonOptions, ct);
     }
 
-    // ─── POST /api/projects ───────────────────────────────────────────────────
+    // ─── GET /api/projects/{id}/settings ────────────────────────────────────────────
+
+    /// <summary>
+    /// Возвращает текущие настройки проекта (SystemPrompt, Temperature и т.д.).
+    /// Используется для пред-заполнения формы Settings перед отображением.
+    /// </summary>
+    public async Task<ProjectSettingsDto?> GetProjectSettingsAsync(Guid projectId, CancellationToken ct = default)
+    {
+        var http     = _httpFactory.CreateAuthorized();
+        var response = await http.GetAsync($"api/projects/{projectId}/settings", ct);
+        if (HandleAuth(response.StatusCode)) return null;
+        if (response.StatusCode == HttpStatusCode.NotFound) return null;
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<ProjectSettingsDto>(JsonOptions, ct);
+    }
+
+    // ─── POST /api/projects ────────────────────────────────────────────────────────
 
     public async Task<ProjectDto?> CreateProjectAsync(CreateProjectRequest request, CancellationToken ct = default)
     {
@@ -88,7 +104,7 @@ public sealed class ProjectsService
         return await response.Content.ReadFromJsonAsync<ProjectDto>(JsonOptions, ct);
     }
 
-    // ─── DELETE /api/projects/{id} ───────────────────────────────────────────────
+    // ─── DELETE /api/projects/{id} ───────────────────────────────────────────────────────
 
     public async Task<bool> DeleteProjectAsync(Guid projectId, CancellationToken ct = default)
     {
@@ -98,7 +114,7 @@ public sealed class ProjectsService
         return IsSuccess(response.StatusCode);
     }
 
-    // ─── PATCH /api/projects/{id}/settings ───────────────────────────────────────────
+    // ─── PATCH /api/projects/{id}/settings ───────────────────────────────────────────────
 
     /// <summary>Обновляет настройки проекта. Считает 200 OK и 204 NoContent успехом.</summary>
     public async Task<bool> UpdateSettingsAsync(Guid projectId, UpdateProjectSettingsRequest request, CancellationToken ct = default)
@@ -110,7 +126,7 @@ public sealed class ProjectsService
         return IsSuccess(response.StatusCode);
     }
 
-    // ─── POST /api/projects/{id}/folders ───────────────────────────────────────────
+    // ─── POST /api/projects/{id}/folders ───────────────────────────────────────────────
 
     public async Task<FolderDto?> AddFolderAsync(Guid projectId, AddProjectFolderRequest request, CancellationToken ct = default)
     {
@@ -121,7 +137,7 @@ public sealed class ProjectsService
         return await response.Content.ReadFromJsonAsync<FolderDto>(JsonOptions, ct);
     }
 
-    // ─── PATCH /api/projects/{id}/folder/permission ────────────────────────────────────
+    // ─── PATCH /api/projects/{id}/folder/permission ──────────────────────────────────────
 
     public async Task<bool> ChangeFolderPermissionAsync(Guid projectId, FolderPermission permission, CancellationToken ct = default)
     {
@@ -133,7 +149,7 @@ public sealed class ProjectsService
         return IsSuccess(response.StatusCode);
     }
 
-    // ─── DELETE /api/projects/{id}/folder ─────────────────────────────────────────────
+    // ─── DELETE /api/projects/{id}/folder ────────────────────────────────────────────────────
 
     public async Task<bool> RemoveFolderAsync(Guid projectId, CancellationToken ct = default)
     {
