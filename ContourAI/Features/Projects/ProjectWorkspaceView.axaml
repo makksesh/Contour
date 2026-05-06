@@ -2,7 +2,7 @@
   ProjectWorkspaceView — workspace проекта.
   Header: кнопка Back + название проекта + вкладки — всё в одну строку.
   Вкладки: Settings, Folder, Documents, Chat.
-  Ошибка загрузки отображается встроенным баннером внутри вкладки.
+  Ошибка загрузки отображается в самом низу, под контентом вкладки.
   Проект: DevAssistant / ContourAI.
 -->
 <UserControl xmlns="https://github.com/avaloniaui"
@@ -97,7 +97,7 @@
 
   </UserControl.Styles>
 
-  <Grid RowDefinitions="Auto,*">
+  <Grid RowDefinitions="Auto,*,Auto">
 
     <!-- ═══ HEADER: Back | Название | │ Вкладки ═══ -->
     <Border Grid.Row="0"
@@ -156,36 +156,17 @@
       </StackPanel>
     </Border>
 
-    <!-- ═══ КОНТEНТ ВКЛАДОК ═══ -->
+    <!-- ═══ КОНТЕНТ ВКЛАДОК ═══ -->
     <Border Grid.Row="1" Background="#0B1120" Padding="20 14">
       <Panel>
 
-        <!-- Баннер ошибки загрузки (IsLoading или HasError) -->
-        <Border IsVisible="{Binding HasError}"
-                Background="#1a0a0d" BorderBrush="#5c1c2e" BorderThickness="1"
-                CornerRadius="6" Padding="12 8" Margin="0 0 0 12"
-                VerticalAlignment="Top">
-          <Grid ColumnDefinitions="*,Auto">
-            <TextBlock Grid.Column="0"
-                       Text="{Binding ErrorMessage}"
-                       Foreground="#f87171" FontSize="12"
-                       TextWrapping="Wrap"/>
-            <Button Grid.Column="1"
-                    Classes="primary"
-                    Command="{Binding LoadProjectCommand}"
-                    Margin="8 0 0 0">
-              Retry
-            </Button>
-          </Grid>
-        </Border>
-
-        <!-- ── SETTINGS TAB ───────────────────────────────────────────── -->
+        <!-- ── SETTINGS TAB ──────────────────────────────────────────────── -->
         <ScrollViewer IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsSettings}}"
                       VerticalScrollBarVisibility="Auto">
           <StackPanel Spacing="14" MaxWidth="580"
                       DataContext="{Binding SettingsViewModel}">
 
-            <!-- Ошибка сохранения -->
+            <!-- Ошибка сохранения (из SettingsViewModel) -->
             <Border IsVisible="{Binding HasError}"
                     Background="#1a0a0d" BorderBrush="#5c1c2e" BorderThickness="1"
                     CornerRadius="6" Padding="10 7">
@@ -258,7 +239,7 @@
           </StackPanel>
         </ScrollViewer>
 
-        <!-- ── FOLDER TAB ──────────────────────────────────────────────── -->
+        <!-- ── FOLDER TAB ──────────────────────────────────────────────────── -->
         <ScrollViewer IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsFolder}}"
                       VerticalScrollBarVisibility="Auto">
           <StackPanel Spacing="14" MaxWidth="580"
@@ -323,7 +304,7 @@
           </StackPanel>
         </ScrollViewer>
 
-        <!-- ── DOCUMENTS TAB ───────────────────────────────────────────── -->
+        <!-- ── DOCUMENTS TAB ──────────────────────────────────────────────── -->
         <StackPanel IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsDocuments}}"
                     HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
           <TextBlock Text="Documents" FontSize="14" FontWeight="Medium"
@@ -332,7 +313,7 @@
                      Foreground="#334155" FontSize="12" HorizontalAlignment="Center"/>
         </StackPanel>
 
-        <!-- ── CHAT TAB ─────────────────────────────────────────────────── -->
+        <!-- ── CHAT TAB ───────────────────────────────────────────────────── -->
         <StackPanel IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsChat}}"
                     HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
           <TextBlock Text="Chat" FontSize="14" FontWeight="Medium"
@@ -342,6 +323,26 @@
         </StackPanel>
 
       </Panel>
+    </Border>
+
+    <!-- ═══ FOOTER: баннер ошибки загрузки (внизу, под всем контентом) ═══ -->
+    <Border Grid.Row="2"
+            IsVisible="{Binding HasError}"
+            Background="#1a0a0d" BorderBrush="#5c1c2e" BorderThickness="0 1 0 0"
+            Padding="16 10">
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Grid.Column="0"
+                   Text="{Binding ErrorMessage}"
+                   Foreground="#f87171" FontSize="12"
+                   VerticalAlignment="Center"
+                   TextWrapping="Wrap"/>
+        <Button Grid.Column="1"
+                Classes="primary"
+                Command="{Binding LoadSettingsCommand}"
+                Margin="12 0 0 0">
+          Retry
+        </Button>
+      </Grid>
     </Border>
 
   </Grid>
