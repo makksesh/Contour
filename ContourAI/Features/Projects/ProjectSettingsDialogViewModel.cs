@@ -3,6 +3,9 @@
 /// Загружает текущие значения из ProjectDto, сохраняет через ProjectsService.
 /// UpdateSettingsAsync: принимает 200 OK и 204 NoContent как успех
 /// (разные версии backend могут возвращать разные коды).
+/// Удаление проекта: по нажатию Delete Project показывается
+/// встроенный confirm-блок (без диалога), по повторному нажатию
+/// вызывается DELETE /api/projects/{id}.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -20,7 +23,7 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
     private readonly ProjectsService _projectsService;
     private readonly Guid            _projectId;
 
-    // ─── Settings fields ────────────────────────────────────────────────────
+    // ─── Settings fields ────────────────────────────────────────────────────────────
 
     [ObservableProperty] private string _systemPrompt      = string.Empty;
     [ObservableProperty] private int    _maxTokens         = 4096;
@@ -29,38 +32,48 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
     [ObservableProperty] private bool   _useRagContext     = true;
     [ObservableProperty] private int    _contextWindowSize = 10;
 
-    // ─── Folder fields ──────────────────────────────────────────────────────
+    // ─── Folder fields ───────────────────────────────────────────────────────────
 
-    /// <summary>Выставляется напрямую из ProjectsViewModel по FolderCount.</summary>
+    /// <summary>Выставляется напрямую из ProjectWorkspaceViewModel по FolderCount.</summary>
     [ObservableProperty] private bool    _hasFolderAttached;
     [ObservableProperty] private string? _folderPath;
     [ObservableProperty] private bool    _permRead;
     [ObservableProperty] private bool    _permEdit;
     [ObservableProperty] private bool    _permDelete;
 
-    // ─── State ──────────────────────────────────────────────────────────────────────
+    // ─── Delete confirm state ──────────────────────────────────────────────────────
+
+    /// <summary>
+    /// true — показывает встроенный confirm-блок вместо диалога.
+    /// false — блок скрыт, видна только кнопка Delete Project.
+    /// </summary>
+    [ObservableProperty] private bool _isDeleteConfirmVisible;
+
+    // ─── State ──────────────────────────────────────────────────────────────────────────
 
     [ObservableProperty] private bool   _isBusy;
     [ObservableProperty] private string _errorMessage = string.Empty;
     [ObservableProperty] private bool   _hasError;
 
-    public event Action? Closed;
-    public event Action? Saved;
+    // ─── События ──────────────────────────────────────────────────────────────────────
+
+    public event Action?      Closed;
+    public event Action?      Saved;
+
+    /// <summary>
+    /// Вызывается после успешного удаления проекта.
+    /// Shell должен подписаться и вернуть пользователя на предыдущий экран
+    /// и обновить список проектов.
+    /// </summary>
+    public event Action? Deleted;
 
     public ProjectSettingsDialogViewModel(Guid projectId, ProjectsService projectsService)
     {
         _projectId       = projectId;
         _projectsService = projectsService;
     }
-    
-    // public void LoadFrom(ProjectDto project, bool folderAttached)
-    // {
-    //     HasFolderAttached = folderAttached;
-    //     if (!folderAttached)
-    //         FolderPath = null;
-    // }
 
-    // ─── Save settings ────────────────────────────────────────────────────────
+    // ─── Save settings ────────────────────────────────────────────────────────────────
 
     [RelayCommand]
     private async Task SaveSettingsAsync()
@@ -88,13 +101,53 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
                 return;
             }
             Saved?.Invoke();
-            Closed?.Invoke();
         }
         catch (Exception ex) { ErrorMessage = ex.Message; HasError = true; }
         finally { IsBusy = false; }
     }
 
-    // ─── Folder: attach ──────────────────────────────────────────────────────
+    // ─── Delete project ───────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Первое нажатие разворачивает встроенный confirm-блок,
+    /// второе — вызывает DELETE /api/projects/{id}.
+    /// </summary>
+    [RelayCommand]
+    private void RequestDeleteProject()
+        => IsDeleteConfirmVisible = true;
+
+    /// <summary>Отменяет запрос на удаление, скрывает confirm-блок.</summary>
+    [RelayCommand]
+    private void CancelDeleteProject()
+        => IsDeleteConfirmVisible = false;
+
+    /// <summary>Подтверждение удаления — DELETE /api/projects/{id}.</summary>
+    [RelayCommand]
+    private async Task ConfirmDeleteProjectAsync()
+    {
+        IsBusy = true; HasError = false;
+        try
+        {
+            var ok = await _projectsService.DeleteProjectAsync(_projectId);
+            if (!ok)
+            {
+                ErrorMessage             = "Failed to delete project.";
+                HasError                 = true;
+                IsDeleteConfirmVisible   = false;
+                return;
+            }
+            Deleted?.Invoke();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage           = ex.Message;
+            HasError               = true;
+            IsDeleteConfirmVisible = false;
+        }
+        finally { IsBusy = false; }
+    }
+
+    // ─── Folder: attach ─────────────────────────────────────────────────────────────
 
     [RelayCommand]
     private async Task AttachFolderAsync()
@@ -113,7 +166,7 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
         finally { IsBusy = false; }
     }
 
-    // ─── Folder: change permissions ──────────────────────────────────────────────
+    // ─── Folder: change permissions ──────────────────────────────────────────────────────
 
     [RelayCommand]
     private async Task SaveFolderPermissionsAsync()
@@ -128,7 +181,7 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
         finally { IsBusy = false; }
     }
 
-    // ─── Folder: detach ────────────────────────────────────────────────────────
+    // ─── Folder: detach ───────────────────────────────────────────────────────────────
 
     [RelayCommand]
     private async Task DetachFolderAsync()

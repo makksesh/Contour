@@ -2,7 +2,8 @@
   ProjectWorkspaceView — workspace проекта.
   Header: кнопка Back + название проекта + вкладки — всё в одну строку.
   Вкладки: Settings, Folder, Documents, Chat.
-  Ошибка загрузки отображается в самом низу, под контентом вкладки.
+  Ошибка загрузки отображается в футере (внизу).
+  Удаление проекта: кнопка в низу Settings + встроенный confirm-блок.
   Проект: DevAssistant / ContourAI.
 -->
 <UserControl xmlns="https://github.com/avaloniaui"
@@ -13,7 +14,6 @@
 
   <UserControl.Styles>
 
-    <!-- Кнопка Back -->
     <Style Selector="Button.back-btn">
       <Setter Property="Background"  Value="Transparent"/>
       <Setter Property="Foreground"  Value="#64748B"/>
@@ -28,7 +28,6 @@
       <Setter Property="TextBlock.Foreground" Value="#94A3B8"/>
     </Style>
 
-    <!-- Кнопка вкладки -->
     <Style Selector="Button.tab-btn">
       <Setter Property="Background"  Value="Transparent"/>
       <Setter Property="Foreground"  Value="#64748B"/>
@@ -48,7 +47,6 @@
       <Setter Property="TextBlock.Foreground" Value="#5EEAD4"/>
     </Style>
 
-    <!-- Кнопка primary -->
     <Style Selector="Button.primary">
       <Setter Property="Background"  Value="#01696f"/>
       <Setter Property="Foreground"  Value="White"/>
@@ -65,7 +63,6 @@
       <Setter Property="TextBlock.Foreground" Value="#4a7a7e"/>
     </Style>
 
-    <!-- Кнопка danger -->
     <Style Selector="Button.danger">
       <Setter Property="Background"  Value="#7f1d4b"/>
       <Setter Property="Foreground"  Value="White"/>
@@ -77,8 +74,26 @@
     <Style Selector="Button.danger:pointerover /template/ ContentPresenter">
       <Setter Property="Background" Value="#9d1f5e"/>
     </Style>
+    <Style Selector="Button.danger:disabled /template/ ContentPresenter">
+      <Setter Property="Background" Value="#3d1226"/>
+      <Setter Property="TextBlock.Foreground" Value="#7a3d5a"/>
+    </Style>
 
-    <!-- Поле ввода -->
+    <Style Selector="Button.ghost">
+      <Setter Property="Background"  Value="Transparent"/>
+      <Setter Property="Foreground"  Value="#64748B"/>
+      <Setter Property="Padding"     Value="12 6"/>
+      <Setter Property="CornerRadius" Value="6"/>
+      <Setter Property="FontSize"    Value="12"/>
+      <Setter Property="Cursor"      Value="Hand"/>
+      <Setter Property="BorderBrush" Value="#2d2c2a"/>
+      <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+    <Style Selector="Button.ghost:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#1E293B"/>
+      <Setter Property="TextBlock.Foreground" Value="#94A3B8"/>
+    </Style>
+
     <Style Selector="TextBox.settings-input">
       <Setter Property="Background"   Value="#1c1b19"/>
       <Setter Property="Foreground"   Value="#cdccca"/>
@@ -88,7 +103,6 @@
       <Setter Property="FontSize"     Value="12"/>
     </Style>
 
-    <!-- Метка поля -->
     <Style Selector="TextBlock.field-label">
       <Setter Property="FontSize"   Value="10"/>
       <Setter Property="Foreground" Value="#475569"/>
@@ -99,60 +113,39 @@
 
   <Grid RowDefinitions="Auto,*,Auto">
 
-    <!-- ═══ HEADER: Back | Название | │ Вкладки ═══ -->
+    <!-- ═══ HEADER ═══ -->
     <Border Grid.Row="0"
             BorderBrush="#1E293B" BorderThickness="0 0 0 1"
             Padding="12 0">
       <StackPanel Orientation="Horizontal" Spacing="4" Height="40">
 
-        <!-- Back -->
-        <Button Classes="back-btn"
-                Command="{Binding GoBackCommand}">
-          ← Back
-        </Button>
-
-        <!-- Разделитель -->
+        <Button Classes="back-btn" Command="{Binding GoBackCommand}">← Back</Button>
         <Border Width="1" Background="#1E293B" Margin="4 8"/>
-
-        <!-- Название проекта -->
         <TextBlock Text="{Binding ProjectName}"
                    FontSize="13" FontWeight="SemiBold" Foreground="#CBD5E1"
                    VerticalAlignment="Center" Margin="4 0"/>
-
-        <!-- Разделитель -->
         <Border Width="1" Background="#1E293B" Margin="4 8"/>
 
-        <!-- Вкладки -->
         <Button Classes="tab-btn"
                 Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsSettings}}"
                 Command="{Binding SelectTabCommand}"
-                CommandParameter="{x:Static vm:WorkspaceTab.Settings}">
-          Settings
-        </Button>
+                CommandParameter="{x:Static vm:WorkspaceTab.Settings}">Settings</Button>
         <Button Classes="tab-btn"
                 Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsFolder}}"
                 Command="{Binding SelectTabCommand}"
-                CommandParameter="{x:Static vm:WorkspaceTab.Folder}">
-          Folder
-        </Button>
+                CommandParameter="{x:Static vm:WorkspaceTab.Folder}">Folder</Button>
         <Button Classes="tab-btn"
                 Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsDocuments}}"
                 Command="{Binding SelectTabCommand}"
-                CommandParameter="{x:Static vm:WorkspaceTab.Documents}">
-          Documents
-        </Button>
+                CommandParameter="{x:Static vm:WorkspaceTab.Documents}">Documents</Button>
         <Button Classes="tab-btn"
                 Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsChat}}"
                 Command="{Binding SelectTabCommand}"
-                CommandParameter="{x:Static vm:WorkspaceTab.Chat}">
-          Chat
-        </Button>
+                CommandParameter="{x:Static vm:WorkspaceTab.Chat}">Chat</Button>
 
-        <!-- Индикатор загрузки -->
         <TextBlock IsVisible="{Binding IsLoading}"
                    Text="…" Foreground="#475569" FontSize="12"
                    VerticalAlignment="Center" Margin="8 0 0 0"/>
-
       </StackPanel>
     </Border>
 
@@ -160,13 +153,13 @@
     <Border Grid.Row="1" Background="#0B1120" Padding="20 14">
       <Panel>
 
-        <!-- ── SETTINGS TAB ──────────────────────────────────────────────── -->
+        <!-- ── SETTINGS TAB ───────────────────────────────────────────── -->
         <ScrollViewer IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsSettings}}"
                       VerticalScrollBarVisibility="Auto">
           <StackPanel Spacing="14" MaxWidth="580"
                       DataContext="{Binding SettingsViewModel}">
 
-            <!-- Ошибка сохранения (из SettingsViewModel) -->
+            <!-- Ошибка сохранения -->
             <Border IsVisible="{Binding HasError}"
                     Background="#1a0a0d" BorderBrush="#5c1c2e" BorderThickness="1"
                     CornerRadius="6" Padding="10 7">
@@ -188,46 +181,37 @@
             <StackPanel Spacing="3">
               <TextBlock Classes="field-label" Text="Max Tokens  (1–32768)"/>
               <NumericUpDown Value="{Binding MaxTokens}"
-                             Minimum="1" Maximum="32768" Increment="256"
-                             FormatString="0"
-                             Background="#1c1b19" Foreground="#cdccca"
-                             BorderBrush="#2d2c2a" FontSize="12"/>
+                             Minimum="1" Maximum="32768" Increment="256" FormatString="0"
+                             Background="#1c1b19" Foreground="#cdccca" BorderBrush="#2d2c2a" FontSize="12"/>
             </StackPanel>
 
             <!-- Temperature -->
             <StackPanel Spacing="3">
               <TextBlock Classes="field-label" Text="Temperature  (0.0–2.0)"/>
               <NumericUpDown Value="{Binding Temperature}"
-                             Minimum="0" Maximum="2" Increment="0.05"
-                             FormatString="0.00"
-                             Background="#1c1b19" Foreground="#cdccca"
-                             BorderBrush="#2d2c2a" FontSize="12"/>
+                             Minimum="0" Maximum="2" Increment="0.05" FormatString="0.00"
+                             Background="#1c1b19" Foreground="#cdccca" BorderBrush="#2d2c2a" FontSize="12"/>
             </StackPanel>
 
             <!-- RAG Top-K -->
             <StackPanel Spacing="3">
               <TextBlock Classes="field-label" Text="RAG Top-K  (1–20)"/>
               <NumericUpDown Value="{Binding RagTopK}"
-                             Minimum="1" Maximum="20" Increment="1"
-                             FormatString="0"
-                             Background="#1c1b19" Foreground="#cdccca"
-                             BorderBrush="#2d2c2a" FontSize="12"/>
+                             Minimum="1" Maximum="20" Increment="1" FormatString="0"
+                             Background="#1c1b19" Foreground="#cdccca" BorderBrush="#2d2c2a" FontSize="12"/>
             </StackPanel>
 
             <!-- Context Window -->
             <StackPanel Spacing="3">
               <TextBlock Classes="field-label" Text="Context Window  (1–50)"/>
               <NumericUpDown Value="{Binding ContextWindowSize}"
-                             Minimum="1" Maximum="50" Increment="1"
-                             FormatString="0"
-                             Background="#1c1b19" Foreground="#cdccca"
-                             BorderBrush="#2d2c2a" FontSize="12"/>
+                             Minimum="1" Maximum="50" Increment="1" FormatString="0"
+                             Background="#1c1b19" Foreground="#cdccca" BorderBrush="#2d2c2a" FontSize="12"/>
             </StackPanel>
 
             <!-- Use RAG -->
             <CheckBox IsChecked="{Binding UseRagContext}"
-                      Foreground="#94A3B8" FontSize="12"
-                      Content="Use RAG Context"/>
+                      Foreground="#94A3B8" FontSize="12" Content="Use RAG Context"/>
 
             <!-- Save -->
             <Button Classes="primary"
@@ -235,6 +219,52 @@
                     IsEnabled="{Binding !IsBusy}">
               Save Settings
             </Button>
+
+            <!-- ────── Danger Zone ─────────────────────────────────────────── -->
+            <Border BorderBrush="#2d1520" BorderThickness="0 1 0 0" Margin="0 10 0 0" Padding="0 14 0 0">
+              <StackPanel Spacing="10">
+
+                <TextBlock Text="Danger Zone"
+                           FontSize="10" Foreground="#64748B"
+                           FontWeight="SemiBold"/>
+
+                <!-- Кнопка Delete Project (нормальное состояние, !IsDeleteConfirmVisible) -->
+                <Button Classes="danger"
+                        IsVisible="{Binding !IsDeleteConfirmVisible}"
+                        Command="{Binding RequestDeleteProjectCommand}"
+                        IsEnabled="{Binding !IsBusy}"
+                        HorizontalAlignment="Left">
+                  Delete Project
+                </Button>
+
+                <!-- Встроенный confirm-блок (IsDeleteConfirmVisible = true) -->
+                <Border IsVisible="{Binding IsDeleteConfirmVisible}"
+                        Background="#1a0810" BorderBrush="#5c1c2e" BorderThickness="1"
+                        CornerRadius="6" Padding="14 12">
+                  <StackPanel Spacing="10">
+                    <TextBlock Text="Delete this project?"
+                               FontSize="13" FontWeight="SemiBold" Foreground="#f87171"/>
+                    <TextBlock Text="This action cannot be undone. All settings and folder links will be permanently removed."
+                               FontSize="11" Foreground="#94A3B8" TextWrapping="Wrap"/>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                      <!-- Подтвердить -->
+                      <Button Classes="danger"
+                              Command="{Binding ConfirmDeleteProjectCommand}"
+                              IsEnabled="{Binding !IsBusy}">
+                        Yes, delete
+                      </Button>
+                      <!-- Отменить -->
+                      <Button Classes="ghost"
+                              Command="{Binding CancelDeleteProjectCommand}"
+                              IsEnabled="{Binding !IsBusy}">
+                        Cancel
+                      </Button>
+                    </StackPanel>
+                  </StackPanel>
+                </Border>
+
+              </StackPanel>
+            </Border>
 
           </StackPanel>
         </ScrollViewer>
@@ -245,7 +275,6 @@
           <StackPanel Spacing="14" MaxWidth="580"
                       DataContext="{Binding SettingsViewModel}">
 
-            <!-- Ошибка папки -->
             <Border IsVisible="{Binding HasError}"
                     Background="#1a0a0d" BorderBrush="#5c1c2e" BorderThickness="1"
                     CornerRadius="6" Padding="10 7">
@@ -253,15 +282,11 @@
                          Foreground="#f87171" FontSize="12" TextWrapping="Wrap"/>
             </Border>
 
-            <!-- Нет папки -->
             <StackPanel IsVisible="{Binding !HasFolderAttached}" Spacing="14">
-              <TextBlock Text="No folder connected."
-                         Foreground="#475569" FontSize="12"/>
+              <TextBlock Text="No folder connected." Foreground="#475569" FontSize="12"/>
               <StackPanel Spacing="3">
                 <TextBlock Classes="field-label" Text="Folder Path"/>
-                <TextBox Classes="settings-input"
-                         Text="{Binding FolderPath}"
-                         Watermark="/absolute/path/to/folder"/>
+                <TextBox Classes="settings-input" Text="{Binding FolderPath}" Watermark="/absolute/path/to/folder"/>
               </StackPanel>
               <StackPanel Spacing="3">
                 <TextBlock Classes="field-label" Text="Permissions"/>
@@ -271,17 +296,13 @@
                   <CheckBox IsChecked="{Binding PermDelete}" Content="Delete" Foreground="#94A3B8" FontSize="12"/>
                 </StackPanel>
               </StackPanel>
-              <Button Classes="primary" Command="{Binding AttachFolderCommand}">
-                Connect Folder
-              </Button>
+              <Button Classes="primary" Command="{Binding AttachFolderCommand}">Connect Folder</Button>
             </StackPanel>
 
-            <!-- Папка подключена -->
             <StackPanel IsVisible="{Binding HasFolderAttached}" Spacing="14">
               <StackPanel Spacing="3">
                 <TextBlock Classes="field-label" Text="Connected Path"/>
-                <TextBlock Text="{Binding FolderPath}"
-                           Foreground="#94A3B8" FontSize="12" TextWrapping="Wrap"/>
+                <TextBlock Text="{Binding FolderPath}" Foreground="#94A3B8" FontSize="12" TextWrapping="Wrap"/>
               </StackPanel>
               <StackPanel Spacing="3">
                 <TextBlock Classes="field-label" Text="Permissions"/>
@@ -292,12 +313,8 @@
                 </StackPanel>
               </StackPanel>
               <StackPanel Orientation="Horizontal" Spacing="8">
-                <Button Classes="primary" Command="{Binding SaveFolderPermissionsCommand}">
-                  Save Permissions
-                </Button>
-                <Button Classes="danger" Command="{Binding DetachFolderCommand}">
-                  Disconnect
-                </Button>
+                <Button Classes="primary" Command="{Binding SaveFolderPermissionsCommand}">Save Permissions</Button>
+                <Button Classes="danger"  Command="{Binding DetachFolderCommand}">Disconnect</Button>
               </StackPanel>
             </StackPanel>
 
@@ -309,8 +326,7 @@
                     HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
           <TextBlock Text="Documents" FontSize="14" FontWeight="Medium"
                      Foreground="#CBD5E1" HorizontalAlignment="Center"/>
-          <TextBlock Text="Coming soon."
-                     Foreground="#334155" FontSize="12" HorizontalAlignment="Center"/>
+          <TextBlock Text="Coming soon." Foreground="#334155" FontSize="12" HorizontalAlignment="Center"/>
         </StackPanel>
 
         <!-- ── CHAT TAB ───────────────────────────────────────────────────── -->
@@ -318,14 +334,13 @@
                     HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
           <TextBlock Text="Chat" FontSize="14" FontWeight="Medium"
                      Foreground="#CBD5E1" HorizontalAlignment="Center"/>
-          <TextBlock Text="Coming soon."
-                     Foreground="#334155" FontSize="12" HorizontalAlignment="Center"/>
+          <TextBlock Text="Coming soon." Foreground="#334155" FontSize="12" HorizontalAlignment="Center"/>
         </StackPanel>
 
       </Panel>
     </Border>
 
-    <!-- ═══ FOOTER: баннер ошибки загрузки (внизу, под всем контентом) ═══ -->
+    <!-- ═══ FOOTER: баннер ошибки загрузки ═══ -->
     <Border Grid.Row="2"
             IsVisible="{Binding HasError}"
             Background="#1a0a0d" BorderBrush="#5c1c2e" BorderThickness="0 1 0 0"
@@ -334,14 +349,10 @@
         <TextBlock Grid.Column="0"
                    Text="{Binding ErrorMessage}"
                    Foreground="#f87171" FontSize="12"
-                   VerticalAlignment="Center"
-                   TextWrapping="Wrap"/>
-        <Button Grid.Column="1"
-                Classes="primary"
+                   VerticalAlignment="Center" TextWrapping="Wrap"/>
+        <Button Grid.Column="1" Classes="primary"
                 Command="{Binding LoadSettingsCommand}"
-                Margin="12 0 0 0">
-          Retry
-        </Button>
+                Margin="12 0 0 0">Retry</Button>
       </Grid>
     </Border>
 
