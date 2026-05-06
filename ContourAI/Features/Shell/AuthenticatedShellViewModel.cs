@@ -16,7 +16,7 @@
 ///   RenameChatFromSidebar    — получает (item, newTitle) через событие, PUT /api/chat/threads/{id}.
 ///   RenameProjectFromSidebar — получает (card, newName)  через событие, PATCH /api/projects/{id}/settings.
 ///
-/// Начальная гидрация Sidebar выполняется в ApplyAuthAsync после загрузки данных.
+/// Начальная гидратация Sidebar выполняется в ApplyAuthAsync после загрузки данных.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -114,8 +114,21 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
             if (args.PropertyName == nameof(AuthSessionStore.CurrentUsername))
                 RaisePropertyChanged(nameof(Username));
         };
-        
+
         Workspace.BackRequested += OnWorkspaceBackRequested;
+
+        /// <summary>
+        /// После успешного DELETE /api/projects/{id}:
+        /// возвращаем пользователя на предыдущий экран
+        /// и перезагружаем проекты в Sidebar.
+        /// </summary>
+        Workspace.SettingsViewModel.Deleted += () =>
+        {
+            CurrentContent   = _previousContent ?? Dashboard;
+            _previousContent = null;
+            RaiseActiveFlags();
+            _ = Projects.LoadProjectsAsync();
+        };
 
         _currentContent = Dashboard;
     }
@@ -128,7 +141,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
     public ChatViewModel      Chat      { get; }
     public DocumentsViewModel Documents { get; }
     public ProjectWorkspaceViewModel Workspace { get; }
-    // ── Sidebar коллекции ─────────────────────────────────────────────────────
+    // ── Sidebar коллекции ───────────────────────────────────────────────────
 
     /// <summary>Все глобальные чаты текущего пользователя (с прокруткой).</summary>
     public ObservableCollection<ChatThreadItemViewModel> RecentGlobalChats { get; } = new();
@@ -136,7 +149,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
     /// <summary>Все проекты текущего пользователя (с прокруткой).</summary>
     public ObservableCollection<ProjectCardViewModel> RecentProjects { get; } = new();
 
-    // ── Команды ───────────────────────────────────────────────────────────────
+    // ── Команды ────────────────────────────────────────────────────────────────
 
     public ICommand LogoutCommand        { get; }
     public ICommand ShowDashboardCommand { get; }
@@ -176,7 +189,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
 
     /// <summary>
     /// Вызывается после успешной авторизации.
-    /// Запускает начальную гидрацию Sidebar: загружает треды и проекты параллельно.
+    /// Запускает начальную гидратацию Sidebar: загружает треды и проекты параллельно.
     /// </summary>
     public async Task ApplyAuthAsync(AuthTokenDto authToken, CancellationToken cancellationToken = default)
     {
@@ -186,7 +199,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         RaiseActiveFlags();
         await Dashboard.LoadAsync(authToken.AccessToken, cancellationToken);
 
-        // Начальная гидрация Sidebar — параллельно, не блокируем Dashboard
+        // Начальная гидратация Sidebar — параллельно, не блокируем Dashboard
         _ = HydrateSidebarAsync();
     }
 
@@ -210,8 +223,6 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
             foreach (var dto in threads)
             {
                 var item = new ChatThreadItemViewModel(dto);
-                // Подписываемся через Chat (он управляет lifecycle тредов)
-                // Прямая вставка в Threads минует AddThread — используем InjectThread
                 Chat.InjectThread(item);
             }
         }
@@ -231,7 +242,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         RebuildRecentProjects();
     }
 
-    // ── Синхронизация Sidebar ─────────────────────────────────────────────────
+    // ── Синхронизация Sidebar ──────────────────────────────────────────────
 
     private void RebuildRecentGlobalChats()
     {
@@ -254,7 +265,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
     private void OnProjectsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         => RebuildRecentProjects();
 
-    // ── Кнопки «+» ───────────────────────────────────────────────────────────
+    // ── Кнопки «+» ───────────────────────────────────────────────────────────────
 
     /// <summary>
     /// Создаёт новый глобальный тред.
@@ -307,7 +318,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         catch { /* silent */ }
     }
 
-    // ── Inline rename из Sidebar ──────────────────────────────────────────────
+    // ── Inline rename из Sidebar ──────────────────────────────────────────────────
 
     /// <summary>
     /// Вызывается из ChatThreadItemViewModel.RenameRequested.
@@ -352,7 +363,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         catch { /* silent */ }
     }
 
-    // ── Обработчик кнопки Open ────────────────────────────────────────────────
+    // ── Обработчик кнопки Open ───────────────────────────────────────────────
 
     private void OnProjectOpened(Guid projectId)
     {
@@ -361,7 +372,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         _ = OpenProjectFromSidebarAsync(card);
     }
 
-    // ── Навигация ─────────────────────────────────────────────────────────────
+    // ── Навигация ─────────────────────────────────────────────────────────────────
 
     private void ShowSection(object section)
     {
@@ -430,7 +441,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         RaiseActiveFlags();
         await Workspace.OpenAsync(card.Id, card.Name);
     }
-    
+
     /// <summary>
     /// Возвращает пользователя на экран, с которого он открыл проект.
     /// Если предыдущего экрана нет — Dashboard.
