@@ -33,6 +33,9 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
     private readonly ProjectsService  _projectsService;
     private CancellationTokenSource   _cts = new();
     private bool                      _documentsLoaded;
+    
+    /// <summary>Проект был удалён из вкладки Settings.</summary>
+    public event Action? ProjectDeleted;
 
     // ─── Идентификация ─────────────────────────────────────────────────────────────
 
@@ -88,6 +91,7 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         var settingsVm           = new ProjectSettingsDialogViewModel(projectId, _projectsService);
         settingsVm.Saved        += () => { };
         settingsVm.Closed       += () => BackRequested?.Invoke();
+        settingsVm.Deleted += () => ProjectDeleted?.Invoke();
         settingsVm.HasFolderAttached = folderCount > 0;
         SettingsViewModel        = settingsVm;
 

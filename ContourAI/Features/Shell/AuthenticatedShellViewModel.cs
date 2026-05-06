@@ -124,19 +124,6 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
             _ = Projects.LoadProjectsAsync();
         };
 
-        /// <summary>
-        /// После успешного DELETE /api/projects/{id}:
-        /// возвращаем пользователя на предыдущий экран
-        /// и перезагружаем проекты в Sidebar.
-        /// </summary>
-        Workspace.SettingsViewModel.Deleted += () =>
-        {
-            CurrentContent   = _previousContent ?? Dashboard;
-            _previousContent = null;
-            RaiseActiveFlags();
-            _ = Projects.LoadProjectsAsync();
-        };
-
         _currentContent = Dashboard;
     }
 
