@@ -7,6 +7,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:ContourAI.Features.Projects"
+             xmlns:chat="clr-namespace:ContourAI.Features.Chat"
              x:Class="ContourAI.Features.Projects.ProjectWorkspaceView"
              x:DataType="vm:ProjectWorkspaceViewModel">
 
@@ -389,13 +390,62 @@
 
         </Grid>
 
-        <!-- ── CHAT TAB ───────────────────────────────────────────────────── -->
-        <StackPanel IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsChat}}"
-                    HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-          <TextBlock Text="Chat" FontSize="14" FontWeight="Medium"
-                     Foreground="#CBD5E1" HorizontalAlignment="Center"/>
-          <TextBlock Text="Coming soon." Foreground="#334155" FontSize="12" HorizontalAlignment="Center"/>
-        </StackPanel>
+        <!-- ── CHAT TAB ─────────────────────────────────────────────────────── -->
+        <Panel IsVisible="{Binding SelectedTabIndex,
+                          Converter={x:Static vm:WorkspaceTabConverter.IsChat}}">
+
+            <!--
+              Состояние загрузки тредов.
+              IsChatLoading=true → крутилка,
+              IsChatLoading=false + ShowStartChatButton=true  → кнопка "Начать чат",
+              IsChatLoading=false + ShowChatView=true         → ChatView.
+            -->
+
+            <!-- Загрузка -->
+            <StackPanel IsVisible="{Binding IsChatLoading}"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="8">
+                <TextBlock Text="Loading chat…"
+                           FontSize="13" Foreground="#5a5957"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Нет чата — кнопка "Начать чат" -->
+            <StackPanel IsVisible="{Binding ShowStartChatButton}"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="12">
+                <TextBlock Text="&#x1F4AC;"
+                           FontSize="40"
+                           HorizontalAlignment="Center"/>
+                <TextBlock Text="No chat yet"
+                           FontSize="14" FontWeight="Medium"
+                           Foreground="#CBD5E1"
+                           HorizontalAlignment="Center"/>
+                <TextBlock Text="Start a conversation with the AI assistant in the context of this project."
+                           FontSize="12" Foreground="#475569"
+                           HorizontalAlignment="Center"
+                           TextWrapping="Wrap" MaxWidth="340"
+                           TextAlignment="Center"/>
+                <Button Classes="primary"
+                        HorizontalAlignment="Center"
+                        Command="{Binding StartChatCommand}">
+                    Start Chat
+                </Button>
+            </StackPanel>
+
+            <!--
+              Чат загружен — рендерим ChatView.
+              DataContext переключается на ProjectChatViewModel.
+              IsVisible привязан к ShowChatView чтобы Panel не занимал место
+              пока VM ещё null.
+            -->
+            <Panel IsVisible="{Binding ShowChatView}">
+              <chat:ChatView DataContext="{Binding ProjectChatViewModel}"/>
+            </Panel>
+
+        </Panel>
 
       </Panel>
     </Border>

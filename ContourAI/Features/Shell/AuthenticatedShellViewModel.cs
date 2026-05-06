@@ -245,6 +245,10 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
                 dto.Id, dto.Name, dto.Description,
                 dto.AccessMode, dto.CreatedAtUtc, FolderCount: 0);
             Projects.InjectCard(new ProjectCardViewModel(summary), insertAtTop: true);
+
+            // Автоматически создаём первый чат-тред для нового проекта
+            _ = _chatService.CreateInProjectAsync(
+                new CreateThreadRequest(dto.Id, $"Chat {DateTime.Now:dd.MM.yyyy}"));
         }
         catch { /* silent */ }
     }

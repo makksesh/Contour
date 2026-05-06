@@ -73,13 +73,23 @@ internal static class Program
         services.AddTransient<RegisterViewModel>();
         services.AddSingleton<DashboardViewModel>();
         services.AddSingleton<CreateProjectDialogViewModel>();
-        services.AddSingleton<ProjectsViewModel>();
+        
+        services.AddSingleton<ProjectsViewModel>(sp => new ProjectsViewModel(
+            sp.GetRequiredService<ProjectsService>(),
+            sp.GetRequiredService<ChatService>(),
+            sp.GetRequiredService<ProjectContextStore>()));
+        
         services.AddSingleton<DocumentsViewModel>();
         services.AddSingleton<ChatViewModel>();     
         services.AddSingleton<AuthenticatedShellViewModel>();
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<ProjectDocumentsViewModel>();
-        services.AddSingleton<ProjectWorkspaceViewModel>();
+        
+        services.AddSingleton<ProjectWorkspaceViewModel>(sp => new ProjectWorkspaceViewModel(
+            sp.GetRequiredService<ProjectsService>(),
+            sp.GetRequiredService<ChatService>(),
+            sp.GetRequiredService<ProjectContextStore>(),
+            sp.GetRequiredService<ProjectDocumentsViewModel>()));
         
 
         // Window

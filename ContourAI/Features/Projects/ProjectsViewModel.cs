@@ -15,6 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ContourAI.Entities.Chat;
 using ContourAI.Entities.Projects;
 using ContourAI.Shared.Api;
 using ContourAI.Shared.State;
@@ -25,6 +26,7 @@ public sealed partial class ProjectsViewModel : ObservableObject
 {
     private readonly ProjectsService     _projectsService;
     private readonly ProjectContextStore _projectContextStore;
+    private readonly ChatService _chatService;
     private CancellationTokenSource      _cts = new();
 
     public ObservableCollection<ProjectCardViewModel> Projects { get; } = new();
@@ -49,9 +51,11 @@ public sealed partial class ProjectsViewModel : ObservableObject
 
     public ProjectsViewModel(
         ProjectsService     projectsService,
+        ChatService         chatService,
         ProjectContextStore projectContextStore)
     {
         _projectsService     = projectsService;
+        _chatService         = chatService;
         _projectContextStore = projectContextStore;
     }
 
@@ -138,6 +142,9 @@ public sealed partial class ProjectsViewModel : ObservableObject
             AddCard(card);
             Projects.Move(Projects.IndexOf(card), 0);
             IsEmpty = false;
+            // Создаём тред чата для нового проекта (костыль: один чат на проект)
+            _ = _chatService.CreateInProjectAsync(
+                new CreateThreadRequest(dto.Id, $"Chat {dto.Name}"), _cts.Token);
             ProjectsChanged?.Invoke();
         }
         catch (OperationCanceledException) { }
