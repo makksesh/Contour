@@ -2,8 +2,16 @@
 /// ViewModel рабочего пространства проекта.
 /// Открывается по клику на проект из SidebarView.
 /// Содержит четыре вкладки: Settings, Folder, Documents, Chat.
+///
+/// Намеренно НЕ вызывает GET /api/projects/{id} — этот endpoint
+/// падает с 500 из-за отсутствия IMapper на сервере.
+/// Имя проекта уже известно из Sidebar (передаётся в OpenAsync).
+/// FolderCount определяется косвенно через GET /api/projects/{id}/settings
+/// (если сервер вернёт данные — папка точно привязана или нет —
+///  используем FolderCount из SidebarDto, переданный снаружи).
+///
 /// Загружает ProjectSettingsDto через GET /api/projects/{id}/settings
-/// и ProjectDto через GET /api/projects/{id} параллельно.
+/// и заполняет поля формы Settings.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -33,25 +41,25 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
     private readonly ProjectsService _projectsService;
     private CancellationTokenSource  _cts = new();
 
-    // ─── Идентификация ───────────────────────────────────────────────────────
+    // ─── Идентификация ─────────────────────────────────────────────────────────
 
     public Guid ProjectId { get; private set; }
 
-    // ─── Заголовок ───────────────────────────────────────────────────────────
+    // ─── Заголовок ─────────────────────────────────────────────────────────────
 
     [ObservableProperty] private string _projectName = string.Empty;
 
-    // ─── Вкладки ─────────────────────────────────────────────────────────────
+    // ─── Вкладки ───────────────────────────────────────────────────────────────
 
     [ObservableProperty] private int _selectedTabIndex = (int)WorkspaceTab.Settings;
 
-    // ─── Состояния загрузки ──────────────────────────────────────────────────
+    // ─── Состояния загрузки ────────────────────────────────────────────────────
 
     [ObservableProperty] private bool   _isLoading;
     [ObservableProperty] private bool   _hasError;
     [ObservableProperty] private string _errorMessage = string.Empty;
 
-    // ─── Вложенные ViewModel ─────────────────────────────────────────────────
+    // ─── Вложенные ViewModel ───────────────────────────────────────────────────
 
     /// <summary>
     /// ViewModel настроек проекта.
@@ -59,7 +67,7 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
     /// </summary>
     [ObservableProperty] private ProjectSettingsDialogViewModel? _settingsViewModel;
 
-    // ─── Событие «назад» ─────────────────────────────────────────────────────
+    // ─── Событие «назад» ───────────────────────────────────────────────────────
 
     /// <summary>Пользователь нажал «Назад» — Shell должен вернуть предыдущий экран.</summary>
     public event Action? BackRequested;
@@ -69,14 +77,15 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         _projectsService = projectsService;
     }
 
-    // ─── Инициализация ────────────────────────────────────────────────────────
+    // ─── Инициализация ─────────────────────────────────────────────────────────
 
     /// <summary>
     /// Открывает проект по id и имени (известны из Sidebar без доп. запроса).
-    /// Параллельно загружает GET /api/projects/{id}
-    /// и GET /api/projects/{id}/settings, затем применяет значения.
+    /// Параметр folderCount передаётся из ProjectSummaryDto, полученного
+    /// при загрузке списка проектов — GET /api/projects (работает).
+    /// Загружает только GET /api/projects/{id}/settings.
     /// </summary>
-    public async Task OpenAsync(Guid projectId, string projectName)
+    public async Task OpenAsync(Guid projectId, string projectName, int folderCount = 0)
     {
         _cts.Cancel();
         _cts = new CancellationTokenSource();
@@ -88,39 +97,31 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         ErrorMessage     = string.Empty;
 
         // Пересоздаём SettingsViewModel с дефолтами
-        var settingsVm    = new ProjectSettingsDialogViewModel(projectId, _projectsService);
-        settingsVm.Saved  += () => { };
-        settingsVm.Closed += () => BackRequested?.Invoke();
-        SettingsViewModel  = settingsVm;
+        var settingsVm           = new ProjectSettingsDialogViewModel(projectId, _projectsService);
+        settingsVm.Saved        += () => { };
+        settingsVm.Closed       += () => BackRequested?.Invoke();
+        settingsVm.HasFolderAttached = folderCount > 0;
+        SettingsViewModel        = settingsVm;
 
-        await LoadProjectAsync(_cts.Token);
+        await LoadSettingsAsync(_cts.Token);
     }
 
-    // ─── Загрузка ────────────────────────────────────────────────────────────
+    // ─── Загрузка ──────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Загружает GET /api/projects/{id}/settings и заполняет поля формы.
+    /// Только этот endpoint — GET /api/projects/{id} исключён намеренно
+    /// (падает с 500 IMapper на сервере).
+    /// </summary>
     [RelayCommand]
-    private async Task LoadProjectAsync(CancellationToken ct = default)
+    private async Task LoadSettingsAsync(CancellationToken ct = default)
     {
         IsLoading = true;
         HasError  = false;
         try
         {
-            // Параллельный запрос: GET /projects/{id} + GET /projects/{id}/settings
-            var projectTask  = _projectsService.GetProjectByIdAsync(ProjectId, ct);
-            var settingsTask = _projectsService.GetProjectSettingsAsync(ProjectId, ct);
-            await Task.WhenAll(projectTask, settingsTask);
+            var settings = await _projectsService.GetProjectSettingsAsync(ProjectId, ct);
 
-            var dto      = projectTask.Result;
-            var settings = settingsTask.Result;
-
-            if (dto != null)
-            {
-                ProjectName = dto.Name;
-                if (SettingsViewModel != null)
-                    SettingsViewModel.HasFolderAttached = dto.FolderCount > 0;
-            }
-
-            // Заполняем поля настроек реальными значениями с сервера
             if (settings != null && SettingsViewModel != null)
                 ApplySettings(settings, SettingsViewModel);
         }
@@ -146,13 +147,13 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         vm.ContextWindowSize = dto.ContextWindowSize;
     }
 
-    // ─── Навигация по вкладкам ───────────────────────────────────────────────
+    // ─── Навигация по вкладкам ─────────────────────────────────────────────────
 
     [RelayCommand]
     private void SelectTab(WorkspaceTab tab)
         => SelectedTabIndex = (int)tab;
 
-    // ─── Кнопка «Назад» ──────────────────────────────────────────────────────
+    // ─── Кнопка «Назад» ────────────────────────────────────────────────────────
 
     [RelayCommand]
     private void GoBack()
