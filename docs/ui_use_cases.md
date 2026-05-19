@@ -1,335 +1,388 @@
-## Пользовательские use cases
+Репозиторий для выполнения задачи: GitHub LocalServerAI.
+Задача:
+Ты — senior backend engineer (.NET/C#). Задача: спроектировать и реализовать
+improved Indexing + RAG для ASP.NET Core проекта DevAssistant.
 
-| ID | Use case | Экран UI | Основной сценарий | API |
-| :-- | :-- | :-- | :-- | :-- |
-| UC-01 | Регистрация нового пользователя | Sign Up | Пользователь вводит `username`, `email`, `password`, получает пару `access/refresh` токенов и попадает в приложение.  | `POST /api/auth/register`  |
-| UC-02 | Вход по email или username | Login | Пользователь вводит `identifier` и `password`, а UI сохраняет токены и подгружает профиль через `me`.  | `POST /api/auth/login`, `GET /api/auth/me`  |
-| UC-03 | Автообновление сессии | Global app shell | При `401` клиент тихо вызывает refresh, сохраняет новую пару токенов и повторяет исходный запрос без выброса пользователя из UI.  | `POST /api/auth/refresh`  |
-| UC-04 | Выход из аккаунта | Profile / Settings | Пользователь нажимает logout, UI отзывает refresh-token и очищает локальную сессию.  | `POST /api/auth/logout`  |
-| UC-05 | Просмотр главного экрана | Dashboard | После входа пользователь видит до 5 последних проектов, чатов и документов в одном агрегированном запросе.  | `GET /api/dashboard/recent`  |
-| UC-06 | Просмотр списка проектов | Projects list | UI показывает полный список проектов пользователя без пагинации, поэтому нужен поиск/фильтр на клиенте.  | `GET /api/projects`  |
-| UC-07 | Создание проекта | New Project modal | Пользователь задаёт `name`, `description`, `accessMode`, после чего видит карточку нового проекта.  | `POST /api/projects`  |
-| UC-08 | Просмотр карточки проекта | Project details | Пользователь открывает проект и получает его метаданные, связанные папки, документы и чаты как отдельные вкладки интерфейса.  | `GET /api/projects/{projectId}` + связанные разделы через другие API  |
-| UC-09 | Настройка AI-параметров проекта | Project Settings | Пользователь меняет `systemPrompt`, `maxTokens`, `temperature`, `ragTopK`, `useRagContext`, `contextWindowSize` и опционально выбирает model endpoint.  | `PATCH /api/projects/{projectId}/settings`  |
-| UC-10 | Подключение рабочей папки | Project Files | Пользователь указывает `path` и права доступа папки для проекта.  | `POST /api/projects/{projectId}/folders`  |
-| UC-11 | Изменение прав папки | Folder permissions | UI даёт чекбоксы `Read / Edit / Delete`, сериализуя их в строковый flags enum вроде `Read, Edit`.  | `PATCH /api/projects/{projectId}/folder/permission`  |
-| UC-12 | Удаление или отвязка папки | Folder actions | Пользователь может отвязать директорию от проекта отдельным действием без удаления проекта.  | `DELETE /api/projects/{projectId}/folder`  |
-| UC-13 | Создание project thread | Project Chat | Внутри проекта пользователь создаёт новый тред с названием и привязкой к `projectId`.  | `POST /api/chat/threads`  |
-| UC-14 | Создание global thread | Global Chat | Пользователь создаёт отдельный глобальный чат, не связанный с проектом.  | `POST /api/chat/threads/global`  |
-| UC-15 | Просмотр списка тредов | Chat sidebar | В проекте UI показывает `GET /projects/{projectId}/threads`, а для общих разговоров — список global threads.  | `GET /api/chat/projects/{projectId}/threads`, `GET /api/chat/threads`  |
-| UC-16 | Просмотр истории сообщений | Chat view | При открытии треда интерфейс загружает историю сообщений и отображает роли `User` / `Assistant`.  | `GET /api/chat/threads/{threadId}/history`  |
-| UC-17 | Отправка сообщения без стрима | Chat input | Пользователь отправляет вопрос и получает пару сообщений: своё и готовый ответ ассистента.  | `POST /api/chat/threads/{threadId}/send`  |
-| UC-18 | Отправка сообщения со стримингом | Chat streaming | UI показывает токены ответа по мере поступления и завершает рендер, когда приходит `event: done`; парсер должен учитывать нестандартный SSE без `data:`.  | `POST /api/chat/threads/{threadId}/stream`  |
-| UC-19 | Переименование треда | Thread actions | Пользователь меняет заголовок беседы из контекстного меню.  | `PUT /api/chat/threads/{threadId}`  |
-| UC-20 | Привязка global thread к проекту | Thread management | Пользователь переносит полезный глобальный диалог в конкретный проект.  | `POST /api/chat/threads/{threadId}/attach`  |
-| UC-21 | Отвязка треда от проекта | Thread management | Пользователь превращает project thread обратно в global thread.  | `DELETE /api/chat/threads/{threadId}/attach`  |
-| UC-22 | Удаление треда | Thread actions | Пользователь удаляет ненужный чат без возврата тела ответа.  | `DELETE /api/chat/threads/{threadId}`  |
-| UC-23 | Загрузка документа в проект | Documents tab | Пользователь загружает файл через multipart-форму с `file` и `projectId`; размер ограничен примерно 50 MB.  | `POST /api/documents/upload`  |
-| UC-24 | Просмотр списка документов проекта | Documents tab | UI показывает все документы проекта со статусами `Uploaded`, `Pending`, `Processing`, `Indexed`, `Failed`.  | `GET /api/documents/projects/{projectId}`  |
-| UC-25 | Просмотр документа | Document details | Пользователь открывает карточку документа и видит `sizeBytes`, `contentType`, `chunkCount`, `indexedAtUtc`, `errorMessage`.  | `GET /api/documents/{documentId}`  |
-| UC-26 | Удаление документа | Document actions | Пользователь удаляет файл из проекта.  | `DELETE /api/documents/{documentId}`  |
-| UC-27 | Запуск индексирования | Indexing action | После загрузки пользователь вручную ставит документ в очередь индексации.  | `POST /api/indexing/queue`  |
-| UC-28 | Отслеживание статуса индексации | Indexing status | UI периодически проверяет статус задачи; `204` должен отображаться как “ещё не поставлено в очередь”, а не как ошибка.  | `GET /api/indexing/status/{documentId}`  |
-| UC-29 | Просмотр очереди индексации | Queue screen | Пользователь видит список задач и их состояния `Queued`, `Running`, `Completed`, `Failed`.  | `GET /api/indexing/queue`  |
-| UC-30 | Повторная постановка в очередь | Retry action | Если задача упала, пользователь нажимает requeue и получает новую попытку обработки.  | `POST /api/indexing/requeue`  |
-| UC-31 | Семантический поиск по проекту | RAG Search | Пользователь вводит запрос, выбирает `TopK`, получает список чанков, отсортированных по `Score` по убыванию.  | `POST /api/rag/search`  |
-| UC-32 | Просмотр системных метрик | System monitor | Пользователь видит текущие CPU, RAM и GPU показатели в отдельном виджете или статус-панели.  | `GET /api/system/metrics`  |
+## Контекст проекта
 
-## Админские use cases
+Архитектура: Clean Architecture (Domain / Application / Infrastructure),
+CQRS через MediatR, PostgreSQL (EF Core), ChromaDB (векторное хранилище),
+отдельные endpoints для chat и embedding моделей.
 
-| ID | Use case | Экран UI | Основной сценарий | API                                      |
-| :-- | :-- | :-- | :-- |:-----------------------------------------|
-| AUC-01 | Просмотр списка endpoint-ов | Admin / Models | Админ видит все endpoints и может фильтровать по `Chat` или `Embedding`.  | `GET /api/models?modelType=...`    |
-| AUC-02 | Просмотр карточки endpoint-а | Admin / Model details | Админ открывает конкретную модель и видит её конфигурацию без `ApiKey`, потому что ключ не возвращается сервером.  | `GET /api/models/{endpointId}`           |
-| AUC-03 | Создание endpoint-а | Admin / Create model | Админ задаёт `displayName`, `modelName`, `baseUrl`, `modelType`, `contextWindowTokens`, опционально `apiKey`.  | `POST /api/models`                       |
-| AUC-04 | Редактирование endpoint-а | Admin / Edit model | Админ обновляет конфигурацию endpoint-а и при необходимости заменяет `apiKey`.  | `PUT /api/models/{endpointId}`           |
-| AUC-05 | Включение/отключение endpoint-а | Admin / Toggle | Админ быстро переключает `isEnabled` без полного редактирования объекта.  | `PATCH /api/models/{endpointId}/enabled` |
-| AUC-06 | Удаление endpoint-а | Admin / Danger zone | Админ удаляет устаревшую модель из системы.  | `DELETE /api/models/{endpointId}`  |
+Существующие сущности (менять нельзя, только расширять):
+- Document: OriginalPath, FileName, ProjectId,
+  Status (Uploaded/Pending/Processing/Indexed/Failed), Chunks
+- DocumentChunk: Content, TokenCount, StartOffset, EndOffset, ExternalVectorId
+- IndexingTask: статусы Queued/Running/Completed/Failed
+- ProjectSettings: EmbeddingModelEndpointId, ChatModelEndpointId,
+  RagTopK (1–20, default 5), UseRagContext,
+  ContextWindowSize (1–50, rolling window сообщений — НЕ токенный лимит),
+  MaxTokens, Temperature
+- RagChunkDto: record(VectorId, Content, Score,
+  Metadata: IReadOnlyDictionary<string,string>)
+- Существующий интерфейс: IDocumentParser.ParseToTextAsync(filePath, ct)
+- API: api/indexing/*, api/rag/search
+- Namespace: DevAssistant.*
 
-## UX-сценарии и приоритет MVP
+Текущий недостаток: BuildChunks использует фиксированный split
+по 2000 символов + overlap 250 символов. Нужно заменить семантическим
+chunking'ом без смены внешних API-контрактов.
 
-MVP: `Auth -> Dashboard -> Projects -> Chat -> Documents -> Indexing -> RAG`, а `System Metrics` и `Admin Models` выносил во вторую очередь, потому что основной пользовательский путь уже закрывается без них.
-Отдельно стоит заложить технические use cases интерфейса: обработку `ProblemDetails` для ошибок `400/401/403/404/422/429/500`, щадящий polling из-за лимита `100 запросов / 10 сек`, и устойчивый SSE-парсер для нестандартного формата потока токенов.
+---
 
-## UML use cases
+## Принцип расширяемости (обязательно соблюдать везде)
 
-Ниже диаграмма вариантов использования.
+Архитектура должна поддерживать добавление новых форматов файлов
+(.py, .docx, .pdf, .ipynb и др.) и новых языков программирования
+без изменения Domain и пайплайна индексирования.
 
-```mermaid
-flowchart LR
-    Guest[Guest]
-    User[User]
-    Admin[Admin]
+Правила:
+- Extraction (извлечение текста из формата) и Chunking (семантическое
+  разбиение по языку) — это две независимые оси расширения.
+  Реализовывать их как отдельные registry-based интерфейсы.
+- ChunkKind + ChunkSubKind (двухуровневый) вместо плоского enum,
+  чтобы Python-функция и C#-метод были одним SubKind=MemberMethod.
+- ParsedDocument должен нести язык и MIME — chunker не определяет язык сам.
+- Boost-правила retrieval вынести в IRetrievalBoostProvider,
+  не хардкодить в сервисе.
+- FallbackTextChunker применяется ко всем нераспознанным типам
+  после извлечения текста.
 
-    subgraph Auth["Auth"]
-        UC1[Register]
-        UC2[Login]
-        UC3[Refresh session]
-        UC4[Logout]
-        UC5[View profile]
-    end
+---
 
-    subgraph Dashboard["Dashboard"]
-        UC6[View recent projects chats documents]
-    end
+## 1. Расширение DocumentChunk (Domain)
 
-    subgraph Projects["Projects"]
-        UC7[View projects]
-        UC8[Create project]
-        UC9[Open project]
-        UC10[Update project settings]
-        UC11[Attach folder]
-        UC12[Change folder permissions]
-        UC13[Detach folder]
-        UC14[Delete project]
-    end
+Добавить поля через новый статический фабричный метод CreateSemantic()
+без изменения существующего Create():
 
-    subgraph Chat["Chat"]
-        UC15[Create project thread]
-        UC16[Create global thread]
-        UC17[View thread list]
-        UC18[Open thread history]
-        UC19[Send message]
-        UC20[Stream assistant response]
-        UC21[Rename thread]
-        UC22[Attach thread to project]
-        UC23[Detach thread from project]
-        UC24[Delete thread]
-    end
-
-    subgraph Documents["Documents and Indexing"]
-        UC25[Upload document]
-        UC26[View project documents]
-        UC27[Open document details]
-        UC28[Delete document]
-        UC29[Queue indexing]
-        UC30[Track indexing status]
-        UC31[View indexing queue]
-        UC32[Requeue failed task]
-    end
-
-    subgraph Rag["RAG"]
-        UC33[Semantic search in project]
-    end
-
-    subgraph System["System"]
-        UC34[View system metrics]
-    end
-
-    subgraph Models["Admin models"]
-        UC35[View model endpoints]
-        UC36[Open model endpoint]
-        UC37[Create model endpoint]
-        UC38[Update model endpoint]
-        UC39[Enable disable model endpoint]
-        UC40[Delete model endpoint]
-    end
-
-    Guest --> UC1
-    Guest --> UC2
-    Guest --> UC3
-
-    User --> UC4
-    User --> UC5
-    User --> UC6
-    User --> UC7
-    User --> UC8
-    User --> UC9
-    User --> UC10
-    User --> UC11
-    User --> UC12
-    User --> UC13
-    User --> UC14
-    User --> UC15
-    User --> UC16
-    User --> UC17
-    User --> UC18
-    User --> UC19
-    User --> UC20
-    User --> UC21
-    User --> UC22
-    User --> UC23
-    User --> UC24
-    User --> UC25
-    User --> UC26
-    User --> UC27
-    User --> UC28
-    User --> UC29
-    User --> UC30
-    User --> UC31
-    User --> UC32
-    User --> UC33
-    User --> UC34
-
-    Admin --> UC35
-    Admin --> UC36
-    Admin --> UC37
-    Admin --> UC38
-    Admin --> UC39
-    Admin --> UC40
+```csharp
+// Новые поля DocumentChunk:
+ChunkKind    Kind          // Code | Document | Config | FallbackText
+ChunkSubKind SubKind       // TypeSummary | MemberMethod | ControllerAction |
+                           // Dto | Enum | Interface | EntryPoint |
+                           // Section | CodeFence | TableBlock |
+                           // ConfigSection | Custom
+string?      SemanticPath  // "ChatService > SendMessageAsync"
+string?      HeadingPath   // "H1 > H2 > H3" (для Document)
+string?      Language      // "csharp" | "python" | "markdown" | "json" | ...
+Guid?        ParentChunkId // ссылка на summary-чанк того же файла
+string       ContentHash   // SHA256 первые 16 hex
+string?      RootEntityName
+int          LineStart
+int          LineEnd
 ```
 
-Для текстового описания диаграммы в дипломе можно зафиксировать, что основной пользовательский поток строится вокруг проекта, внутри которого пользователь настраивает AI-параметры, ведёт чат, загружает документы и запускает индексацию для последующего RAG-поиска.
-Отдельный административный поток существует из-за независимого набора endpoint-ов `/api/models`, где управляются chat- и embedding-модели на уровне системы.
+---
 
-## Экранная структура
+## 2. Расширение метаданных ChromaDB
 
-Ниже экранная карта, которую удобно использовать как sitemap desktop-приложения.
+Дополнить BuildChunkMetadata() (сейчас: 6 полей) до:
 
-```text
-DevAssistant
-├── Auth
-│   ├── Login
-│   ├── Register
-│   └── Session restore / refresh
-├── App Shell
-│   ├── Sidebar navigation
-│   ├── Top bar
-│   └── Global notifications / errors
-├── Dashboard
-│   ├── Recent projects
-│   ├── Recent chats
-│   └── Recent documents
-├── Projects
-│   ├── Project list
-│   ├── Create project modal
-│   └── Project details
-│       ├── Overview
-│       ├── Settings
-│       ├── Folder access
-│       ├── Documents
-│       ├── Indexing
-│       ├── RAG search
-│       └── Project chat
-├── Global Chat
-│   ├── Thread list
-│   ├── Thread history
-│   └── Composer + streaming response
-├── System Monitor
-│   └── CPU / RAM / GPU metrics
-├── Profile
-│   ├── Me
-│   └── Logout
-└── Admin
-    └── Model Endpoints
-        ├── List
-        ├── Create
-        ├── Edit
-        ├── Enable / disable
-        └── Delete
+projectId, documentId, chunkId, fileName, filePath, fileExtension,
+language, mimeType, chunkKind, chunkSubKind, semanticPath, headingPath,
+lineStart, lineEnd, tokenCount, parentChunkId, rootEntityName,
+contentHash, indexedAtUtc, embeddingModel
+
+Дополнительно для ControllerAction:
+httpMethod, routeTemplate, requestType, responseType, authorizeAttributes
+
+---
+
+## 3. Интерфейсы (Application layer)
+
+### 3.1 Content Extraction (замена IDocumentParser)
+
+```csharp
+// ParsedDocument — общий результат извлечения
+public sealed record ParsedDocument(
+    string FilePath,
+    string Language,               // определяется экстрактором
+    string MimeType,
+    IReadOnlyList<string> Lines,
+    string FullText);
+
+// Экстрактор для конкретного формата файла
+public interface IContentExtractor
+{
+    bool CanHandle(string fileExtension, string? mimeType = null);
+    Task<ParsedDocument> ExtractAsync(string filePath, CancellationToken ct);
+}
+
+// Фасад — существующий IDocumentParser делегирует сюда
+public interface IContentExtractorRegistry
+{
+    Task<ParsedDocument> ExtractAsync(string filePath, CancellationToken ct);
+}
 ```
 
-Такое разбиение логично, потому что `dashboard/recent` уже агрегирует стартовые данные для домашнего экрана, а почти вся остальная предметная работа группируется вокруг `projectId`.
-Глобальный чат стоит вынести в отдельный раздел навигации, потому что сервер различает project threads и global threads через отдельные endpoints создания и выборки.
+Реализовать экстракторы:
+- PlainTextExtractor (.cs, .md, .json, .yml, .yaml, .csproj, .txt и др.)
+- FallbackBinaryExtractor (возвращает пустой FullText, не падает)
 
-## Спецификация экранов
+Зарезервировать расширение: DocxExtractor, PdfExtractor, NotebookExtractor
+(описать как TODO с указанием NuGet: DocumentFormat.OpenXml, PdfPig,
+System.Text.Json для .ipynb).
 
-### Auth
+### 3.2 Semantic Chunking
 
-Экран `Login` должен поддерживать вход по `identifier`, который должен быть username, а после успешного ответа сохранять access/refresh токены и загружать профиль через `GET /api/auth/me`.
-Экран `Register` должен собирать `username`, `email`, `password` и сразу переводить пользователя в авторизованное состояние, потому что регистрация тоже возвращает `AuthTokenDto`.
+```csharp
+public interface ISemanticChunker
+{
+    bool CanHandle(string fileExtension, string? mimeType = null);
+    IReadOnlyList<SemanticChunk> Chunk(ParsedDocument document);
+}
 
-### Dashboard
+public sealed record SemanticChunk(
+    string Content,
+    ChunkKind Kind,
+    ChunkSubKind SubKind,
+    string? SemanticPath,
+    string? HeadingPath,
+    int LineStart,
+    int LineEnd,
+    int EstimatedTokens,
+    Guid? ParentChunkId,
+    string? RootEntityName,
+    IReadOnlyDictionary<string, string> ExtraMetadata);
 
-Dashboard должен быть лёгким стартовым экраном с тремя блоками: последние проекты, последние чаты и последние документы, так как сервер уже отдаёт это одним запросом `GET /api/dashboard/recent`.
-Каждый элемент списка должен вести в соответствующий детальный экран: проект, чат-тред или карточку документа.
-
-### Projects
-
-Экран списка проектов показывает полный перечень без пагинации, поэтому в UI стоит предусмотреть локальный поиск, сортировку и client-side фильтры.
-Экран создания проекта должен включать `name`, `description` и `accessMode`, где enum передаётся строками вроде `Private` и `Shared`.
-
-Карточку проекта лучше разбить на вкладки: `Overview`, `Settings`, `Folder Access`, `Documents`, `Indexing`, `RAG Search`, `Project Chat`, потому что именно так группируются доступные серверные операции.
-Во вкладке `Settings` нужно редактировать `systemPrompt`, `maxTokens`, `temperature`, `ragTopK`, `useRagContext`, `contextWindowSize` и опционально выбранные model endpoints.
-
-Во вкладке `Folder Access` лучше использовать форму пути и набор чекбоксов `Read / Edit / Delete`, потому что `FolderPermission` на сервере является `[Flags]` enum и сериализуется строкой комбинаций.
-Кнопку удаления проекта нужно выносить в danger-zone, так как удаление выполняется отдельной операцией `DELETE /api/projects/{projectId}`.
-
-### Chat
-
-В проектном чате нужен левый сайдбар со списком тредов проекта и основная область истории сообщений, потому что сервер отдельно отдаёт список тредов и отдельно историю конкретного треда.
-Для global chat нужен такой же layout, но данные должны приходить из `GET /api/chat/threads` и создаваться через `POST /api/chat/threads/global`.
-
-Внизу чата нужен composer с двумя режимами отправки: обычный request/response и streaming-режим.
-Streaming UI важно проектировать осторожно, потому что сервер использует нестандартный SSE-формат без обязательного `data:` префикса и завершает поток через `event: done`.
-
-Контекстное меню треда должно включать действия `Rename`, `Attach to project`, `Detach from project`, `Delete`, поскольку для каждого из них есть отдельный endpoint.
-Это особенно полезно для DevAssistant-сценария, где пользователь может сначала вести общий exploratory-диалог, а потом прикрепить его к конкретному проекту.
-
-### Documents, Indexing, RAG
-
-Во вкладке `Documents` нужен drag-and-drop upload или кнопка выбора файла, где форма отправляет `multipart/form-data` с `file` и `projectId`, а UI показывает лимит около 50 MB.
-Список документов должен явно показывать статус `Uploaded`, `Pending`, `Processing`, `Indexed` или `Failed`, а также размер, дату и возможную ошибку обработки.
-
-Во вкладке `Indexing` нужен список задач, индикатор статуса документа и кнопка `Queue indexing` для документов, которые ещё не отправлены в очередь.
-При polling необходимо трактовать `204` от `GET /api/indexing/status/{documentId}` как состояние “задачи ещё нет”, а не как аварийный ответ.
-
-Во вкладке `RAG Search` нужна форма `query + topK` и список найденных чанков с `score`, `content` и metadata, потому что именно это возвращает `POST /api/rag/search`.
-Эту вкладку особенно полезно связать с project settings, где пользователь может включать и выключать `UseRagContext` и настраивать `RagTopK`.
-
-### System Monitor и Admin
-
-Экран `System Monitor` можно реализовать как компактную панель в sidebar/footer, потому что `GET /api/system/metrics` возвращает плоский snapshot CPU, RAM и GPU.
-Для диплома это хороший “операционный” модуль, показывающий, что ассистент учитывает ресурсы локальной машины.
-
-Раздел `Admin / Model Endpoints` должен быть скрыт для обычного пользователя и показываться только при наличии admin-role, так как иначе UI неизбежно получит `403`.
-На этом экране нужны список, фильтр по `Chat/Embedding`, форма создания/редактирования и быстрый toggle `enabled`, причём `ApiKey` вводится пользователем, но не возвращается сервером обратно.
-
-## MVP для диплома
-
-Для первой рабочей версии я бы рекомендовал такой релизный срез: `Login/Register`, `Dashboard`, `Projects`, `Project Settings`, `Project Chat`, `Documents`, `Indexing`, `RAG Search`.
-`System Monitor` и `Admin Models` можно вынести во вторую итерацию, потому что они расширяют продукт, но не ломают базовый пользовательский сценарий ассистента.
-
-С архитектурной точки зрения это означает, что навигация может строиться вокруг shell-layout с постоянным sidebar, а основной маршрут проекта должен быть вида `projects/:projectId/*`, где дочерние вкладки открывают chat, docs, indexing и rag.
-Такое разбиение хорошо стыкуется с твоим дипломным форматом, потому что даёт понятную декомпозицию на bounded UI-модули и отдельные application services поверх уже существующих API-контрактов.
-
-## Иерархия файлов
-```text
-DevAssistant
-├── src
-│   ├── app
-│   │   ├── layout
-│   │   ├── routing
-│   │   └── providers
-│   ├── pages
-│   │   ├── auth
-│   │   ├── dashboard
-│   │   ├── projects
-│   │   ├── global-chat
-│   │   ├── system
-│   │   ├── profile
-│   │   └── admin-models
-│   ├── features
-│   │   ├── auth
-│   │   ├── project-settings
-│   │   ├── folders
-│   │   ├── chat
-│   │   ├── documents
-│   │   ├── indexing
-│   │   ├── rag-search
-│   │   └── system-metrics
-│   ├── entities
-│   │   ├── user
-│   │   ├── project
-│   │   ├── chat-thread
-│   │   ├── chat-message
-│   │   ├── document
-│   │   ├── indexing-task
-│   │   └── model-endpoint
-│   ├── shared
-│   │   ├── api
-│   │   ├── lib
-│   │   ├── config
-│   │   ├── ui
-│   │   └── types
-│   └── widgets
-│       ├── sidebar
-│       ├── topbar
-│       ├── recent-list
-│       ├── project-tabs
-│       └── chat-layout
-└── docs
-    ├── use-cases.md
-    ├── screen-map.md
-    └── architecture.md
+public interface IChunkerRegistry
+{
+    ISemanticChunker Resolve(string fileExtension, string? mimeType = null);
+}
 ```
+
+### 3.3 Retrieval Boost
+
+```csharp
+public sealed record RetrievalBoostRule(
+    string[] QueryKeywords,
+    ChunkKind TargetKind,
+    ChunkSubKind? TargetSubKind,
+    float BoostFactor);
+
+public interface IRetrievalBoostProvider
+{
+    IReadOnlyList<RetrievalBoostRule> GetRules();
+}
+```
+
+Реализовать DefaultRetrievalBoostProvider с правилами:
+- "где", "как работает", "endpoint", "метод", "dto" →
+  ControllerAction/MemberMethod boost x1.3
+- "архитектура", "опиши", "структура", "модуль" →
+  TypeSummary boost x1.2
+- (расширяется через DI без изменения retrieval-сервиса)
+
+### 3.4 RAG Retrieval Service
+
+```csharp
+public interface IRagRetrievalService
+{
+    Task<RagContextResult> RetrieveAsync(
+        Guid projectId,
+        string query,
+        ProjectSettings settings,
+        CancellationToken ct);
+}
+
+public sealed record RagContextResult(
+    IReadOnlyList<RagChunkDto> Chunks,
+    string FormattedContext,    // готов для вставки в промпт
+    int TotalTokensEstimate);
+```
+
+---
+
+## 4. Правила chunking по типам файлов
+
+### 4.1 C# (.cs) — через Roslyn (Microsoft.CodeAnalysis.CSharp)
+
+Уровни разбиения:
+1. Файл → 1 Summary-чанк (SubKind=TypeSummary): namespace + все type names
+    + public member signatures. ParentChunkId = null.
+2. Небольшой тип (≤ 600 токенов) → 1 CodeType-чанк (SubKind=TypeSummary).
+3. Большой тип → TypeSummary-чанк + MemberMethod/MemberProperty на каждый
+   public метод/свойство/конструктор.
+4. Controller: TypeSummary + ControllerAction на каждый action.
+5. DTO, record, enum, interface → SubKind Dto/Enum/Interface (type-level чанк).
+6. Метод > 800 токенов → делить по region/блокам if-switch/локальным функциям,
+   НЕ разрывать сигнатуру с телом.
+7. Private helpers < 80 токенов → присоединить к ближайшему public методу.
+8. Program.cs → SubKind=EntryPoint, блоки по логическим секциям
+   (services, middleware, auth, endpoints mapping).
+
+Размеры: 200–600 токенов (цель), мягкий максимум 800, жёсткий 1000.
+
+Overlap (семантический):
+Каждый member-чанк содержит: namespace, имя типа, сигнатуру метода/свойства,
+атрибуты ([HttpGet], [Authorize], [FromBody] и др.), 3–5 строк контекста.
+Overhead: 30–80 токенов. Тело метода не дублировать между соседними чанками.
+
+### 4.2 Markdown (.md) — через Markdig
+
+- 1 секция ## или ### = 1 Section-чанк при ≤ 900 токенов.
+- Длинная секция → делить по абзацам/спискам, сохранять HeadingPath.
+- Code fence > 100 токенов → SubKind=CodeFence, ParentChunkId = текстовый родитель.
+- Маленькие соседние секции одного уровня можно объединять.
+
+Размеры: 250–700 токенов (цель), мягкий 900, жёсткий 1100.
+
+Overlap: breadcrumb H1 > H2 > H3 + опционально первый абзац родителя.
+Overhead: 20–60 токенов.
+
+### 4.3 Config (.json, .yml, .yaml, .csproj, .props)
+
+- Разбивать по верхнеуровневым секциям/логическим группам.
+- Не резать посередине объекта или массива.
+- SubKind = ConfigSection.
+- Размеры: 100–400 токенов, максимум 700.
+- Overlap: только путь секции + имя файла.
+
+### 4.4 Fallback (все остальные / нераспознанные)
+
+- Фиксированный split: 300–500 токенов, overlap 40–70 токенов посимвольный.
+- Kind=FallbackText, SubKind=Custom.
+- Применяется в том числе к .docx и .pdf после извлечения текста,
+  если специфичного chunker ещё нет.
+
+### 4.5 Зарезервировано для будущего расширения
+
+Описать как TODO-заглушки в IChunkerRegistry с указанием подхода:
+- Python (.py): tree-sitter-python — разбиение по def/class/decorator
+- Jupyter (.ipynb): JSON-парсинг → cell-chunks (code cell / markdown cell)
+- DOCX (.docx): DocumentFormat.OpenXml → разбиение по стилям заголовков
+  (Heading1/2/3) аналогично Markdown
+- PDF (.pdf): PdfPig → разбиение по параграфам/страницам
+
+---
+## 5. Пайплайн индексирования
+Заменить метод BuildChunks() в ProcessIndexingTaskHandler,
+сохранив транзакционную схему (блок 1 до SaveChanges, блок 2 best-effort):
+1.	FileFilter
+      o	Проверить расширение, пропустить бинарные и > 5 МБ
+      o	Исключить: .git/, bin/, obj/, node_modules/, venv/, dist/
+2.	HashCheck
+      o	Вычислить ContentHash (SHA256 от содержимого, первые 16 hex)
+      o	Пропустить файл если hash совпадает — идемпотентность
+3.	Extract
+      o	IContentExtractorRegistry.ExtractAsync(filePath) → ParsedDocument
+      o	При ошибке: логировать, Document.MarkFailed, не терять остальные файлы
+4.	Chunk
+      o	IChunkerRegistry.Resolve(ext, mimeType).Chunk(parsedDocument)
+      o	Отфильтровать чанки < 10 токенов
+5.	Embed
+      o	Батчи по 20 чанков к embedding endpoint
+      o	Retry 3 раза с Polly (exponential backoff)
+      o	Пропускать пустые чанки
+6.	Persist (в рамках транзакции)
+      o	DocumentChunk.CreateSemantic(...) для каждого чанка
+      o	SetExternalVectorId
+      o	document.MarkIndexed(chunks), task.Complete()
+      o	SaveChangesAsync
+7.	VectorUpsert (best-effort, после SaveChanges)
+      o	VectorStore.UpsertAsync с расширенными метаданными
+      o	Ошибки логировать, не откатывать PostgreSQL-состояние
+
+---
+
+## 6. Пайплайн retrieval
+
+Алгоритм IRagRetrievalService.RetrieveAsync:
+1.	Если UseRagContext = false → вернуть пустой RagContextResult
+2.	Embedding запроса через EmbeddingModelEndpointId проекта
+3.	Поиск в ChromaDB:
+      where = { projectId: settings.ProjectId }
+      topN = max(RagTopK * 3, 15) кандидатов
+4.	Post-filtering:
+      a. Убрать дубликаты по ContentHash
+      b. Не более 3 чанков из одного файла (filePath в metadata)
+      c. Score threshold: отбросить score < 0.30
+      d. Применить IRetrievalBoostProvider.GetRules() к оставшимся
+5.	Взять top-RagTopK после ре-ранкинга
+6.	Собрать FormattedContext:
+      Для каждого чанка — citation header:
+      "// [fileName:lineStart] semanticPath" + Content
+      Ограничить суммарный объём: ~35% от MaxTokens настроек проекта
+7.	Вернуть RagContextResult(Chunks, FormattedContext, TotalTokensEstimate)
+
+
+---
+
+## 7. Интеграция с chat (Application/Chat)
+
+В ChatService.SendMessageAsync и StreamAsync перед формированием промпта:
+
+```csharp
+if (settings.UseRagContext)
+{
+    var ragResult = await _ragRetrievalService.RetrieveAsync(
+        project.Id, userMessage, settings, ct);
+
+    systemPrompt = BuildSystemPromptWithContext(
+        settings.SystemPrompt, ragResult.FormattedContext);
+}
+```
+
+Поддержать оба пути: обычный ответ и SSE-стрим.
+
+---
+
+## 8. Sane defaults
+
+| Параметр              | Рекомендация    | Текущий default        |
+|-----------------------|-----------------|------------------------|
+| RagTopK               | 6–8             | 5 → увеличить до 6     |
+| Первичный retrieval   | RagTopK × 3     | —                      |
+| Score threshold       | 0.30            | —                      |
+| Max chunks per file   | 3               | —                      |
+| Context budget        | ~35% MaxTokens  | —                      |
+| ContextWindowSize     | 10 сообщений    | 10 (корректно)         |
+| Chunk target (code)   | 200–600 токенов | 500 символов ≈ 125 ❌  |
+
+Примечание: ContextWindowSize — rolling window истории сообщений (1–50),
+не токенный лимит. Задокументировать явно в XML-комментарии.
+
+---
+
+## 9. Этапы реализации
+
+1. **Domain**: расширить DocumentChunk (новые поля через CreateSemantic),
+   добавить ChunkKind + ChunkSubKind enums
+2. **Application contracts**: ParsedDocument, SemanticChunk,
+   IContentExtractor, IContentExtractorRegistry, ISemanticChunker,
+   IChunkerRegistry, IRetrievalBoostProvider, IRagRetrievalService
+3. **Infrastructure — Extractors**:
+   PlainTextExtractor, FallbackBinaryExtractor
+4. **Infrastructure — Chunkers**:
+   CSharpRoslynChunker, MarkdownChunker, ConfigChunker, FallbackTextChunker
+5. **Application**: заменить BuildChunks в ProcessIndexingTaskHandler
+6. **Application**: реализовать IRagRetrievalService
+7. **Application/Chat**: интегрировать retrieval перед send/stream
+8. **Observability**: логировать chunk stats (count, avg token size, hit-rate),
+   согласовать с ILogger<T>
+
+---
+
+## 10. Критерии качества
+
+- Чанки .cs совпадают со смысловыми единицами, сигнатуры не разрываются
+- Markdown индексируется по заголовочной иерархии
+- Overlap семантический — сигнатура + контекст, не дублирование тела
+- Retrieval возвращает конкретные методы/классы/endpoints, не шумные обрезки
+- Метаданные достаточны для citation в ответе LLM
+- Индексирование идемпотентно (ContentHash + DeleteChunks перед re-index)
+- Добавление нового типа файла = 1 новый класс IContentExtractor или
+  ISemanticChunker + регистрация в DI, без изменения пайплайна
+
+---
+
+## Формат ответа
+
+1. C#-скелеты всех интерфейсов и Domain-изменений
+2. Полная реализация CSharpRoslynChunker с примерами Roslyn SyntaxWalker
+3. Полная реализация MarkdownChunker
+4. Изменения в ProcessIndexingTaskHandler
+5. Реализация IRagRetrievalService + DefaultRetrievalBoostProvider
+6. TODO-заглушки для Python/DOCX/PDF/ipynb с указанием NuGet-пакетов
+7. Список компромиссов: почему это лучше naive fixed-size split
+

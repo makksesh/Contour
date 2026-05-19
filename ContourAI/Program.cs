@@ -13,12 +13,12 @@ using Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using ContourAI.Features.Auth;
 using ContourAI.Features.Chat;
-using ContourAI.Features.Dashboard;
 using ContourAI.Features.Documents;
 using ContourAI.Features.Projects;
 using ContourAI.Features.Shell;
 using ContourAI.Shared.Api;
 using ContourAI.Shared.State;
+using ContourAI.Widgets.SystemMetrics;
 
 namespace ContourAI;
 
@@ -62,16 +62,16 @@ internal static class Program
 
         // API-сервисы
         services.AddSingleton<AuthService>();
-        services.AddSingleton<DashboardService>();
         services.AddSingleton<ProjectsService>();
         services.AddSingleton<DocumentsService>();
-        services.AddSingleton<ChatService>();       
-        services.AddSingleton<IndexingService>(); 
+        services.AddSingleton<ChatService>();
+        services.AddSingleton<IndexingService>();
+        services.AddSingleton<SystemMetricsService>();
 
         // ViewModels
         services.AddTransient<LoginViewModel>();
         services.AddTransient<RegisterViewModel>();
-        services.AddSingleton<DashboardViewModel>();
+        services.AddSingleton<SystemMetricsViewModel>();
         services.AddSingleton<CreateProjectDialogViewModel>();
         
         services.AddSingleton<ProjectsViewModel>(sp => new ProjectsViewModel(

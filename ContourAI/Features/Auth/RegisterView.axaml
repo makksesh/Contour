@@ -10,7 +10,7 @@
              x:DataType="auth:RegisterViewModel"
              mc:Ignorable="d"
              x:Class="ContourAI.Features.Auth.RegisterView">
-  <Border Background="#111827"
+  <Border Background="{StaticResource ThemeWindowBrush}"
           Padding="32">
     <Grid RowDefinitions="Auto,*"
           MaxWidth="520"
@@ -21,34 +21,37 @@
         <TextBlock Text="Создание аккаунта"
                    FontSize="30"
                    FontWeight="SemiBold"
-                   Foreground="#F9FAFB" />
+                   Foreground="{StaticResource ThemeTextPrimaryBrush}" />
         <TextBlock Text="Регистрация в ContourAI"
                    FontSize="15"
-                   Foreground="#9CA3AF" />
+                   Classes="secondary" />
       </StackPanel>
 
       <Border Grid.Row="1"
-              Background="#1F2937"
+              Classes="card"
+              Background="{StaticResource ThemeSandBrush}"
               CornerRadius="18"
               Padding="24">
         <StackPanel Spacing="16">
-          <Border Background="#0F172A"
+          <Border Classes="panel-alt"
+                  Background="{StaticResource ThemeSandAltBrush}"
                   CornerRadius="12"
                   Padding="12">
             <StackPanel Spacing="4">
               <TextBlock Text="Текущий сервер"
                          FontWeight="SemiBold"
-                         Foreground="#F3F4F6" />
+                         Classes="on-light" />
               <TextBlock Text="{Binding ServerIpDisplay}"
-                         Foreground="#5EEAD4" />
+                         Classes="on-light-secondary"
+                         FontWeight="SemiBold" />
             </StackPanel>
           </Border>
 
           <StackPanel Spacing="6">
             <TextBlock Text="Username"
                        FontWeight="SemiBold"
-                       Foreground="#F3F4F6" />
-            <TextBox Watermark="Введите username"
+                       Classes="on-light" />
+            <TextBox PlaceholderText="Введите username"
                      Text="{Binding Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Classes="auth-input" />
           </StackPanel>
@@ -56,8 +59,8 @@
           <StackPanel Spacing="6">
             <TextBlock Text="Email"
                        FontWeight="SemiBold"
-                       Foreground="#F3F4F6" />
-            <TextBox Watermark="Введите email"
+                       Classes="on-light" />
+            <TextBox PlaceholderText="Введите email"
                      Text="{Binding Email, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Classes="auth-input" />
           </StackPanel>
@@ -65,8 +68,8 @@
           <StackPanel Spacing="6">
             <TextBlock Text="Пароль"
                        FontWeight="SemiBold"
-                       Foreground="#F3F4F6" />
-            <TextBox Watermark="Введите пароль"
+                       Classes="on-light" />
+            <TextBox PlaceholderText="Введите пароль"
                      PasswordChar="●"
                      Text="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Classes="auth-input" />
@@ -74,25 +77,23 @@
 
           <TextBlock Text="{Binding ErrorMessage}"
                      TextWrapping="Wrap"
-                     Foreground="#FCA5A5"
+                     Foreground="{StaticResource ThemeDangerBrush}"
                      IsVisible="{Binding HasError}" />
 
-          <Button Content="Создать аккаунт"
+          <Button Classes="primary"
+                  Content="Создать аккаунт"
                   Height="44"
                   Command="{Binding RegisterCommand}"
-                  Background="#0F766E"
-                  Foreground="White"
                   FontWeight="SemiBold" />
 
           <StackPanel Orientation="Horizontal"
                       Spacing="8"
                       HorizontalAlignment="Center">
             <TextBlock Text="Уже есть аккаунт?"
-                       Foreground="#9CA3AF" />
+                       Classes="on-light-secondary" />
             <Button Content="Войти"
                     Command="{Binding OpenLoginCommand}"
-                    Background="Transparent"
-                    Foreground="#5EEAD4" />
+                    Classes="link" />
           </StackPanel>
         </StackPanel>
       </Border>

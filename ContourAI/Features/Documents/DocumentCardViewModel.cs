@@ -44,11 +44,11 @@ public sealed partial class DocumentCardViewModel : ObservableObject
 
     public string StatusColor => Status switch
     {
-        DocumentStatus.Indexed    => "#6daa45",
-        DocumentStatus.Failed     => "#dd6974",
-        DocumentStatus.Processing => "#fdab43",
-        DocumentStatus.Pending    => "#797876",
-        _                         => "#797876"
+        DocumentStatus.Indexed    => "#8D9E73",
+        DocumentStatus.Failed     => "#8C4E49",
+        DocumentStatus.Processing => "#B88A56",
+        DocumentStatus.Pending    => "#8F8477",
+        _                         => "#8F8477"
     };
 
     public bool HasError => Status == DocumentStatus.Failed && !string.IsNullOrEmpty(ErrorMessage);

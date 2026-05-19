@@ -11,7 +11,7 @@
         MinWidth="920"
         MinHeight="640"
         Title="ContourAI">
-  <Border Background="#0B1120">
+  <Border Background="{StaticResource ThemeWindowBrush}">
     <ContentControl Content="{Binding CurrentViewModel}" />
   </Border>
 </Window>

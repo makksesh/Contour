@@ -1,0 +1,83 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ContourAI.Widgets.SystemMetrics"
+             x:Class="ContourAI.Widgets.SystemMetrics.SystemMetricsView"
+             x:DataType="vm:SystemMetricsViewModel">
+
+  <UserControl.Styles>
+    <Style Selector="Border.metric-chip">
+      <Setter Property="Background" Value="{StaticResource ThemeSurfaceAltBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource ThemeBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="12"/>
+      <Setter Property="Padding" Value="12 8"/>
+    </Style>
+
+    <Style Selector="TextBlock.metric-label">
+      <Setter Property="Foreground" Value="{StaticResource ThemeTextMutedBrush}"/>
+      <Setter Property="FontSize" Value="10"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="LetterSpacing" Value="0.8"/>
+    </Style>
+
+    <Style Selector="TextBlock.metric-value">
+      <Setter Property="Foreground" Value="{StaticResource ThemeTextPrimaryBrush}"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
+    <Style Selector="TextBlock.metric-temp">
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+  </UserControl.Styles>
+
+  <Panel HorizontalAlignment="Left"
+         VerticalAlignment="Center">
+    <StackPanel Orientation="Horizontal"
+                Spacing="8"
+                IsVisible="{Binding IsServerConnected}">
+      <Border Classes="metric-chip">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <TextBlock Text="GPU" Classes="metric-label"/>
+          <TextBlock Text="{Binding GpuLoad}" Classes="metric-value"/>
+          <TextBlock Text="{Binding GpuTemp}"
+                     Classes="metric-temp"
+                     Foreground="{Binding GpuTempBrush}"/>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="metric-chip">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <TextBlock Text="CPU" Classes="metric-label"/>
+          <TextBlock Text="{Binding CpuLoad}" Classes="metric-value"/>
+          <TextBlock Text="{Binding CpuTemp}"
+                     Classes="metric-temp"
+                     Foreground="{Binding CpuTempBrush}"/>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="metric-chip">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <TextBlock Text="RAM" Classes="metric-label"/>
+          <TextBlock Text="{Binding RamLoad}" Classes="metric-value"/>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+
+    <StackPanel Orientation="Horizontal"
+                Spacing="8"
+                IsVisible="{Binding !IsServerConnected}"
+                VerticalAlignment="Center">
+      <Ellipse Width="7"
+               Height="7"
+               Fill="{StaticResource ThemeTextMutedBrush}"
+               VerticalAlignment="Center"
+               Opacity="0.7"/>
+      <TextBlock Text="{Binding ConnectionStatus}"
+                 Classes="muted"
+                 FontSize="12"
+                 VerticalAlignment="Center"/>
+    </StackPanel>
+  </Panel>
+</UserControl>

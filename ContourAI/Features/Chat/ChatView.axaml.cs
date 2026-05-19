@@ -2,7 +2,7 @@
 /// Code-behind для ChatView.
 /// Автоскролл вниз при добавлении нового сообщения через Messages.CollectionChanged.
 /// PointerPressed → vm.RaiseSelected(), кнопка × → vm.RaiseDeleteRequested().
-/// Enter в TextBox → vm.SendCommand.
+/// Enter → отправка, Shift+Enter → новая строка.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -64,7 +64,9 @@ public partial class ChatView : UserControl
 
     private void Input_KeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key != Key.Enter) return;
+        if (e.Key != Key.Enter || e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+            return;
+
         if (DataContext is ChatViewModel vm)
             vm.SendCommand.Execute(null);
         e.Handled = true;

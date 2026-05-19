@@ -9,42 +9,44 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:ContourAI.Features.Chat"
-             xmlns:md="clr-namespace:Markdown.Avalonia;assembly=Markdown.Avalonia"
+             xmlns:markdown="using:ContourAI.Widgets.Markdown"
              x:Class="ContourAI.Features.Chat.ChatView"
              x:DataType="vm:ChatViewModel">
 
   <UserControl.Styles>
-    <!-- ── Кнопки ─────────────────────────────────────────────────── -->
-    <Style Selector="Button.primary">
-      <Setter Property="Background"   Value="#01696f"/>
-      <Setter Property="Foreground"   Value="White"/>
-      <Setter Property="Padding"      Value="14 7"/>
-      <Setter Property="CornerRadius" Value="6"/>
-    </Style>
-    <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
-      <Setter Property="Background" Value="#0c4e54"/>
-    </Style>
-    <Style Selector="Button.ghost">
-      <Setter Property="Background"   Value="Transparent"/>
-      <Setter Property="Foreground"   Value="#7a7974"/>
-      <Setter Property="Padding"      Value="10 5"/>
-      <Setter Property="CornerRadius" Value="6"/>
-    </Style>
-    <Style Selector="Button.ghost:pointerover /template/ ContentPresenter">
-      <Setter Property="Background" Value="#22211f"/>
-    </Style>
-
     <!-- ── TextBox ─────────────────────────────────────────────────── -->
     <Style Selector="TextBox.chat-input">
-      <Setter Property="Background"   Value="#22211f"/>
-      <Setter Property="Foreground"   Value="#cdccca"/>
-      <Setter Property="BorderBrush"  Value="#393836"/>
+      <Setter Property="Background"   Value="{StaticResource ThemeSurfaceAltBrush}"/>
+      <Setter Property="Foreground"   Value="{StaticResource ThemeTextPrimaryBrush}"/>
+      <Setter Property="BorderBrush"  Value="{StaticResource ThemeBorderBrush}"/>
       <Setter Property="CornerRadius" Value="8"/>
       <Setter Property="Padding"      Value="12 8"/>
       <Setter Property="FontSize"     Value="14"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+      <Setter Property="VerticalContentAlignment" Value="Top"/>
+      <Setter Property="MinHeight" Value="44"/>
+      <Setter Property="MaxHeight" Value="220"/>
     </Style>
     <Style Selector="TextBox.chat-input:focus /template/ Border">
-      <Setter Property="BorderBrush" Value="#4f98a3"/>
+      <Setter Property="BorderBrush" Value="{StaticResource ThemeAccentBrush}"/>
+    </Style>
+
+    <Style Selector="SelectableTextBlock.message-text">
+      <Setter Property="TextWrapping" Value="Wrap"/>
+      <Setter Property="SelectionBrush" Value="{StaticResource ThemeAccentSoftBrush}"/>
+      <Setter Property="SelectionForegroundBrush" Value="{StaticResource ThemeTextPrimaryBrush}"/>
+      <Setter Property="Cursor" Value="Ibeam"/>
+    </Style>
+
+    <Style Selector="SelectableTextBlock.user-message">
+      <Setter Property="Foreground" Value="{StaticResource ThemeTextOnLightBrush}"/>
+      <Setter Property="FontSize" Value="14"/>
+    </Style>
+
+    <Style Selector="SelectableTextBlock.assistant-message">
+      <Setter Property="Foreground" Value="{StaticResource ThemeTextPrimaryBrush}"/>
+      <Setter Property="FontSize" Value="14"/>
+      <Setter Property="LineHeight" Value="21"/>
     </Style>
   </UserControl.Styles>
 
@@ -58,13 +60,13 @@
     <!-- ─── Хедер: название активного треда ─────────────────────── -->
     <Border Grid.Row="0"
             Background="Transparent"
-            BorderBrush="White"
+            BorderBrush="{StaticResource ThemeBorderBrush}"
             BorderThickness="0 0 0 1"
             Padding="20 12">
       <TextBlock Text="{Binding SelectedThreadTitle}"
                  FontSize="15"
                  FontWeight="Medium"
-                 Foreground="#cdccca"/>
+                 Foreground="{StaticResource ThemeTextSecondaryBrush}"/>
     </Border>
 
     <!-- ─── Лента сообщений ───────────────────────────────────────── -->
@@ -81,7 +83,8 @@
           <TextBlock Text="&#x1F4AC;" FontSize="36"
                      HorizontalAlignment="Center"/>
           <TextBlock Text="Select a chat from the sidebar"
-                     FontSize="14" Foreground="#5a5957"
+                     FontSize="14"
+                     Classes="muted"
                      HorizontalAlignment="Center"/>
         </StackPanel>
 
@@ -91,17 +94,20 @@
                     VerticalAlignment="Center"
                     Spacing="10">
           <TextBlock Text="Start the conversation"
-                     FontSize="14" Foreground="#5a5957"
+                     FontSize="14"
+                     Classes="secondary"
                      HorizontalAlignment="Center"/>
           <TextBlock Text="Ask anything — the assistant will answer based on context"
-                     FontSize="12" Foreground="#393836"
+                     FontSize="12"
+                     Classes="muted"
                      HorizontalAlignment="Center"/>
         </StackPanel>
 
         <!-- Загрузка сообщений -->
         <TextBlock IsVisible="{Binding IsLoadingMessages}"
                    Text="Loading messages..."
-                   Foreground="#5a5957" FontSize="13"
+                   Classes="muted"
+                   FontSize="13"
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center"/>
 
@@ -121,22 +127,22 @@
 
                 <!-- Сообщение пользователя — справа -->
                 <Border IsVisible="{Binding IsUser}"
-                        Background="Transparent"
+                        Background="{StaticResource ThemeSandBrush}"
+                        BorderBrush="{StaticResource ThemeBorderSoftBrush}"
+                        BorderThickness="1"
                         CornerRadius="10 10 2 10"
                         Padding="12 8"
                         MaxWidth="560"
                         HorizontalAlignment="Right">
-                  <TextBlock Text="{Binding Content}"
-                             Foreground="#cdccca"
-                             FontSize="14"
-                             TextWrapping="Wrap"/>
+                  <SelectableTextBlock Text="{Binding Content}"
+                                       Classes="message-text user-message"/>
                 </Border>
 
-                <!-- Ответ ассистента — слева (Markdown) -->
+                <!-- Ответ ассистента — слева -->
                 <Border IsVisible="{Binding IsAssistant}"
-                        Background="Transparent"
+                        Background="{StaticResource ThemeSurfaceBrush}"
                         CornerRadius="10 10 10 2"
-                        BorderBrush="#393836"
+                        BorderBrush="{StaticResource ThemeBorderBrush}"
                         BorderThickness="1"
                         Padding="12 8"
                         MaxWidth="680"
@@ -146,21 +152,22 @@
                     <!-- Лейбл роли -->
                     <TextBlock Text="Assistant"
                                FontSize="11"
-                               Foreground="#4f98a3"
+                               Foreground="{StaticResource ThemeAccentBrush}"
                                FontWeight="SemiBold"/>
 
-                    <!--
-                      MarkdownScrollViewer (Markdown.Avalonia 12.0.0-a3):
-                      скролл управляется внешним MessagesScroll.
-                    -->
-                    <md:MarkdownScrollViewer
-                      Markdown="{Binding Content}"
-                      MaxWidth="640"/>
+                    <SelectableTextBlock Text="{Binding Content}"
+                                         Classes="message-text assistant-message"
+                                         MaxWidth="640"
+                                         IsVisible="{Binding IsStreaming}"/>
+
+                    <markdown:MarkdownView Markdown="{Binding Content}"
+                                           MaxWidth="640"
+                                           IsVisible="{Binding !IsStreaming}"/>
 
                     <!-- Индикатор стриминга -->
                     <TextBlock IsVisible="{Binding IsStreaming}"
                                Text="●●●"
-                               Foreground="#4f98a3"
+                               Foreground="{StaticResource ThemeAccentBrush}"
                                FontSize="12"
                                Margin="4 0 0 0"
                                Opacity="0.7"/>
@@ -179,7 +186,7 @@
     <!-- ─── Панель ввода ──────────────────────────────────────────── -->
     <Border Grid.Row="2"
             Background="Transparent"
-            BorderBrush="White"
+            BorderBrush="{StaticResource ThemeBorderBrush}"
             BorderThickness="0 1 0 0"
             Padding="16 12">
       <Grid ColumnDefinitions="*,Auto,Auto">
@@ -188,7 +195,7 @@
                  Classes="chat-input"
                  Text="{Binding InputText}"
                  PlaceholderText="Message the assistant..."
-                 AcceptsReturn="False"
+                 AcceptsReturn="True"
                  KeyDown="Input_KeyDown"/>
 
         <!-- Кнопка отмены SSE -->

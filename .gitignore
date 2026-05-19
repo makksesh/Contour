@@ -43,3 +43,6 @@ artifacts/
 # Local environment
 .env
 .env.*
+
+# docs
+/docs

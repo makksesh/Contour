@@ -1,6 +1,6 @@
 <!--
   Авторизованный shell-экран.
-  ContentControl переключает между Dashboard и Projects через CurrentContent.
+  ContentControl переключает между Projects, Chat и Documents через CurrentContent.
   Проект: DevAssistant / ContourAI.
 -->
 <UserControl xmlns="https://github.com/avaloniaui"
@@ -13,15 +13,20 @@
              mc:Ignorable="d"
              x:Class="ContourAI.Features.Shell.AuthenticatedShellView">
   <Grid ColumnDefinitions="280,*"
-        Background="#020617">
-    <shell:SidebarView DataContext="{Binding}" />
+        Background="{StaticResource ThemeWindowBrush}">
+    <shell:SidebarView DataContext="{Binding}"
+                       Margin="16" />
 
     <Grid Grid.Column="1"
+          Margin="0 16 16 16"
           RowDefinitions="Auto,*">
       <shell:TopbarView DataContext="{Binding}" />
       <Border Grid.Row="1"
-              Padding="24"
-              Background="#030712">
+              Classes="panel"
+              Margin="0 16 0 0"
+              Padding="28 24"
+              CornerRadius="24"
+              Background="{StaticResource ThemeShellBrush}">
         <ContentControl Content="{Binding CurrentContent}" />
       </Border>
     </Grid>

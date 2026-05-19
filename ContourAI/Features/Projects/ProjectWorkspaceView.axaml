@@ -15,105 +15,64 @@
 
     <Style Selector="Button.back-btn">
       <Setter Property="Background"  Value="Transparent"/>
-      <Setter Property="Foreground"  Value="#64748B"/>
+      <Setter Property="Foreground"  Value="{StaticResource ThemeTextMutedBrush}"/>
+      <Setter Property="BorderBrush" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
       <Setter Property="Padding"     Value="6 4"/>
-      <Setter Property="CornerRadius" Value="5"/>
+      <Setter Property="CornerRadius" Value="8"/>
       <Setter Property="FontSize"    Value="12"/>
       <Setter Property="Cursor"      Value="Hand"/>
       <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
     <Style Selector="Button.back-btn:pointerover /template/ ContentPresenter">
-      <Setter Property="Background" Value="#1E293B"/>
-      <Setter Property="TextBlock.Foreground" Value="#94A3B8"/>
+      <Setter Property="Background" Value="{StaticResource ThemeAccentSoftBrush}"/>
+      <Setter Property="TextBlock.Foreground" Value="{StaticResource ThemeTextPrimaryBrush}"/>
     </Style>
 
     <Style Selector="Button.tab-btn">
       <Setter Property="Background"  Value="Transparent"/>
-      <Setter Property="Foreground"  Value="#64748B"/>
+      <Setter Property="Foreground"  Value="{StaticResource ThemeTextMutedBrush}"/>
+      <Setter Property="BorderBrush" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
       <Setter Property="Padding"     Value="12 6"/>
-      <Setter Property="CornerRadius" Value="6 6 0 0"/>
+      <Setter Property="CornerRadius" Value="10"/>
       <Setter Property="FontSize"    Value="12"/>
       <Setter Property="FontWeight"  Value="Medium"/>
       <Setter Property="Cursor"      Value="Hand"/>
       <Setter Property="VerticalAlignment" Value="Bottom"/>
     </Style>
     <Style Selector="Button.tab-btn:pointerover /template/ ContentPresenter">
-      <Setter Property="Background" Value="#1E293B"/>
-      <Setter Property="TextBlock.Foreground" Value="#94A3B8"/>
+      <Setter Property="Background" Value="{StaticResource ThemeAccentSoftBrush}"/>
+      <Setter Property="TextBlock.Foreground" Value="{StaticResource ThemeTextPrimaryBrush}"/>
     </Style>
     <Style Selector="Button.tab-btn.active /template/ ContentPresenter">
-      <Setter Property="Background" Value="#0F172A"/>
-      <Setter Property="TextBlock.Foreground" Value="#5EEAD4"/>
-    </Style>
-
-    <Style Selector="Button.primary">
-      <Setter Property="Background"  Value="#01696f"/>
-      <Setter Property="Foreground"  Value="White"/>
-      <Setter Property="Padding"     Value="14 6"/>
-      <Setter Property="CornerRadius" Value="6"/>
-      <Setter Property="FontSize"    Value="12"/>
-      <Setter Property="Cursor"      Value="Hand"/>
-    </Style>
-    <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
-      <Setter Property="Background" Value="#0c4e54"/>
-    </Style>
-    <Style Selector="Button.primary:disabled /template/ ContentPresenter">
-      <Setter Property="Background" Value="#1c3537"/>
-      <Setter Property="TextBlock.Foreground" Value="#4a7a7e"/>
-    </Style>
-
-    <Style Selector="Button.danger">
-      <Setter Property="Background"  Value="#7f1d4b"/>
-      <Setter Property="Foreground"  Value="White"/>
-      <Setter Property="Padding"     Value="12 6"/>
-      <Setter Property="CornerRadius" Value="6"/>
-      <Setter Property="FontSize"    Value="12"/>
-      <Setter Property="Cursor"      Value="Hand"/>
-    </Style>
-    <Style Selector="Button.danger:pointerover /template/ ContentPresenter">
-      <Setter Property="Background" Value="#9d1f5e"/>
-    </Style>
-    <Style Selector="Button.danger:disabled /template/ ContentPresenter">
-      <Setter Property="Background" Value="#3d1226"/>
-      <Setter Property="TextBlock.Foreground" Value="#7a3d5a"/>
-    </Style>
-
-    <Style Selector="Button.ghost">
-      <Setter Property="Background"  Value="Transparent"/>
-      <Setter Property="Foreground"  Value="#64748B"/>
-      <Setter Property="Padding"     Value="12 6"/>
-      <Setter Property="CornerRadius" Value="6"/>
-      <Setter Property="FontSize"    Value="12"/>
-      <Setter Property="Cursor"      Value="Hand"/>
-      <Setter Property="BorderBrush" Value="#2d2c2a"/>
-      <Setter Property="BorderThickness" Value="1"/>
-    </Style>
-    <Style Selector="Button.ghost:pointerover /template/ ContentPresenter">
-      <Setter Property="Background" Value="#1E293B"/>
-      <Setter Property="TextBlock.Foreground" Value="#94A3B8"/>
+      <Setter Property="Background" Value="{StaticResource ThemeAccentSoftBrush}"/>
+      <Setter Property="TextBlock.Foreground" Value="{StaticResource ThemeAccentBrush}"/>
     </Style>
 
     <Style Selector="Button.icon-btn">
       <Setter Property="Background"  Value="Transparent"/>
-      <Setter Property="Foreground"  Value="#475569"/>
+      <Setter Property="Foreground"  Value="{StaticResource ThemeTextMutedBrush}"/>
+      <Setter Property="BorderBrush" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
       <Setter Property="Padding"     Value="4 3"/>
       <Setter Property="CornerRadius" Value="4"/>
       <Setter Property="FontSize"    Value="11"/>
       <Setter Property="Cursor"      Value="Hand"/>
     </Style>
     <Style Selector="Button.icon-btn:pointerover /template/ ContentPresenter">
-      <Setter Property="Background" Value="#1E293B"/>
-      <Setter Property="TextBlock.Foreground" Value="#94A3B8"/>
+      <Setter Property="Background" Value="{StaticResource ThemeAccentSoftBrush}"/>
+      <Setter Property="TextBlock.Foreground" Value="{StaticResource ThemeTextPrimaryBrush}"/>
     </Style>
     <Style Selector="Button.icon-btn.del:pointerover /template/ ContentPresenter">
-      <Setter Property="Background" Value="#3d1226"/>
-      <Setter Property="TextBlock.Foreground" Value="#f87171"/>
+      <Setter Property="Background" Value="{StaticResource ThemeDangerSoftBrush}"/>
+      <Setter Property="TextBlock.Foreground" Value="{StaticResource ThemeDangerTextBrush}"/>
     </Style>
 
     <Style Selector="TextBox.settings-input">
-      <Setter Property="Background"   Value="#1c1b19"/>
-      <Setter Property="Foreground"   Value="#cdccca"/>
-      <Setter Property="BorderBrush"  Value="#2d2c2a"/>
+      <Setter Property="Background"   Value="{StaticResource ThemeSurfaceAltBrush}"/>
+      <Setter Property="Foreground"   Value="{StaticResource ThemeTextPrimaryBrush}"/>
+      <Setter Property="BorderBrush"  Value="{StaticResource ThemeBorderBrush}"/>
       <Setter Property="CornerRadius" Value="5"/>
       <Setter Property="Padding"      Value="8 5"/>
       <Setter Property="FontSize"     Value="12"/>
@@ -121,7 +80,7 @@
 
     <Style Selector="TextBlock.field-label">
       <Setter Property="FontSize"   Value="10"/>
-      <Setter Property="Foreground" Value="#475569"/>
+      <Setter Property="Foreground" Value="{StaticResource ThemeTextMutedBrush}"/>
       <Setter Property="Margin"     Value="0 0 0 3"/>
     </Style>
 
@@ -131,16 +90,16 @@
 
     <!-- ═══ HEADER ═══ -->
     <Border Grid.Row="0"
-            BorderBrush="#1E293B" BorderThickness="0 0 0 1"
+            BorderBrush="{StaticResource ThemeBorderBrush}" BorderThickness="0 0 0 1"
             Padding="12 0">
       <StackPanel Orientation="Horizontal" Spacing="4" Height="40">
 
         <Button Classes="back-btn" Command="{Binding GoBackCommand}">← Back</Button>
-        <Border Width="1" Background="#1E293B" Margin="4 8"/>
+        <Border Width="1" Background="{StaticResource ThemeBorderBrush}" Margin="4 8"/>
         <TextBlock Text="{Binding ProjectName}"
-                   FontSize="13" FontWeight="SemiBold" Foreground="#CBD5E1"
+                   FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource ThemeTextSecondaryBrush}"
                    VerticalAlignment="Center" Margin="4 0"/>
-        <Border Width="1" Background="#1E293B" Margin="4 8"/>
+        <Border Width="1" Background="{StaticResource ThemeBorderBrush}" Margin="4 8"/>
 
         <Button Classes="tab-btn"
                 Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsSettings}}"
@@ -160,13 +119,13 @@
                 CommandParameter="{x:Static vm:WorkspaceTab.Chat}">Chat</Button>
 
         <TextBlock IsVisible="{Binding IsLoading}"
-                   Text="…" Foreground="#475569" FontSize="12"
+                   Text="…" Foreground="{StaticResource ThemeTextMutedBrush}" FontSize="12"
                    VerticalAlignment="Center" Margin="8 0 0 0"/>
       </StackPanel>
     </Border>
 
     <!-- ═══ КОНТЕНТ ВКЛАДОК ═══ -->
-    <Border Grid.Row="1" Background="#0B1120" Padding="20 14">
+    <Border Grid.Row="1" Background="Transparent" Padding="20 14">
       <Panel>
 
         <!-- ── SETTINGS TAB ───────────────────────────────────────────── -->
@@ -176,53 +135,53 @@
                       DataContext="{Binding SettingsViewModel}">
 
             <Border IsVisible="{Binding HasError}"
-                    Background="#1a0a0d" BorderBrush="#5c1c2e" BorderThickness="1"
+                    Background="{StaticResource ThemeDangerSoftBrush}" BorderBrush="{StaticResource ThemeDangerBrush}" BorderThickness="1"
                     CornerRadius="6" Padding="10 7">
-              <TextBlock Text="{Binding ErrorMessage}" Foreground="#f87171" FontSize="12" TextWrapping="Wrap"/>
+              <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource ThemeDangerTextBrush}" FontSize="12" TextWrapping="Wrap"/>
             </Border>
 
             <StackPanel Spacing="3">
               <TextBlock Classes="field-label" Text="System Prompt"/>
               <TextBox Classes="settings-input" Text="{Binding SystemPrompt}"
-                       AcceptsReturn="True" Height="90" TextWrapping="Wrap" Watermark="Enter system prompt…"/>
+                       AcceptsReturn="True" Height="90" TextWrapping="Wrap" PlaceholderText="Enter system prompt…"/>
             </StackPanel>
             <StackPanel Spacing="3">
               <TextBlock Classes="field-label" Text="Max Tokens  (1–32768)"/>
               <NumericUpDown Value="{Binding MaxTokens}" Minimum="1" Maximum="32768" Increment="256" FormatString="0"
-                             Background="#1c1b19" Foreground="#cdccca" BorderBrush="#2d2c2a" FontSize="12"/>
+                             Background="{StaticResource ThemeSurfaceAltBrush}" Foreground="{StaticResource ThemeTextPrimaryBrush}" BorderBrush="{StaticResource ThemeBorderBrush}" FontSize="12"/>
             </StackPanel>
             <StackPanel Spacing="3">
               <TextBlock Classes="field-label" Text="Temperature  (0.0–2.0)"/>
               <NumericUpDown Value="{Binding Temperature}" Minimum="0" Maximum="2" Increment="0.05" FormatString="0.00"
-                             Background="#1c1b19" Foreground="#cdccca" BorderBrush="#2d2c2a" FontSize="12"/>
+                             Background="{StaticResource ThemeSurfaceAltBrush}" Foreground="{StaticResource ThemeTextPrimaryBrush}" BorderBrush="{StaticResource ThemeBorderBrush}" FontSize="12"/>
             </StackPanel>
             <StackPanel Spacing="3">
               <TextBlock Classes="field-label" Text="RAG Top-K  (1–20)"/>
               <NumericUpDown Value="{Binding RagTopK}" Minimum="1" Maximum="20" Increment="1" FormatString="0"
-                             Background="#1c1b19" Foreground="#cdccca" BorderBrush="#2d2c2a" FontSize="12"/>
+                             Background="{StaticResource ThemeSurfaceAltBrush}" Foreground="{StaticResource ThemeTextPrimaryBrush}" BorderBrush="{StaticResource ThemeBorderBrush}" FontSize="12"/>
             </StackPanel>
             <StackPanel Spacing="3">
               <TextBlock Classes="field-label" Text="Context Window  (1–50)"/>
               <NumericUpDown Value="{Binding ContextWindowSize}" Minimum="1" Maximum="50" Increment="1" FormatString="0"
-                             Background="#1c1b19" Foreground="#cdccca" BorderBrush="#2d2c2a" FontSize="12"/>
+                             Background="{StaticResource ThemeSurfaceAltBrush}" Foreground="{StaticResource ThemeTextPrimaryBrush}" BorderBrush="{StaticResource ThemeBorderBrush}" FontSize="12"/>
             </StackPanel>
-            <CheckBox IsChecked="{Binding UseRagContext}" Foreground="#94A3B8" FontSize="12" Content="Use RAG Context"/>
+            <CheckBox IsChecked="{Binding UseRagContext}" Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12" Content="Use RAG Context"/>
             <Button Classes="primary" Command="{Binding SaveSettingsCommand}" IsEnabled="{Binding !IsBusy}">Save Settings</Button>
 
             <!-- Danger Zone -->
-            <Border BorderBrush="#2d1520" BorderThickness="0 1 0 0" Margin="0 10 0 0" Padding="0 14 0 0">
+            <Border BorderBrush="{StaticResource ThemeBorderBrush}" BorderThickness="0 1 0 0" Margin="0 10 0 0" Padding="0 14 0 0">
               <StackPanel Spacing="10">
-                <TextBlock Text="Danger Zone" FontSize="10" Foreground="#64748B" FontWeight="SemiBold"/>
+                <TextBlock Text="Danger Zone" FontSize="10" Foreground="{StaticResource ThemeTextMutedBrush}" FontWeight="SemiBold"/>
                 <Button Classes="danger" IsVisible="{Binding !IsDeleteConfirmVisible}"
                         Command="{Binding RequestDeleteProjectCommand}" IsEnabled="{Binding !IsBusy}"
                         HorizontalAlignment="Left">Delete Project</Button>
                 <Border IsVisible="{Binding IsDeleteConfirmVisible}"
-                        Background="#1a0810" BorderBrush="#5c1c2e" BorderThickness="1"
+                        Background="{StaticResource ThemeDangerSoftBrush}" BorderBrush="{StaticResource ThemeDangerBrush}" BorderThickness="1"
                         CornerRadius="6" Padding="14 12">
                   <StackPanel Spacing="10">
-                    <TextBlock Text="Delete this project?" FontSize="13" FontWeight="SemiBold" Foreground="#f87171"/>
+                    <TextBlock Text="Delete this project?" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource ThemeDangerTextBrush}"/>
                     <TextBlock Text="This action cannot be undone. All settings and folder links will be permanently removed."
-                               FontSize="11" Foreground="#94A3B8" TextWrapping="Wrap"/>
+                               FontSize="11" Foreground="{StaticResource ThemeTextSecondaryBrush}" TextWrapping="Wrap"/>
                     <StackPanel Orientation="Horizontal" Spacing="8">
                       <Button Classes="danger" Command="{Binding ConfirmDeleteProjectCommand}" IsEnabled="{Binding !IsBusy}">Yes, delete</Button>
                       <Button Classes="ghost"  Command="{Binding CancelDeleteProjectCommand}"  IsEnabled="{Binding !IsBusy}">Cancel</Button>
@@ -240,22 +199,22 @@
                       VerticalScrollBarVisibility="Auto">
           <StackPanel Spacing="14" MaxWidth="580" DataContext="{Binding SettingsViewModel}">
 
-            <Border IsVisible="{Binding HasError}" Background="#1a0a0d" BorderBrush="#5c1c2e" BorderThickness="1" CornerRadius="6" Padding="10 7">
-              <TextBlock Text="{Binding ErrorMessage}" Foreground="#f87171" FontSize="12" TextWrapping="Wrap"/>
+            <Border IsVisible="{Binding HasError}" Background="{StaticResource ThemeDangerSoftBrush}" BorderBrush="{StaticResource ThemeDangerBrush}" BorderThickness="1" CornerRadius="6" Padding="10 7">
+              <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource ThemeDangerTextBrush}" FontSize="12" TextWrapping="Wrap"/>
             </Border>
 
             <StackPanel IsVisible="{Binding !HasFolderAttached}" Spacing="14">
-              <TextBlock Text="No folder connected." Foreground="#475569" FontSize="12"/>
+              <TextBlock Text="No folder connected." Foreground="{StaticResource ThemeTextMutedBrush}" FontSize="12"/>
               <StackPanel Spacing="3">
                 <TextBlock Classes="field-label" Text="Folder Path"/>
-                <TextBox Classes="settings-input" Text="{Binding FolderPath}" Watermark="/absolute/path/to/folder"/>
+                <TextBox Classes="settings-input" Text="{Binding FolderPath}" PlaceholderText="/absolute/path/to/folder"/>
               </StackPanel>
               <StackPanel Spacing="3">
                 <TextBlock Classes="field-label" Text="Permissions"/>
                 <StackPanel Orientation="Horizontal" Spacing="12">
-                  <CheckBox IsChecked="{Binding PermRead}"   Content="Read"   Foreground="#94A3B8" FontSize="12"/>
-                  <CheckBox IsChecked="{Binding PermEdit}"   Content="Edit"   Foreground="#94A3B8" FontSize="12"/>
-                  <CheckBox IsChecked="{Binding PermDelete}" Content="Delete" Foreground="#94A3B8" FontSize="12"/>
+                  <CheckBox IsChecked="{Binding PermRead}"   Content="Read"   Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
+                  <CheckBox IsChecked="{Binding PermEdit}"   Content="Edit"   Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
+                  <CheckBox IsChecked="{Binding PermDelete}" Content="Delete" Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
                 </StackPanel>
               </StackPanel>
               <Button Classes="primary" Command="{Binding AttachFolderCommand}">Connect Folder</Button>
@@ -264,14 +223,14 @@
             <StackPanel IsVisible="{Binding HasFolderAttached}" Spacing="14">
               <StackPanel Spacing="3">
                 <TextBlock Classes="field-label" Text="Connected Path"/>
-                <TextBlock Text="{Binding FolderPath}" Foreground="#94A3B8" FontSize="12" TextWrapping="Wrap"/>
+                <TextBlock Text="{Binding FolderPath}" Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12" TextWrapping="Wrap"/>
               </StackPanel>
               <StackPanel Spacing="3">
                 <TextBlock Classes="field-label" Text="Permissions"/>
                 <StackPanel Orientation="Horizontal" Spacing="12">
-                  <CheckBox IsChecked="{Binding PermRead}"   Content="Read"   Foreground="#94A3B8" FontSize="12"/>
-                  <CheckBox IsChecked="{Binding PermEdit}"   Content="Edit"   Foreground="#94A3B8" FontSize="12"/>
-                  <CheckBox IsChecked="{Binding PermDelete}" Content="Delete" Foreground="#94A3B8" FontSize="12"/>
+                  <CheckBox IsChecked="{Binding PermRead}"   Content="Read"   Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
+                  <CheckBox IsChecked="{Binding PermEdit}"   Content="Edit"   Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
+                  <CheckBox IsChecked="{Binding PermDelete}" Content="Delete" Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
                 </StackPanel>
               </StackPanel>
               <StackPanel Orientation="Horizontal" Spacing="8">
@@ -300,10 +259,10 @@
               ↺ Refresh
             </Button>
             <TextBlock IsVisible="{Binding DocumentsViewModel.IsUploading}"
-                       Text="Uploading…" Foreground="#4f98a3" FontSize="12"
+                       Text="Uploading…" Foreground="{StaticResource ThemeAccentBrush}" FontSize="12"
                        VerticalAlignment="Center" Margin="4 0"/>
             <TextBlock IsVisible="{Binding IsLoading}"
-                       Text="Loading…" Foreground="#475569" FontSize="12"
+                       Text="Loading…" Foreground="{StaticResource ThemeTextMutedBrush}" FontSize="12"
                        VerticalAlignment="Center" Margin="4 0"/>
           </StackPanel>
 
@@ -314,9 +273,9 @@
             <StackPanel IsVisible="{Binding DocumentsViewModel.IsEmpty}"
                         HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
               <TextBlock Text="No documents yet."
-                         Foreground="#334155" FontSize="13" HorizontalAlignment="Center"/>
+                         Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="13" HorizontalAlignment="Center"/>
               <TextBlock Text="Upload a file to get started."
-                         Foreground="#1e3a4a" FontSize="11" HorizontalAlignment="Center"/>
+                         Foreground="{StaticResource ThemeTextMutedBrush}" FontSize="11" HorizontalAlignment="Center"/>
             </StackPanel>
 
             <!-- Список документов -->
@@ -325,25 +284,25 @@
               <ItemsControl ItemsSource="{Binding DocumentsViewModel.Documents}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="vm:DocumentItemViewModel">
-                    <Border Background="#111827"
-                            BorderBrush="#1e293b" BorderThickness="1"
-                            CornerRadius="7" Padding="12 9" Margin="0 0 0 6">
+                    <Border Classes="card"
+                            Background="{StaticResource ThemeSandBrush}"
+                            CornerRadius="10" Padding="12 9" Margin="0 0 0 6">
                       <Grid ColumnDefinitions="*,Auto">
 
                         <!-- Левая часть: название + мета -->
                         <StackPanel Grid.Column="0" Spacing="3">
                           <TextBlock Text="{Binding FileName}"
-                                     FontSize="12" Foreground="#CBD5E1"
+                                     FontSize="12" Foreground="{StaticResource ThemeTextOnLightBrush}"
                                      TextTrimming="CharacterEllipsis"
                                      MaxWidth="400"/>
                           <StackPanel Orientation="Horizontal" Spacing="10">
                             <TextBlock Text="{Binding SizeDisplay}"
-                                       FontSize="10" Foreground="#475569"/>
+                                       FontSize="10" Foreground="{StaticResource ThemeTextOnLightSecondaryBrush}"/>
                             <TextBlock Text="{Binding StatusLabel}"
-                                       FontSize="10" Foreground="#4f98a3"/>
+                                       FontSize="10" Foreground="{StaticResource ThemeAccentMutedBrush}"/>
                             <TextBlock IsVisible="{Binding TaskError, Converter={x:Static vm:WorkspaceTabConverter.IsNotNull}}"
                                        Text="{Binding TaskError}"
-                                       FontSize="10" Foreground="#f87171"
+                                       FontSize="10" Foreground="{StaticResource ThemeDangerBrush}"
                                        TextTrimming="CharacterEllipsis" MaxWidth="200"/>
                           </StackPanel>
                         </StackPanel>
@@ -383,9 +342,9 @@
           <!-- Ошибка низу -->
           <Border Grid.Row="2"
                   IsVisible="{Binding HasError}"
-                  Background="#1a0a0d" BorderBrush="#5c1c2e" BorderThickness="0 1 0 0"
+                  Background="{StaticResource ThemeDangerSoftBrush}" BorderBrush="{StaticResource ThemeDangerBrush}" BorderThickness="0 1 0 0"
                   Padding="12 8" Margin="0 8 0 0">
-            <TextBlock Text="{Binding ErrorMessage}" Foreground="#f87171" FontSize="12" TextWrapping="Wrap"/>
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource ThemeDangerTextBrush}" FontSize="12" TextWrapping="Wrap"/>
           </Border>
 
         </Grid>
@@ -407,7 +366,7 @@
                         VerticalAlignment="Center"
                         Spacing="8">
                 <TextBlock Text="Loading chat…"
-                           FontSize="13" Foreground="#5a5957"
+                           FontSize="13" Foreground="{StaticResource ThemeTextMutedBrush}"
                            HorizontalAlignment="Center"/>
             </StackPanel>
 
@@ -421,10 +380,10 @@
                            HorizontalAlignment="Center"/>
                 <TextBlock Text="No chat yet"
                            FontSize="14" FontWeight="Medium"
-                           Foreground="#CBD5E1"
+                           Foreground="{StaticResource ThemeTextPrimaryBrush}"
                            HorizontalAlignment="Center"/>
                 <TextBlock Text="Start a conversation with the AI assistant in the context of this project."
-                           FontSize="12" Foreground="#475569"
+                           FontSize="12" Foreground="{StaticResource ThemeTextMutedBrush}"
                            HorizontalAlignment="Center"
                            TextWrapping="Wrap" MaxWidth="340"
                            TextAlignment="Center"/>
@@ -453,11 +412,11 @@
     <!-- ═══ FOOTER: баннер ошибки загрузки рабочего пространства ═══ -->
     <Border Grid.Row="2"
             IsVisible="{Binding HasError}"
-            Background="#1a0a0d" BorderBrush="#5c1c2e" BorderThickness="0 1 0 0"
+            Background="{StaticResource ThemeDangerSoftBrush}" BorderBrush="{StaticResource ThemeDangerBrush}" BorderThickness="0 1 0 0"
             Padding="16 10">
       <Grid ColumnDefinitions="*,Auto">
         <TextBlock Grid.Column="0" Text="{Binding ErrorMessage}"
-                   Foreground="#f87171" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                   Foreground="{StaticResource ThemeDangerTextBrush}" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap"/>
         <Button Grid.Column="1" Classes="primary"
                 Command="{Binding LoadSettingsCommand}"
                 Margin="12 0 0 0">Retry</Button>

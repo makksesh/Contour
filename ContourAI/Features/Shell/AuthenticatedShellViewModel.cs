@@ -1,6 +1,6 @@
 /// <summary>
 /// ViewModel авторизованного shell-экрана.
-/// Управляет навигацией: Dashboard, Projects, Chat, Documents.
+/// Управляет навигацией: Projects, Chat, Documents.
 /// Предоставляет RecentGlobalChats и RecentProjects для SidebarView.
 ///
 /// Live-обновление Sidebar:
@@ -32,11 +32,11 @@ using ContourAI.Entities.Chat;
 using ContourAI.Entities.Projects;
 using ContourAI.Features.Auth;
 using ContourAI.Features.Chat;
-using ContourAI.Features.Dashboard;
 using ContourAI.Features.Documents;
 using ContourAI.Features.Projects;
 using ContourAI.Shared.Api;
 using ContourAI.Shared.State;
+using ContourAI.Widgets.SystemMetrics;
 
 namespace ContourAI.Features.Shell;
 
@@ -58,7 +58,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         ProjectContextStore       projectContextStore,
         ChatService               chatService,
         ProjectsService           projectsService,
-        DashboardViewModel        dashboardViewModel,
+        SystemMetricsViewModel    systemMetricsViewModel,
         ProjectsViewModel         projectsViewModel,
         ChatViewModel             chatViewModel,
         DocumentsViewModel        documentsViewModel,
@@ -71,14 +71,13 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         _chatService             = chatService;
         _projectsService         = projectsService;
 
-        Dashboard = dashboardViewModel;
+        Metrics   = systemMetricsViewModel;
         Projects  = projectsViewModel;
         Chat      = chatViewModel;
         Documents = documentsViewModel;
         Workspace = projectWorkspaceViewModel;
 
         LogoutCommand        = new RelayCommand(() => _ = LogoutAsync());
-        ShowDashboardCommand = new RelayCommand(() => ShowSection(Dashboard));
         ShowProjectsCommand  = new AsyncRelayCommand(ShowProjectsAsync);
         ShowChatCommand      = new AsyncRelayCommand(ShowChatAsync);
         ShowDocumentsCommand = new AsyncRelayCommand(ShowDocumentsAsync);
@@ -119,13 +118,13 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         /// </summary>
         Workspace.ProjectDeleted += OnProjectDeleted;
 
-        _currentContent = Dashboard;
+        _currentContent = Projects;
     }
 
     public event Action? LogoutRequested;
     public event Action? SettingsRequested;
 
-    public DashboardViewModel     Dashboard { get; }
+    public SystemMetricsViewModel Metrics { get; }
     public ProjectsViewModel      Projects  { get; }
     public ChatViewModel          Chat      { get; }
     public DocumentsViewModel     Documents { get; }
@@ -139,7 +138,6 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
     // ─── Команды ──────────────────────────────────────────────────────────────
 
     public ICommand LogoutCommand        { get; }
-    public ICommand ShowDashboardCommand { get; }
     public ICommand ShowProjectsCommand  { get; }
     public ICommand ShowChatCommand      { get; }
     public ICommand ShowDocumentsCommand { get; }
@@ -158,7 +156,6 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         private set => SetProperty(ref _currentContent, value);
     }
 
-    public bool IsDashboardActive => CurrentContent is DashboardViewModel;
     public bool IsProjectsActive  => CurrentContent is ProjectsViewModel;
     public bool IsChatActive      => CurrentContent is ChatViewModel;
     public bool IsDocumentsActive => CurrentContent is DocumentsViewModel;
@@ -169,9 +166,8 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
     {
         _sessionStore.Apply(authToken);
         _projectContextStore.Clear();
-        CurrentContent = Dashboard;
+        CurrentContent = Projects;
         RaiseActiveFlags();
-        await Dashboard.LoadAsync(authToken.AccessToken, cancellationToken);
         _ = HydrateSidebarAsync();
     }
 
@@ -327,7 +323,6 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
     {
         await _sessionAuthService.LogoutAsync();
         _projectContextStore.Clear();
-        Dashboard.Clear();
         RecentGlobalChats.Clear();
         RecentProjects.Clear();
         LogoutRequested?.Invoke();
@@ -357,7 +352,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
 
     private void OnWorkspaceBackRequested()
     {
-        CurrentContent   = _previousContent ?? Dashboard;
+        CurrentContent   = _previousContent ?? Projects;
         _previousContent = null;
         RaiseActiveFlags();
     }
@@ -368,7 +363,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
     /// </summary>
     private void OnProjectDeleted()
     {
-        CurrentContent   = _previousContent ?? Dashboard;
+        CurrentContent   = _previousContent ?? Projects;
         _previousContent = null;
         RaiseActiveFlags();
         _ = Projects.LoadProjectsAsync();
@@ -376,7 +371,6 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
 
     private void RaiseActiveFlags()
     {
-        RaisePropertyChanged(nameof(IsDashboardActive));
         RaisePropertyChanged(nameof(IsProjectsActive));
         RaisePropertyChanged(nameof(IsChatActive));
         RaisePropertyChanged(nameof(IsDocumentsActive));

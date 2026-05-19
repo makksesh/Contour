@@ -6,7 +6,7 @@
              x:DataType="auth:LoginViewModel"
              mc:Ignorable="d"
              x:Class="ContourAI.Features.Auth.LoginView">
-  <Border Background="#111827"
+  <Border Background="{StaticResource ThemeWindowBrush}"
           Padding="32">
     <Grid RowDefinitions="Auto,*"
           MaxWidth="520"
@@ -17,35 +17,40 @@
         <TextBlock Text="ContourAI"
                    FontSize="30"
                    FontWeight="SemiBold"
-                   Foreground="#F9FAFB" />
+                   Foreground="{StaticResource ThemeTextPrimaryBrush}" />
+        <TextBlock Text="Desktop workspace for local AI workflows"
+                   FontSize="12"
+                   FontWeight="Medium"
+                   Classes="secondary" />
         <TextBlock Text="Вход в DevAssistant UI"
                    FontSize="15"
-                   Foreground="#9CA3AF" />
+                   Classes="secondary" />
       </StackPanel>
 
       <Border Grid.Row="1"
-              Background="#1F2937"
+              Classes="card"
+              Background="{StaticResource ThemeSandBrush}"
               CornerRadius="18"
               Padding="24">
         <StackPanel Spacing="16">
           <StackPanel Spacing="6">
             <TextBlock Text="IP сервера"
                        FontWeight="SemiBold"
-                       Foreground="#F3F4F6" />
-            <TextBox Watermark="Например: 192.168.3.50"
+                       Classes="on-light" />
+            <TextBox PlaceholderText="Например: 192.168.3.50"
                      Text="{Binding ServerIp, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Classes="auth-input" />
             <TextBlock Text="Указывается только IP или host, без порта. Настройка сохраняется в памяти приложения."
                        TextWrapping="Wrap"
                        FontSize="12"
-                       Foreground="#9CA3AF" />
+                       Classes="on-light-secondary" />
           </StackPanel>
 
           <StackPanel Spacing="6">
             <TextBlock Text="Email или username"
                        FontWeight="SemiBold"
-                       Foreground="#F3F4F6" />
-            <TextBox Watermark="Введите email или username"
+                       Classes="on-light" />
+            <TextBox PlaceholderText="Введите email или username"
                      Text="{Binding Identifier, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Classes="auth-input" />
           </StackPanel>
@@ -53,8 +58,8 @@
           <StackPanel Spacing="6">
             <TextBlock Text="Пароль"
                        FontWeight="SemiBold"
-                       Foreground="#F3F4F6" />
-            <TextBox Watermark="Введите пароль"
+                       Classes="on-light" />
+            <TextBox PlaceholderText="Введите пароль"
                      PasswordChar="●"
                      Text="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Classes="auth-input" />
@@ -62,25 +67,23 @@
 
           <TextBlock Text="{Binding ErrorMessage}"
                      TextWrapping="Wrap"
-                     Foreground="#FCA5A5"
+                     Foreground="{StaticResource ThemeDangerBrush}"
                      IsVisible="{Binding HasError}" />
 
-          <Button Content="Войти"
+          <Button Classes="primary"
+                  Content="Войти"
                   Height="44"
                   Command="{Binding LoginCommand}"
-                  Background="#0F766E"
-                  Foreground="White"
                   FontWeight="SemiBold" />
 
           <StackPanel Orientation="Horizontal"
                       Spacing="8"
                       HorizontalAlignment="Center">
             <TextBlock Text="Нет аккаунта?"
-                       Foreground="#9CA3AF" />
+                       Classes="on-light-secondary" />
             <Button Content="Зарегистрироваться"
                     Command="{Binding OpenRegisterCommand}"
-                    Background="Transparent"
-                    Foreground="#5EEAD4" />
+                    Classes="link" />
           </StackPanel>
         </StackPanel>
       </Border>
