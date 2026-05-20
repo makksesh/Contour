@@ -137,7 +137,7 @@
     <Border Grid.Row="1" Background="Transparent" Padding="20 14">
       <Panel>
 
-        <!-- ── SETTINGS TAB ──────────────────────────────────────────────────────────────── -->
+        <!-- ── SETTINGS TAB ────────────────────────────────────────────────── -->
         <ScrollViewer IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsSettings}}"
                       VerticalScrollBarVisibility="Auto">
           <StackPanel Spacing="14" MaxWidth="580"
@@ -203,7 +203,7 @@
           </StackPanel>
         </ScrollViewer>
 
-        <!-- ── FOLDER TAB ──────────────────────────────────────────────────────────────────── -->
+        <!-- ── FOLDER TAB ───────────────────────────────────────────────────── -->
         <ScrollViewer IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsFolder}}"
                       VerticalScrollBarVisibility="Auto">
           <StackPanel Spacing="14" MaxWidth="580" DataContext="{Binding SettingsViewModel}">
@@ -251,7 +251,7 @@
           </StackPanel>
         </ScrollViewer>
 
-        <!-- ── DOCUMENTS TAB ───────────────────────────────────────────────────────────── -->
+        <!-- ── DOCUMENTS TAB ──────────────────────────────────────────────── -->
         <Grid IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsDocuments}}"
               RowDefinitions="Auto,*,Auto">
 
@@ -336,7 +336,7 @@
 
         </Grid>
 
-        <!-- ── CHAT TAB ─────────────────────────────────────────────────────────────────── -->
+        <!-- ── CHAT TAB ────────────────────────────────────────────────────── -->
         <Panel IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsChat}}">
             <StackPanel IsVisible="{Binding IsChatLoading}"
                         HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
@@ -362,19 +362,19 @@
             </Panel>
         </Panel>
 
-        <!-- ── RAG SEARCH TAB ──────────────────────────────────────────────────────────── -->
+        <!-- ── RAG SEARCH TAB ──────────────────────────────────────────────── -->
         <!--
-          IsVisible биндится на SelectedTabIndex родительского ProjectWorkspaceViewModel
-          через $parent, а не на DataContext=RagSearchViewModel.
-          Без этого Avalonia резолвит биндинг против RagSearchViewModel →
-          проперти нет → false → IsVisible=false → чёрный экран.
+          Обёртка Grid нужна чтобы RagSearchView получил полную высоту от Panel.
+          Panel не растягивает UserControl — Grid с одной строкой * делает это.
+          IsVisible на Grid резолвится против ProjectWorkspaceViewModel (DataContext Panel).
         -->
-        <vm:RagSearchView
-          IsVisible="{Binding $parent[UserControl].((vm:ProjectWorkspaceViewModel)DataContext).SelectedTabIndex,
-                      Converter={x:Static vm:WorkspaceTabConverter.IsRagSearch}}"
-          DataContext="{Binding RagSearchViewModel}" />
+        <Grid IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsRagSearch}}">
+          <vm:RagSearchView DataContext="{Binding RagSearchViewModel}"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"/>
+        </Grid>
 
-        <!-- ── SYNC TAB ──────────────────────────────────────────────────────────────────── -->
+        <!-- ── SYNC TAB ────────────────────────────────────────────────────── -->
         <Panel IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsSync}}">
           <ws:WorkspaceSyncView
             DataContext="{Binding SyncViewModel}"
