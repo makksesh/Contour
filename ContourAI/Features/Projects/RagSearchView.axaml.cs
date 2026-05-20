@@ -4,8 +4,5 @@ namespace ContourAI.Features.Projects;
 
 public partial class RagSearchView : UserControl
 {
-    public RagSearchView()
-    {
-        InitializeComponent();
-    }
+    public RagSearchView() => InitializeComponent();
 }

@@ -1,13 +1,12 @@
 /// <summary>
-/// ViewModel вкладки «RAG Search» рабочего пространства проекта.
+/// ViewModel вкладки «RAG Search» в ProjectWorkspaceView.
 ///
-/// Сценарий:
-/// 1. SetProject(projectId) — вызывается из ProjectWorkspaceViewModel при смене проекта.
-/// 2. SearchCommand — POST /api/rag/search { projectId, query, topK }
-///    → заполняет Results коллекцией RagChunkItemViewModel.
-/// 3. ClearCommand — очищает Results и Query.
+/// Отвечает за:
+///   - Хранение текущего projectId (SetProject).
+///   - SearchCommand → POST /api/rag/search → заполняет Results.
+///   - Отображение состояний: IsLoading, IsEmpty, HasError.
 ///
-/// TopK (1–20) задаётся пользователем; по умолчанию 5.
+/// Зависимости: RagService.
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -17,6 +16,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ContourAI.Entities.Rag;
 using ContourAI.Shared.Api;
 
 namespace ContourAI.Features.Projects;
@@ -24,13 +24,10 @@ namespace ContourAI.Features.Projects;
 public sealed partial class RagSearchViewModel : ObservableObject
 {
     private readonly RagService _ragService;
-    private Guid _projectId;
+    private Guid                _projectId;
+    private CancellationTokenSource _cts = new();
 
-    // ─── Коллекция результатов ────────────────────────────────────────────────
-
-    public ObservableCollection<RagChunkItemViewModel> Results { get; } = new();
-
-    // ─── Ввод ────────────────────────────────────────────────────────────────
+    // ─── Ввод ─────────────────────────────────────────────────────────────────
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SearchCommand))]
@@ -38,82 +35,71 @@ public sealed partial class RagSearchViewModel : ObservableObject
 
     [ObservableProperty] private int _topK = 5;
 
-    // ─── Состояния ───────────────────────────────────────────────────────────
+    // ─── Результаты ───────────────────────────────────────────────────────────
+
+    public ObservableCollection<RagChunkDto> Results { get; } = [];
+
+    // ─── Состояния ────────────────────────────────────────────────────────────
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(SearchCommand))]
+    [NotifyPropertyChangedFor(nameof(IsEmpty))]
     private bool _isLoading;
 
     [ObservableProperty] private bool   _hasError;
     [ObservableProperty] private string _errorMessage = string.Empty;
-    [ObservableProperty] private bool   _isEmpty;
-    [ObservableProperty] private bool   _hasSearched;
 
-    // ─── Дисплей-свойства ────────────────────────────────────────────────────
+    public bool IsEmpty => !IsLoading && Results.Count == 0;
 
-    public string ResultsSummary => Results.Count switch
-    {
-        0 => string.Empty,
-        1 => "1 чанк найден",
-        _ => $"{Results.Count} чанков найдено"
-    };
-
-    // ─── Конструктор ─────────────────────────────────────────────────────────
+    // ─── ctor ─────────────────────────────────────────────────────────────────
 
     public RagSearchViewModel(RagService ragService)
-    {
-        _ragService = ragService;
-    }
+        => _ragService = ragService;
 
-    // ─── Инициализация ───────────────────────────────────────────────────────
+    // ─── Инициализация ────────────────────────────────────────────────────────
 
-    /// <summary>Вызывается из ProjectWorkspaceViewModel при смене проекта.</summary>
+    /// <summary>Вызывается из ProjectWorkspaceViewModel при открытии проекта.</summary>
     public void SetProject(Guid projectId)
     {
         if (_projectId == projectId) return;
         _projectId = projectId;
-        ClearCommand.Execute(null);
+        Results.Clear();
+        Query        = string.Empty;
+        HasError     = false;
+        ErrorMessage = string.Empty;
     }
 
-    // ─── Команды ─────────────────────────────────────────────────────────────
-
-    private bool CanSearch() =>
-        !string.IsNullOrWhiteSpace(Query) && !IsLoading;
+    // ─── Команды ──────────────────────────────────────────────────────────────
 
     [RelayCommand(CanExecute = nameof(CanSearch))]
-    private async Task SearchAsync(CancellationToken ct = default)
+    private async Task SearchAsync()
     {
-        IsLoading  = true;
-        HasError   = false;
-        HasSearched = true;
+        _cts.Cancel();
+        _cts = new CancellationTokenSource();
+
+        IsLoading = true;
+        HasError  = false;
         Results.Clear();
+        OnPropertyChanged(nameof(IsEmpty));
+
         try
         {
-            var topK   = Math.Clamp(TopK, 1, 20);
-            var chunks = await _ragService.SearchAsync(_projectId, Query.Trim(), topK, ct);
-
-            if (chunks is null) return;
-
-            foreach (var c in chunks)
-                Results.Add(new RagChunkItemViewModel(c));
-
-            IsEmpty = Results.Count == 0;
-            OnPropertyChanged(nameof(ResultsSummary));
+            var chunks = await _ragService.SearchAsync(_projectId, Query, TopK, _cts.Token);
+            if (chunks != null)
+                foreach (var c in chunks)
+                    Results.Add(c);
         }
         catch (OperationCanceledException) { }
-        catch (Exception ex) { HasError = true; ErrorMessage = ex.Message; }
-        finally { IsLoading = false; }
+        catch (Exception ex)
+        {
+            HasError     = true;
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsLoading = false;
+            OnPropertyChanged(nameof(IsEmpty));
+        }
     }
 
-    [RelayCommand]
-    private void Clear()
-    {
-        Query   = string.Empty;
-        Results.Clear();
-        IsEmpty     = false;
-        HasSearched = false;
-        HasError    = false;
-        ErrorMessage = string.Empty;
-        OnPropertyChanged(nameof(ResultsSummary));
-    }
+    private bool CanSearch() => !string.IsNullOrWhiteSpace(Query);
 }

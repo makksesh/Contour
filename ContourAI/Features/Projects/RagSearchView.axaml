@@ -1,123 +1,129 @@
+<!--
+  RagSearchView — вкладка «RAG Search» в ProjectWorkspaceView.
+  Отображает поисковую строку, TopK и список найденных чанков.
+  DataContext: RagSearchViewModel.
+  Проект: DevAssistant / ContourAI.
+-->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:ContourAI.Features.Projects"
+             xmlns:vm="clr-namespace:ContourAI.Features.Projects"
              x:Class="ContourAI.Features.Projects.RagSearchView"
-             x:DataType="local:RagSearchViewModel">
+             x:DataType="vm:RagSearchViewModel">
 
-  <Grid RowDefinitions="Auto,Auto,*" Margin="16">
+  <UserControl.Styles>
+    <Style Selector="TextBox.rag-input">
+      <Setter Property="Background"   Value="{StaticResource ThemeSurfaceAltBrush}"/>
+      <Setter Property="Foreground"   Value="{StaticResource ThemeTextPrimaryBrush}"/>
+      <Setter Property="BorderBrush"  Value="{StaticResource ThemeBorderBrush}"/>
+      <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="Padding"      Value="10 7"/>
+      <Setter Property="FontSize"     Value="13"/>
+    </Style>
+    <Style Selector="TextBlock.chunk-source">
+      <Setter Property="FontSize"   Value="10"/>
+      <Setter Property="Foreground" Value="{StaticResource ThemeTextMutedBrush}"/>
+    </Style>
+    <Style Selector="TextBlock.chunk-score">
+      <Setter Property="FontSize"   Value="10"/>
+      <Setter Property="Foreground" Value="{StaticResource ThemeAccentMutedBrush}"/>
+    </Style>
+    <Style Selector="TextBlock.chunk-content">
+      <Setter Property="FontSize"     Value="12"/>
+      <Setter Property="Foreground"   Value="{StaticResource ThemeTextSecondaryBrush}"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+      <Setter Property="Margin"       Value="0 4 0 0"/>
+    </Style>
+  </UserControl.Styles>
 
-    <!-- ── Строка поиска ─────────────────────────────────────────────── -->
-    <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,8">
+  <Grid RowDefinitions="Auto,*">
 
-      <TextBox Grid.Column="0"
-               Text="{Binding Query, Mode=TwoWay}"
-               Watermark="Введите запрос для поиска по базе знаний…"
-               VerticalContentAlignment="Center"
-               Margin="0,0,8,0">
-        <TextBox.KeyBindings>
-          <KeyBinding Gesture="Enter" Command="{Binding SearchCommand}" />
-        </TextBox.KeyBindings>
-      </TextBox>
+    <!-- ─── Панель поиска ─────────────────────────────────────────────────── -->
+    <StackPanel Grid.Row="0" Spacing="8" Margin="0 0 0 14">
 
-      <!-- TopK -->
-      <NumericUpDown Grid.Column="1"
-                     Value="{Binding TopK}"
-                     Minimum="1" Maximum="20" Increment="1"
-                     Width="72" Margin="0,0,8,0"
-                     ToolTip.Tip="Количество чанков (top-K)"
-                     VerticalAlignment="Center" />
+      <Grid ColumnDefinitions="*,Auto,Auto">
+        <TextBox Grid.Column="0"
+                 Classes="rag-input"
+                 Text="{Binding Query}"
+                 PlaceholderText="Введите поисковый запрос по документам проекта…"
+                 Margin="0 0 8 0">
+          <TextBox.KeyBindings>
+            <KeyBinding Gesture="Return" Command="{Binding SearchCommand}"/>
+          </TextBox.KeyBindings>
+        </TextBox>
 
-      <Button Grid.Column="2"
-              Content="Найти"
-              Command="{Binding SearchCommand}"
-              VerticalAlignment="Center" />
-    </Grid>
+        <NumericUpDown Grid.Column="1"
+                       Value="{Binding TopK}"
+                       Minimum="1" Maximum="20" Increment="1" FormatString="0"
+                       Width="90"
+                       ToolTip.Tip="Количество чанков (Top-K)"
+                       Background="{StaticResource ThemeSurfaceAltBrush}"
+                       Foreground="{StaticResource ThemeTextPrimaryBrush}"
+                       BorderBrush="{StaticResource ThemeBorderBrush}"
+                       FontSize="12"
+                       Margin="0 0 8 0"/>
 
-    <!-- ── Статус / прогресс ─────────────────────────────────────────── -->
-    <Grid Grid.Row="1" Margin="0,0,0,8">
-
-      <ProgressBar IsIndeterminate="True" Height="2"
-                   IsVisible="{Binding IsLoading}" />
-
-      <TextBlock Text="{Binding ResultsSummary}"
-                 FontSize="12" Opacity="0.6"
-                 IsVisible="{Binding !IsLoading}" />
-    </Grid>
-
-    <!-- ── Контентная область ────────────────────────────────────────── -->
-    <Grid Grid.Row="2">
-
-      <!-- Пустое состояние: ничего не искали -->
-      <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
-                  IsVisible="{Binding !HasSearched}" Spacing="8">
-        <TextBlock Text="🔍" FontSize="32" HorizontalAlignment="Center" />
-        <TextBlock Text="Введите запрос и нажмите «Найти»"
-                   Opacity="0.5" HorizontalAlignment="Center" />
-      </StackPanel>
-
-      <!-- Пустое состояние: поиск выполнен, результатов нет -->
-      <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
-                  IsVisible="{Binding IsEmpty}">
-        <TextBlock Text="○" FontSize="32" HorizontalAlignment="Center" />
-        <TextBlock Text="Ничего не найдено. Попробуйте изменить запрос."
-                   Opacity="0.5" HorizontalAlignment="Center" />
-      </StackPanel>
+        <Button Grid.Column="2"
+                Classes="primary"
+                Command="{Binding SearchCommand}"
+                IsEnabled="{Binding !IsLoading}">Найти</Button>
+      </Grid>
 
       <!-- Ошибка -->
-      <Border Background="#20FF4444" CornerRadius="6" Padding="12"
-              IsVisible="{Binding HasError}" VerticalAlignment="Top">
-        <TextBlock Text="{Binding ErrorMessage}" Foreground="#FF6B6B"
-                   TextWrapping="Wrap" />
+      <Border IsVisible="{Binding HasError}"
+              Background="{StaticResource ThemeDangerSoftBrush}"
+              BorderBrush="{StaticResource ThemeDangerBrush}" BorderThickness="1"
+              CornerRadius="6" Padding="10 7">
+        <TextBlock Text="{Binding ErrorMessage}"
+                   Foreground="{StaticResource ThemeDangerTextBrush}" FontSize="12" TextWrapping="Wrap"/>
       </Border>
 
-      <!-- Список чанков -->
-      <ScrollViewer IsVisible="{Binding !IsEmpty}">
-        <ItemsControl ItemsSource="{Binding Results}" Margin="0,0,4,0">
-          <ItemsControl.ItemTemplate>
-            <DataTemplate DataType="local:RagChunkItemViewModel">
-              <Border Background="{DynamicResource CardBackgroundBrush}"
-                      BorderBrush="{DynamicResource CardBorderBrush}"
-                      BorderThickness="1" CornerRadius="6"
-                      Padding="12" Margin="0,0,0,8">
-                <StackPanel Spacing="6">
+    </StackPanel>
 
-                  <!-- Заголовок: имя файла + score -->
+    <!-- ─── Результаты ───────────────────────────────────────────────────────── -->
+    <Panel Grid.Row="1">
+
+      <!-- Загрузка -->
+      <StackPanel IsVisible="{Binding IsLoading}"
+                  HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+        <TextBlock Text="Поиск…"
+                   FontSize="13" Foreground="{StaticResource ThemeTextMutedBrush}"
+                   HorizontalAlignment="Center"/>
+      </StackPanel>
+
+      <!-- Пустое состояние -->
+      <StackPanel IsVisible="{Binding IsEmpty}"
+                  HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+        <TextBlock Text="🔍" FontSize="32" HorizontalAlignment="Center"/>
+        <TextBlock Text="Введите запрос для поиска по документам"
+                   FontSize="13" Foreground="{StaticResource ThemeTextSecondaryBrush}"
+                   HorizontalAlignment="Center"/>
+        <TextBlock Text="Будут найдены наиболее релевантные фрагменты из прикреплённых файлов"
+                   FontSize="11" Foreground="{StaticResource ThemeTextMutedBrush}"
+                   HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="360" TextAlignment="Center"/>
+      </StackPanel>
+
+      <!-- Список чанков -->
+      <ScrollViewer IsVisible="{Binding !IsEmpty}" VerticalScrollBarVisibility="Auto">
+        <ItemsControl ItemsSource="{Binding Results}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:RagChunkDto">
+              <Border Background="{StaticResource ThemeSandBrush}"
+                      CornerRadius="10" Padding="12 10" Margin="0 0 0 8">
+                <StackPanel Spacing="2">
+                  <!-- Шапка чанка: имя файла + оценка релевантности -->
                   <Grid ColumnDefinitions="*,Auto">
                     <TextBlock Grid.Column="0"
+                               Classes="chunk-source"
                                Text="{Binding FileName}"
-                               FontWeight="SemiBold" FontSize="13"
-                               TextTrimming="CharacterEllipsis" />
-                    <Border Grid.Column="1"
-                            CornerRadius="4" Padding="6,2"
-                            Background="{DynamicResource AccentHighlightBrush}">
-                      <TextBlock Text="{Binding ScorePercent, StringFormat='{}{0}%'}"
-                                 FontSize="11" FontWeight="Medium" />
-                    </Border>
+                               TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Grid.Column="1"
+                               Classes="chunk-score"
+                               Text="{Binding ScoreDisplay}"
+                               Margin="8 0 0 0"/>
                   </Grid>
-
-                  <!-- Путь + строка -->
-                  <TextBlock Text="{Binding LocationLabel}"
-                             FontSize="11" Opacity="0.5"
-                             TextTrimming="CharacterEllipsis" />
-
-                  <!-- Preview (свёрнут) -->
-                  <SelectableTextBlock Text="{Binding Preview}"
-                                       TextWrapping="Wrap" FontSize="12"
-                                       IsVisible="{Binding !IsExpanded}" />
-
-                  <!-- FullContent (развёрнут) -->
-                  <SelectableTextBlock Text="{Binding FullContent}"
-                                       TextWrapping="Wrap" FontSize="12"
-                                       FontFamily="Monospace"
-                                       IsVisible="{Binding IsExpanded}" />
-
-                  <!-- Кнопка развернуть/свернуть -->
-                  <Button Content="{Binding ExpandButtonLabel}"
-                          Command="{Binding ToggleExpandCommand}"
-                          IsVisible="{Binding HasMore}"
-                          HorizontalAlignment="Left"
-                          Padding="4,2" FontSize="11" />
-
+                  <!-- Текст чанка -->
+                  <TextBlock Classes="chunk-content"
+                             Text="{Binding ContentPreview}"/>
                 </StackPanel>
               </Border>
             </DataTemplate>
@@ -125,6 +131,7 @@
         </ItemsControl>
       </ScrollViewer>
 
-    </Grid>
+    </Panel>
   </Grid>
+
 </UserControl>
