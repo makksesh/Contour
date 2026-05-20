@@ -244,7 +244,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
 
             // Автоматически создаём первый чат-тред для нового проекта
             _ = _chatService.CreateInProjectAsync(
-                new CreateThreadRequest(dto.Id, $"Chat {DateTime.Now:dd.MM.yyyy}"));
+                new CreateThreadRequest(dto.Id, $"Чат {DateTime.Now:dd.MM.yyyy}"));
         }
         catch { /* silent */ }
     }

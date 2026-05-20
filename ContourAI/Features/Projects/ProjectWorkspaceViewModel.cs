@@ -268,7 +268,7 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         HasError      = false;
         try
         {
-            var title = $"Chat {DateTime.Now:dd.MM.yyyy HH:mm}";
+            var title = $"Чат {DateTime.Now:dd.MM.yyyy HH:mm}";
             var dto   = await _chatService.CreateInProjectAsync(
                 new CreateThreadRequest(ProjectId, title), _cts.Token);
             if (dto == null) return;

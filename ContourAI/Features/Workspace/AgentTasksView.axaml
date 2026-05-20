@@ -18,13 +18,13 @@
             Padding="0 0 0 12" Margin="0 0 0 12">
       <StackPanel Spacing="8">
 
-        <TextBlock Text="Ask the AI agent to modify files in this workspace:"
+        <TextBlock Text="Опишите задачу для AI-агента в этом рабочем пространстве:"
                    FontSize="11" Foreground="{StaticResource ThemeTextMutedBrush}"/>
 
         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
           <TextBox Grid.Column="0"
                    Text="{Binding PromptText}"
-                   PlaceholderText="e.g. Add XML doc-comments to all public methods in Services/"
+                   PlaceholderText="Например: добавь XML-комментарии ко всем публичным методам в папке Services/"
                    Background="{StaticResource ThemeSurfaceAltBrush}"
                    Foreground="{StaticResource ThemeTextPrimaryBrush}"
                    BorderBrush="{StaticResource ThemeBorderBrush}"
@@ -35,12 +35,12 @@
                   Command="{Binding TriggerTaskCommand}"
                   IsEnabled="{Binding !IsTriggeringTask}"
                   VerticalAlignment="Stretch">
-            Run
+            Запустить
           </Button>
         </Grid>
 
         <TextBlock IsVisible="{Binding IsTriggeringTask}"
-                   Text="Creating task…"
+                   Text="Создание задачи…"
                    FontSize="11" Foreground="{StaticResource ThemeTextMutedBrush}"/>
 
         <!-- Ошибка -->
@@ -62,7 +62,7 @@
       <!-- Loading -->
       <StackPanel IsVisible="{Binding IsLoading}"
                   HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
-        <TextBlock Text="Loading tasks…"
+        <TextBlock Text="Загрузка задач…"
                    FontSize="13" Foreground="{StaticResource ThemeTextMutedBrush}"
                    HorizontalAlignment="Center"/>
       </StackPanel>
@@ -72,11 +72,11 @@
                   HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
         <TextBlock Text="🤖"
                    FontSize="36" HorizontalAlignment="Center"/>
-        <TextBlock Text="No agent tasks yet"
+        <TextBlock Text="Задач агента пока нет"
                    FontSize="13" FontWeight="Medium"
                    Foreground="{StaticResource ThemeTextPrimaryBrush}"
                    HorizontalAlignment="Center"/>
-        <TextBlock Text="Enter a prompt above and press Run to let the AI agent modify your workspace."
+        <TextBlock Text="Введите задачу выше и нажмите «Запустить», чтобы AI-агент внёс изменения в рабочее пространство."
                    FontSize="11" Foreground="{StaticResource ThemeTextMutedBrush}"
                    HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="320"
                    TextAlignment="Center"/>
@@ -112,14 +112,14 @@
                             IsVisible="{Binding CanReview}"
                             Command="{Binding OpenReviewCommand}"
                             FontSize="11" Padding="10 4">
-                      Review ChangeSet
+                      Открыть ChangeSet
                     </Button>
                     <Button Classes="danger"
                             IsVisible="{Binding CanRollback}"
                             Command="{Binding RequestRollbackCommand}"
                             IsEnabled="{Binding !IsRollingBack}"
                             FontSize="11" Padding="8 4">
-                      Rollback
+                      Откатить
                     </Button>
                   </StackPanel>
 
@@ -149,7 +149,7 @@
               Command="{Binding RefreshCommand}"
               IsEnabled="{Binding !IsLoading}"
               HorizontalAlignment="Left">
-        ↺ Refresh
+        ↺ Обновить
       </Button>
     </Border>
 

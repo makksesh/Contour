@@ -96,7 +96,7 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
             var ok = await _projectsService.UpdateSettingsAsync(_projectId, request);
             if (!ok)
             {
-                ErrorMessage = "Failed to save settings.";
+                ErrorMessage = "Не удалось сохранить настройки.";
                 HasError     = true;
                 return;
             }
@@ -131,7 +131,7 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
             var ok = await _projectsService.DeleteProjectAsync(_projectId);
             if (!ok)
             {
-                ErrorMessage             = "Failed to delete project.";
+                ErrorMessage             = "Не удалось удалить проект.";
                 HasError                 = true;
                 IsDeleteConfirmVisible   = false;
                 return;
@@ -158,7 +158,7 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
         {
             var dto = await _projectsService.AddFolderAsync(_projectId,
                 new AddProjectFolderRequest(FolderPath, BuildPermission()));
-            if (dto == null) { ErrorMessage = "Failed to attach folder."; HasError = true; return; }
+            if (dto == null) { ErrorMessage = "Не удалось подключить папку."; HasError = true; return; }
             HasFolderAttached = true;
             FolderPath        = dto.Path;
         }
@@ -175,7 +175,7 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
         try
         {
             var ok = await _projectsService.ChangeFolderPermissionAsync(_projectId, BuildPermission());
-            if (!ok) { ErrorMessage = "Failed to update permissions."; HasError = true; }
+            if (!ok) { ErrorMessage = "Не удалось обновить разрешения."; HasError = true; }
         }
         catch (Exception ex) { ErrorMessage = ex.Message; HasError = true; }
         finally { IsBusy = false; }
@@ -190,7 +190,7 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
         try
         {
             var ok = await _projectsService.RemoveFolderAsync(_projectId);
-            if (!ok) { ErrorMessage = "Failed to detach folder."; HasError = true; return; }
+            if (!ok) { ErrorMessage = "Не удалось отключить папку."; HasError = true; return; }
             HasFolderAttached          = false;
             FolderPath                 = null;
             PermRead = PermEdit = PermDelete = false;

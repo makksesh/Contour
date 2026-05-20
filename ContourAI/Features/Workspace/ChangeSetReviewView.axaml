@@ -18,14 +18,14 @@
             BorderBrush="{StaticResource ThemeBorderBrush}" BorderThickness="0 0 0 1"
             Padding="0 0 0 10" Margin="0 0 0 12">
       <StackPanel Orientation="Horizontal" Spacing="10" Height="36">
-        <Button Classes="ghost" Command="{Binding GoBackCommand}">← Back</Button>
+        <Button Classes="ghost" Command="{Binding GoBackCommand}">← Назад</Button>
         <Border Width="1" Background="{StaticResource ThemeBorderBrush}" Margin="0 6"/>
-        <TextBlock Text="Review ChangeSet"
+        <TextBlock Text="Просмотр ChangeSet"
                    FontSize="13" FontWeight="SemiBold"
                    Foreground="{StaticResource ThemeTextPrimaryBrush}"
                    VerticalAlignment="Center"/>
         <TextBlock IsVisible="{Binding IsLoading}"
-                   Text="Loading…"
+                   Text="Загрузка…"
                    FontSize="11" Foreground="{StaticResource ThemeTextMutedBrush}"
                    VerticalAlignment="Center"/>
       </StackPanel>
@@ -40,19 +40,19 @@
         <!-- Select-all toolbar -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="6" Margin="0 0 0 6">
           <Button Classes="ghost" FontSize="10" Padding="6 3"
-                  Command="{Binding SelectAllFilesCommand}">All</Button>
+                  Command="{Binding SelectAllFilesCommand}">Все</Button>
           <Button Classes="ghost" FontSize="10" Padding="6 3"
-                  Command="{Binding DeselectAllFilesCommand}">None</Button>
+                  Command="{Binding DeselectAllFilesCommand}">Ничего</Button>
         </StackPanel>
 
         <!-- Empty state -->
         <StackPanel Grid.Row="1"
                     IsVisible="{Binding !FileChanges.Count}"
                     HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
-          <TextBlock Text="No file changes."
+          <TextBlock Text="Изменений файлов нет."
                      FontSize="12" Foreground="{StaticResource ThemeTextMutedBrush}"
                      HorizontalAlignment="Center"/>
-          <TextBlock Text="The ChangeSet detail endpoint may not be available yet."
+          <TextBlock Text="Детальный endpoint для ChangeSet, возможно, ещё недоступен."
                      FontSize="10" Foreground="{StaticResource ThemeTextMutedBrush}"
                      HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="240" TextAlignment="Center"/>
         </StackPanel>
@@ -109,7 +109,7 @@
           <!-- No selection placeholder -->
           <StackPanel IsVisible="{Binding !HasPreview}"
                       HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
-            <TextBlock Text="Select a file to preview its content."
+            <TextBlock Text="Выберите файл, чтобы посмотреть его содержимое."
                        FontSize="12" Foreground="{StaticResource ThemeTextMutedBrush}"
                        HorizontalAlignment="Center"/>
           </StackPanel>
@@ -159,23 +159,23 @@
           <Button Classes="ghost"
                   Command="{Binding GoBackCommand}"
                   IsEnabled="{Binding !IsApplying}">
-            Cancel
+            Отмена
           </Button>
           <Button Classes="primary"
                   Command="{Binding ApplyCommand}"
                   IsEnabled="{Binding !IsApplied}"
                   IsVisible="{Binding !IsApplied}">
             <StackPanel Orientation="Horizontal" Spacing="6">
-              <TextBlock Text="Apply to local files"
+              <TextBlock Text="Применить к локальным файлам"
                          IsVisible="{Binding !IsApplying}" FontSize="12"/>
-              <TextBlock Text="Applying…"
+              <TextBlock Text="Применение…"
                          IsVisible="{Binding IsApplying}" FontSize="12"/>
             </StackPanel>
           </Button>
           <Button Classes="ghost"
                   IsVisible="{Binding IsApplied}"
                   Command="{Binding GoBackCommand}">
-            Done ✔
+            Готово ✔
           </Button>
         </StackPanel>
 

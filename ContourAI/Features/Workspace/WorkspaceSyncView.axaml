@@ -38,16 +38,16 @@
       ════════════════════════════════════════════════════════════════════ -->
       <StackPanel IsVisible="{Binding IsNotAttached}" Spacing="14">
 
-        <TextBlock Text="Connect workspace to server"
+        <TextBlock Text="Подключение рабочего пространства к серверу"
                    FontSize="13" FontWeight="SemiBold"
                    Foreground="{StaticResource ThemeTextPrimaryBrush}"/>
-        <TextBlock Text="Link the local project folder to a server-side mirror path so the AI agent can read and modify files."
+        <TextBlock Text="Свяжите локальную папку проекта с серверным зеркальным путём, чтобы AI-агент мог читать и изменять файлы."
                    FontSize="11" Foreground="{StaticResource ThemeTextMutedBrush}"
                    TextWrapping="Wrap"/>
 
         <!-- Local root path -->
         <StackPanel Spacing="3">
-          <TextBlock Text="Local Root Path"
+          <TextBlock Text="Локальный путь к корню"
                      FontSize="10" Foreground="{StaticResource ThemeTextMutedBrush}" Margin="0 0 0 3"/>
           <TextBox Text="{Binding LocalRootPath}"
                    PlaceholderText="/Users/me/projects/my-app"
@@ -59,7 +59,7 @@
 
         <!-- Server mirror path -->
         <StackPanel Spacing="3">
-          <TextBlock Text="Server Mirror Path"
+          <TextBlock Text="Зеркальный путь на сервере"
                      FontSize="10" Foreground="{StaticResource ThemeTextMutedBrush}" Margin="0 0 0 3"/>
           <TextBox Text="{Binding ServerMirrorPath}"
                    PlaceholderText="/srv/devassistant/mirrors/my-app"
@@ -73,10 +73,10 @@
           <Button Classes="primary"
                   Command="{Binding AttachCommand}"
                   IsEnabled="{Binding !IsLoading}">
-            Connect
+            Подключить
           </Button>
           <TextBlock IsVisible="{Binding IsLoading}"
-                     Text="Connecting…"
+                     Text="Подключение…"
                      FontSize="12" Foreground="{StaticResource ThemeTextMutedBrush}"
                      VerticalAlignment="Center"/>
         </StackPanel>
@@ -95,7 +95,7 @@
           <StackPanel Spacing="8">
 
             <Grid ColumnDefinitions="Auto,*">
-              <TextBlock Grid.Column="0" Text="Local Root"
+              <TextBlock Grid.Column="0" Text="Локальный корень"
                          FontSize="10" Foreground="{StaticResource ThemeTextMutedBrush}"
                          Width="110" VerticalAlignment="Center"/>
               <TextBlock Grid.Column="1" Text="{Binding LocalRootPath}"
@@ -104,7 +104,7 @@
             </Grid>
 
             <Grid ColumnDefinitions="Auto,*">
-              <TextBlock Grid.Column="0" Text="Server Mirror"
+              <TextBlock Grid.Column="0" Text="Зеркало на сервере"
                          FontSize="10" Foreground="{StaticResource ThemeTextMutedBrush}"
                          Width="110" VerticalAlignment="Center"/>
               <TextBlock Grid.Column="1" Text="{Binding ServerMirrorPath}"
@@ -121,24 +121,24 @@
           <Button Classes="primary"
                   Command="{Binding SnapshotCommand}"
                   IsEnabled="{Binding !IsSyncing}">
-            ↑ Sync Snapshot
+            ↑ Отправить снимок
           </Button>
 
           <Button Classes="ghost"
                   Command="{Binding RefreshStatusCommand}"
                   IsEnabled="{Binding !IsLoading}">
-            ↺ Refresh
+            ↺ Обновить
           </Button>
 
           <Button Classes="ghost"
                   Command="{Binding OpenAgentTasksCommand}">
-            🤖 Agent Tasks
+            🤖 Задачи агента
           </Button>
 
         </StackPanel>
 
         <TextBlock IsVisible="{Binding IsSyncing}"
-                   Text="Scanning files and sending snapshot to server…"
+                   Text="Сканирование файлов и отправка снимка на сервер…"
                    FontSize="11" Foreground="{StaticResource ThemeTextMutedBrush}"
                    TextWrapping="Wrap"/>
 

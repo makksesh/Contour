@@ -95,7 +95,7 @@ public sealed partial class AgentTasksViewModel : ObservableObject
             if (dto is null)
             {
                 HasError     = true;
-                ErrorMessage = "Failed to create agent task.";
+                ErrorMessage = "Не удалось создать задачу агента.";
                 return;
             }
 
@@ -144,7 +144,7 @@ public sealed partial class AgentTasksViewModel : ObservableObject
                 var pseudoDto = new AgentTaskDto(
                     Id:                  cs.AgentTaskId,
                     WorkspaceId:         _workspaceStore.WorkspaceId!.Value,
-                    Prompt:              "(from ChangeSet)",
+                    Prompt:              "(из ChangeSet)",
                     Status:              cs.Status switch
                     {
                         ChangeSetStatus.Ready           => AgentTaskStatus.Ready,

@@ -23,7 +23,7 @@ public sealed partial class SystemMetricsViewModel : ObservableObject, IAsyncDis
     private readonly CancellationTokenSource _cts = new();
 
     [ObservableProperty] private bool _isServerConnected;
-    [ObservableProperty] private string _connectionStatus = "Connecting...";
+    [ObservableProperty] private string _connectionStatus = "Подключение...";
 
     [ObservableProperty] private string _gpuLoad = "— / — GB";
     [ObservableProperty] private string _gpuTemp = "—";
@@ -38,7 +38,7 @@ public sealed partial class SystemMetricsViewModel : ObservableObject, IAsyncDis
     public SystemMetricsViewModel()
     {
         IsServerConnected = true;
-        ConnectionStatus = "Connected";
+        ConnectionStatus = "Подключено";
         GpuLoad = "1.2 / 8.0 GB";
         GpuTemp = "54°C";
         GpuTempBrush = ResolveTemperatureBrush(54);
@@ -80,12 +80,12 @@ public sealed partial class SystemMetricsViewModel : ObservableObject, IAsyncDis
             if (metrics is null)
             {
                 IsServerConnected = false;
-                ConnectionStatus = "Server unavailable";
+                ConnectionStatus = "Сервер недоступен";
                 return;
             }
 
             IsServerConnected = true;
-            ConnectionStatus = "Connected";
+            ConnectionStatus = "Подключено";
 
             GpuLoad = $"{metrics.GpuUsedGb:F1} / {metrics.GpuTotalGb:F1} GB";
             GpuTemp = metrics.GpuTemperatureCelsius > 0 ? $"{metrics.GpuTemperatureCelsius:F0}°C" : "—";
@@ -100,7 +100,7 @@ public sealed partial class SystemMetricsViewModel : ObservableObject, IAsyncDis
         catch
         {
             IsServerConnected = false;
-            ConnectionStatus = "Server unavailable";
+            ConnectionStatus = "Сервер недоступен";
         }
     }
 

@@ -47,7 +47,7 @@ public sealed partial class ChatViewModel : ObservableObject
     private ChatThreadItemViewModel? _selectedThread;
 
     public string SelectedThreadTitle
-        => _selectedThread?.Title ?? "Select or create a thread";
+        => _selectedThread?.Title ?? "Выберите чат или создайте новый";
 
     public bool HasActiveThread => SelectedThread is not null;
 
@@ -55,7 +55,7 @@ public sealed partial class ChatViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(SendCommand))]
     private string _inputText = string.Empty;
 
-    [ObservableProperty] private string _scopeLabel = "GLOBAL";
+    [ObservableProperty] private string _scopeLabel = "ГЛОБАЛЬНЫЙ";
     [ObservableProperty] private string _newThreadTitle        = string.Empty;
     [ObservableProperty] private bool   _isNewThreadDialogOpen;
 
@@ -73,8 +73,8 @@ public sealed partial class ChatViewModel : ObservableObject
     [ObservableProperty] private bool   _isMessagesEmpty;
     [ObservableProperty] private string _errorMessage = string.Empty;
     [ObservableProperty] private bool   _hasError;
-    [ObservableProperty] private string _headerTitle     = "AI Assistant";
-    [ObservableProperty] private string _threadListTitle = "Threads";
+    [ObservableProperty] private string _headerTitle     = "AI-ассистент";
+    [ObservableProperty] private string _threadListTitle = "Чаты";
     [ObservableProperty] private bool   _showBackButton  = true;
 
     private readonly Guid? _projectId;
@@ -90,10 +90,10 @@ public sealed partial class ChatViewModel : ObservableObject
         _projectContext = projectContext;
         _projectId      = projectId;
 
-        HeaderTitle     = headerTitle ?? (projectId is null ? "AI Assistant" : "Project Chat");
-        ThreadListTitle = projectId is null ? "Threads" : "Project Threads";
+        HeaderTitle     = headerTitle ?? (projectId is null ? "AI-ассистент" : "Чат проекта");
+        ThreadListTitle = projectId is null ? "Чаты" : "Чаты проекта";
         ShowBackButton  = showBackButton;
-        ScopeLabel      = projectId is null ? "GLOBAL" : "PROJECT";
+        ScopeLabel      = projectId is null ? "ГЛОБАЛЬНЫЙ" : "ПРОЕКТ";
     }
 
     public async Task InitializeAsync()
@@ -172,14 +172,14 @@ public sealed partial class ChatViewModel : ObservableObject
     [RelayCommand]
     private async Task SwitchToGlobalAsync()
     {
-        ScopeLabel = "GLOBAL";
+        ScopeLabel = "ГЛОБАЛЬНЫЙ";
         await LoadThreadsAsync();
     }
 
     [RelayCommand]
     private async Task SwitchToProjectAsync()
     {
-        ScopeLabel = "PROJECT";
+        ScopeLabel = "ПРОЕКТ";
         await LoadThreadsAsync();
     }
 
@@ -318,7 +318,7 @@ public sealed partial class ChatViewModel : ObservableObject
         catch (Exception ex)
         {
             await Dispatcher.UIThread.InvokeAsync(
-                () => { ErrorMessage = $"Send error: {ex.Message}"; HasError = true; });
+                    () => { ErrorMessage = $"Ошибка отправки: {ex.Message}"; HasError = true; });
         }
         finally
         {

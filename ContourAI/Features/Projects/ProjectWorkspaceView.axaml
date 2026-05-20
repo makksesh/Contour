@@ -95,7 +95,7 @@
             Padding="12 0">
       <StackPanel Orientation="Horizontal" Spacing="4" Height="40">
 
-        <Button Classes="back-btn" Command="{Binding GoBackCommand}">← Back</Button>
+        <Button Classes="back-btn" Command="{Binding GoBackCommand}">← Назад</Button>
         <Border Width="1" Background="{StaticResource ThemeBorderBrush}" Margin="4 8"/>
         <TextBlock Text="{Binding ProjectName}"
                    FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource ThemeTextSecondaryBrush}"
@@ -105,23 +105,23 @@
         <Button Classes="tab-btn"
                 Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsSettings}}"
                 Command="{Binding SelectTabCommand}"
-                CommandParameter="{x:Static vm:WorkspaceTab.Settings}">Settings</Button>
+                CommandParameter="{x:Static vm:WorkspaceTab.Settings}">Настройки</Button>
         <Button Classes="tab-btn"
                 Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsFolder}}"
                 Command="{Binding SelectTabCommand}"
-                CommandParameter="{x:Static vm:WorkspaceTab.Folder}">Folder</Button>
+                CommandParameter="{x:Static vm:WorkspaceTab.Folder}">Папка</Button>
         <Button Classes="tab-btn"
                 Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsDocuments}}"
                 Command="{Binding SelectTabCommand}"
-                CommandParameter="{x:Static vm:WorkspaceTab.Documents}">Documents</Button>
+                CommandParameter="{x:Static vm:WorkspaceTab.Documents}">Документы</Button>
         <Button Classes="tab-btn"
                 Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsChat}}"
                 Command="{Binding SelectTabCommand}"
-                CommandParameter="{x:Static vm:WorkspaceTab.Chat}">Chat</Button>
+                CommandParameter="{x:Static vm:WorkspaceTab.Chat}">Чат</Button>
         <Button Classes="tab-btn"
                 Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsSync}}"
                 Command="{Binding SelectTabCommand}"
-                CommandParameter="{x:Static vm:WorkspaceTab.Sync}">Sync</Button>
+                CommandParameter="{x:Static vm:WorkspaceTab.Sync}">Синхронизация</Button>
 
         <TextBlock IsVisible="{Binding IsLoading}"
                    Text="…" Foreground="{StaticResource ThemeTextMutedBrush}" FontSize="12"
@@ -146,17 +146,17 @@
             </Border>
 
             <StackPanel Spacing="3">
-              <TextBlock Classes="field-label" Text="System Prompt"/>
+              <TextBlock Classes="field-label" Text="Системный промпт"/>
               <TextBox Classes="settings-input" Text="{Binding SystemPrompt}"
-                       AcceptsReturn="True" Height="90" TextWrapping="Wrap" PlaceholderText="Enter system prompt…"/>
+                       AcceptsReturn="True" Height="90" TextWrapping="Wrap" PlaceholderText="Введите системный промпт…"/>
             </StackPanel>
             <StackPanel Spacing="3">
-              <TextBlock Classes="field-label" Text="Max Tokens  (1–32768)"/>
+              <TextBlock Classes="field-label" Text="Макс. токены  (1–32768)"/>
               <NumericUpDown Value="{Binding MaxTokens}" Minimum="1" Maximum="32768" Increment="256" FormatString="0"
                              Background="{StaticResource ThemeSurfaceAltBrush}" Foreground="{StaticResource ThemeTextPrimaryBrush}" BorderBrush="{StaticResource ThemeBorderBrush}" FontSize="12"/>
             </StackPanel>
             <StackPanel Spacing="3">
-              <TextBlock Classes="field-label" Text="Temperature  (0.0–2.0)"/>
+              <TextBlock Classes="field-label" Text="Температура  (0.0–2.0)"/>
               <NumericUpDown Value="{Binding Temperature}" Minimum="0" Maximum="2" Increment="0.05" FormatString="0.00"
                              Background="{StaticResource ThemeSurfaceAltBrush}" Foreground="{StaticResource ThemeTextPrimaryBrush}" BorderBrush="{StaticResource ThemeBorderBrush}" FontSize="12"/>
             </StackPanel>
@@ -166,30 +166,30 @@
                              Background="{StaticResource ThemeSurfaceAltBrush}" Foreground="{StaticResource ThemeTextPrimaryBrush}" BorderBrush="{StaticResource ThemeBorderBrush}" FontSize="12"/>
             </StackPanel>
             <StackPanel Spacing="3">
-              <TextBlock Classes="field-label" Text="Context Window  (1–50)"/>
+              <TextBlock Classes="field-label" Text="Окно контекста  (1–50)"/>
               <NumericUpDown Value="{Binding ContextWindowSize}" Minimum="1" Maximum="50" Increment="1" FormatString="0"
                              Background="{StaticResource ThemeSurfaceAltBrush}" Foreground="{StaticResource ThemeTextPrimaryBrush}" BorderBrush="{StaticResource ThemeBorderBrush}" FontSize="12"/>
             </StackPanel>
-            <CheckBox IsChecked="{Binding UseRagContext}" Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12" Content="Use RAG Context"/>
-            <Button Classes="primary" Command="{Binding SaveSettingsCommand}" IsEnabled="{Binding !IsBusy}">Save Settings</Button>
+            <CheckBox IsChecked="{Binding UseRagContext}" Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12" Content="Использовать RAG-контекст"/>
+            <Button Classes="primary" Command="{Binding SaveSettingsCommand}" IsEnabled="{Binding !IsBusy}">Сохранить настройки</Button>
 
             <!-- Danger Zone -->
             <Border BorderBrush="{StaticResource ThemeBorderBrush}" BorderThickness="0 1 0 0" Margin="0 10 0 0" Padding="0 14 0 0">
               <StackPanel Spacing="10">
-                <TextBlock Text="Danger Zone" FontSize="10" Foreground="{StaticResource ThemeTextMutedBrush}" FontWeight="SemiBold"/>
+                <TextBlock Text="Опасная зона" FontSize="10" Foreground="{StaticResource ThemeTextMutedBrush}" FontWeight="SemiBold"/>
                 <Button Classes="danger" IsVisible="{Binding !IsDeleteConfirmVisible}"
                         Command="{Binding RequestDeleteProjectCommand}" IsEnabled="{Binding !IsBusy}"
-                        HorizontalAlignment="Left">Delete Project</Button>
+                        HorizontalAlignment="Left">Удалить проект</Button>
                 <Border IsVisible="{Binding IsDeleteConfirmVisible}"
                         Background="{StaticResource ThemeDangerSoftBrush}" BorderBrush="{StaticResource ThemeDangerBrush}" BorderThickness="1"
                         CornerRadius="6" Padding="14 12">
                   <StackPanel Spacing="10">
-                    <TextBlock Text="Delete this project?" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource ThemeDangerTextBrush}"/>
-                    <TextBlock Text="This action cannot be undone. All settings and folder links will be permanently removed."
+                    <TextBlock Text="Удалить этот проект?" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource ThemeDangerTextBrush}"/>
+                    <TextBlock Text="Это действие нельзя отменить. Все настройки и связи с папками будут удалены безвозвратно."
                                FontSize="11" Foreground="{StaticResource ThemeTextSecondaryBrush}" TextWrapping="Wrap"/>
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                      <Button Classes="danger" Command="{Binding ConfirmDeleteProjectCommand}" IsEnabled="{Binding !IsBusy}">Yes, delete</Button>
-                      <Button Classes="ghost"  Command="{Binding CancelDeleteProjectCommand}"  IsEnabled="{Binding !IsBusy}">Cancel</Button>
+                      <Button Classes="danger" Command="{Binding ConfirmDeleteProjectCommand}" IsEnabled="{Binding !IsBusy}">Да, удалить</Button>
+                      <Button Classes="ghost"  Command="{Binding CancelDeleteProjectCommand}"  IsEnabled="{Binding !IsBusy}">Отмена</Button>
                     </StackPanel>
                   </StackPanel>
                 </Border>
@@ -209,38 +209,38 @@
             </Border>
 
             <StackPanel IsVisible="{Binding !HasFolderAttached}" Spacing="14">
-              <TextBlock Text="No folder connected." Foreground="{StaticResource ThemeTextMutedBrush}" FontSize="12"/>
+              <TextBlock Text="Папка не подключена." Foreground="{StaticResource ThemeTextMutedBrush}" FontSize="12"/>
               <StackPanel Spacing="3">
-                <TextBlock Classes="field-label" Text="Folder Path"/>
-                <TextBox Classes="settings-input" Text="{Binding FolderPath}" PlaceholderText="/absolute/path/to/folder"/>
+                <TextBlock Classes="field-label" Text="Путь к папке"/>
+                <TextBox Classes="settings-input" Text="{Binding FolderPath}" PlaceholderText="/абсолютный/путь/к/папке"/>
               </StackPanel>
               <StackPanel Spacing="3">
-                <TextBlock Classes="field-label" Text="Permissions"/>
+                <TextBlock Classes="field-label" Text="Разрешения"/>
                 <StackPanel Orientation="Horizontal" Spacing="12">
-                  <CheckBox IsChecked="{Binding PermRead}"   Content="Read"   Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
-                  <CheckBox IsChecked="{Binding PermEdit}"   Content="Edit"   Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
-                  <CheckBox IsChecked="{Binding PermDelete}" Content="Delete" Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
+                  <CheckBox IsChecked="{Binding PermRead}"   Content="Чтение"   Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
+                  <CheckBox IsChecked="{Binding PermEdit}"   Content="Изменение"   Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
+                  <CheckBox IsChecked="{Binding PermDelete}" Content="Удаление" Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
                 </StackPanel>
               </StackPanel>
-              <Button Classes="primary" Command="{Binding AttachFolderCommand}">Connect Folder</Button>
+              <Button Classes="primary" Command="{Binding AttachFolderCommand}">Подключить папку</Button>
             </StackPanel>
 
             <StackPanel IsVisible="{Binding HasFolderAttached}" Spacing="14">
               <StackPanel Spacing="3">
-                <TextBlock Classes="field-label" Text="Connected Path"/>
+                <TextBlock Classes="field-label" Text="Подключённый путь"/>
                 <TextBlock Text="{Binding FolderPath}" Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12" TextWrapping="Wrap"/>
               </StackPanel>
               <StackPanel Spacing="3">
-                <TextBlock Classes="field-label" Text="Permissions"/>
+                <TextBlock Classes="field-label" Text="Разрешения"/>
                 <StackPanel Orientation="Horizontal" Spacing="12">
-                  <CheckBox IsChecked="{Binding PermRead}"   Content="Read"   Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
-                  <CheckBox IsChecked="{Binding PermEdit}"   Content="Edit"   Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
-                  <CheckBox IsChecked="{Binding PermDelete}" Content="Delete" Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
+                  <CheckBox IsChecked="{Binding PermRead}"   Content="Чтение"   Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
+                  <CheckBox IsChecked="{Binding PermEdit}"   Content="Изменение"   Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
+                  <CheckBox IsChecked="{Binding PermDelete}" Content="Удаление" Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
                 </StackPanel>
               </StackPanel>
               <StackPanel Orientation="Horizontal" Spacing="8">
-                <Button Classes="primary" Command="{Binding SaveFolderPermissionsCommand}">Save Permissions</Button>
-                <Button Classes="danger"  Command="{Binding DetachFolderCommand}">Disconnect</Button>
+                <Button Classes="primary" Command="{Binding SaveFolderPermissionsCommand}">Сохранить разрешения</Button>
+                <Button Classes="danger"  Command="{Binding DetachFolderCommand}">Отключить</Button>
               </StackPanel>
             </StackPanel>
 
@@ -256,18 +256,18 @@
             <Button Classes="primary"
                     Command="{Binding DocumentsViewModel.UploadCommand}"
                     IsEnabled="{Binding !DocumentsViewModel.IsUploading}">
-              Upload File
+              Загрузить файл
             </Button>
             <Button Classes="ghost"
                     Command="{Binding DocumentsViewModel.RefreshCommand}"
                     IsEnabled="{Binding !DocumentsViewModel.IsLoading}">
-              ↺ Refresh
+              ↺ Обновить
             </Button>
             <TextBlock IsVisible="{Binding DocumentsViewModel.IsUploading}"
-                       Text="Uploading…" Foreground="{StaticResource ThemeAccentBrush}" FontSize="12"
+                       Text="Загрузка…" Foreground="{StaticResource ThemeAccentBrush}" FontSize="12"
                        VerticalAlignment="Center" Margin="4 0"/>
             <TextBlock IsVisible="{Binding IsLoading}"
-                       Text="Loading…" Foreground="{StaticResource ThemeTextMutedBrush}" FontSize="12"
+                       Text="Загрузка…" Foreground="{StaticResource ThemeTextMutedBrush}" FontSize="12"
                        VerticalAlignment="Center" Margin="4 0"/>
           </StackPanel>
 
@@ -277,9 +277,9 @@
             <!-- Empty state -->
             <StackPanel IsVisible="{Binding DocumentsViewModel.IsEmpty}"
                         HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-              <TextBlock Text="No documents yet."
+              <TextBlock Text="Документов пока нет."
                          Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="13" HorizontalAlignment="Center"/>
-              <TextBlock Text="Upload a file to get started."
+              <TextBlock Text="Загрузите файл, чтобы начать работу."
                          Foreground="{StaticResource ThemeTextMutedBrush}" FontSize="11" HorizontalAlignment="Center"/>
             </StackPanel>
 
@@ -320,7 +320,7 @@
                                   IsVisible="{Binding TaskStatus, Converter={x:Static vm:WorkspaceTabConverter.IsTaskFailed}}"
                                   Command="{Binding $parent[ItemsControl].((vm:ProjectDocumentsViewModel)DataContext).RequeueCommand}"
                                   CommandParameter="{Binding}"
-                                  ToolTip.Tip="Retry indexing">
+                                  ToolTip.Tip="Повторить индексацию">
                             ↻
                           </Button>
 
@@ -329,7 +329,7 @@
                                   Command="{Binding $parent[ItemsControl].((vm:ProjectDocumentsViewModel)DataContext).DeleteCommand}"
                                   CommandParameter="{Binding}"
                                   IsEnabled="{Binding !IsDeleting}"
-                                  ToolTip.Tip="Delete document">
+                                  ToolTip.Tip="Удалить документ">
                             ✕
                           </Button>
 
@@ -370,7 +370,7 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Spacing="8">
-                <TextBlock Text="Loading chat…"
+                <TextBlock Text="Загрузка чата…"
                            FontSize="13" Foreground="{StaticResource ThemeTextMutedBrush}"
                            HorizontalAlignment="Center"/>
             </StackPanel>
@@ -383,11 +383,11 @@
                 <TextBlock Text="&#x1F4AC;"
                            FontSize="40"
                            HorizontalAlignment="Center"/>
-                <TextBlock Text="No chat yet"
+                <TextBlock Text="Чат ещё не создан"
                            FontSize="14" FontWeight="Medium"
                            Foreground="{StaticResource ThemeTextPrimaryBrush}"
                            HorizontalAlignment="Center"/>
-                <TextBlock Text="Start a conversation with the AI assistant in the context of this project."
+                <TextBlock Text="Начните диалог с AI-ассистентом в контексте этого проекта."
                            FontSize="12" Foreground="{StaticResource ThemeTextMutedBrush}"
                            HorizontalAlignment="Center"
                            TextWrapping="Wrap" MaxWidth="340"
@@ -395,7 +395,7 @@
                 <Button Classes="primary"
                         HorizontalAlignment="Center"
                         Command="{Binding StartChatCommand}">
-                    Start Chat
+                    Начать чат
                 </Button>
             </StackPanel>
 
@@ -454,7 +454,7 @@
                    Foreground="{StaticResource ThemeDangerTextBrush}" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap"/>
         <Button Grid.Column="1" Classes="primary"
                 Command="{Binding LoadSettingsCommand}"
-                Margin="12 0 0 0">Retry</Button>
+                Margin="12 0 0 0">Повторить</Button>
       </Grid>
     </Border>
 

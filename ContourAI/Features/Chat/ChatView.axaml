@@ -82,7 +82,7 @@
                     Spacing="10">
           <TextBlock Text="&#x1F4AC;" FontSize="36"
                      HorizontalAlignment="Center"/>
-          <TextBlock Text="Select a chat from the sidebar"
+          <TextBlock Text="Выберите чат в боковой панели"
                      FontSize="14"
                      Classes="muted"
                      HorizontalAlignment="Center"/>
@@ -93,11 +93,11 @@
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Spacing="10">
-          <TextBlock Text="Start the conversation"
+          <TextBlock Text="Начните диалог"
                      FontSize="14"
                      Classes="secondary"
                      HorizontalAlignment="Center"/>
-          <TextBlock Text="Ask anything — the assistant will answer based on context"
+          <TextBlock Text="Задайте вопрос — ассистент ответит с учётом текущего контекста"
                      FontSize="12"
                      Classes="muted"
                      HorizontalAlignment="Center"/>
@@ -105,7 +105,7 @@
 
         <!-- Загрузка сообщений -->
         <TextBlock IsVisible="{Binding IsLoadingMessages}"
-                   Text="Loading messages..."
+                   Text="Загрузка сообщений..."
                    Classes="muted"
                    FontSize="13"
                    HorizontalAlignment="Center"
@@ -150,7 +150,7 @@
                   <StackPanel Spacing="4">
 
                     <!-- Лейбл роли -->
-                    <TextBlock Text="Assistant"
+                    <TextBlock Text="Ассистент"
                                FontSize="11"
                                Foreground="{StaticResource ThemeAccentBrush}"
                                FontWeight="SemiBold"/>
@@ -194,7 +194,7 @@
         <TextBox Grid.Column="0"
                  Classes="chat-input"
                  Text="{Binding InputText}"
-                 PlaceholderText="Message the assistant..."
+                 PlaceholderText="Напишите ассистенту..."
                  AcceptsReturn="True"
                  KeyDown="Input_KeyDown"/>
 
@@ -213,7 +213,7 @@
                 Margin="8 0 0 0"
                 Command="{Binding SendCommand}"
                 IsEnabled="{Binding !IsSending}">
-          Send
+          Отправить
         </Button>
 
       </Grid>

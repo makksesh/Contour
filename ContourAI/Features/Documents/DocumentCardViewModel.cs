@@ -34,11 +34,11 @@ public sealed partial class DocumentCardViewModel : ObservableObject
 
     public string StatusLabel => Status switch
     {
-        DocumentStatus.Uploaded   => "• Uploaded",
-        DocumentStatus.Pending    => "⏳ Pending",
-        DocumentStatus.Processing => "↻ Processing",
-        DocumentStatus.Indexed    => "✓ Indexed",
-        DocumentStatus.Failed     => "✗ Failed",
+        DocumentStatus.Uploaded   => "• Загружен",
+        DocumentStatus.Pending    => "⏳ В очереди",
+        DocumentStatus.Processing => "↻ Обрабатывается",
+        DocumentStatus.Indexed    => "✓ Индексирован",
+        DocumentStatus.Failed     => "✗ Ошибка",
         _                         => Status.ToString()
     };
 
@@ -61,7 +61,7 @@ public sealed partial class DocumentCardViewModel : ObservableObject
     {
         Id           = dto.Id;
         FileName     = dto.FileName;
-        ContentType  = dto.ContentType ?? "unknown";
+        ContentType  = dto.ContentType ?? "неизвестно";
         SizeBytes    = dto.SizeBytes;
         CreatedAt    = dto.CreatedAtUtc;
         ErrorMessage = dto.ErrorMessage;

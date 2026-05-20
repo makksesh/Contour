@@ -102,7 +102,7 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(LocalRootPath) || string.IsNullOrWhiteSpace(ServerMirrorPath))
         {
             HasError     = true;
-            ErrorMessage = "Please provide both Local Root Path and Server Mirror Path.";
+            ErrorMessage = "Укажите и локальный путь к корню, и зеркальный путь на сервере.";
             return;
         }
 
@@ -117,12 +117,12 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject
             if (dto is null)
             {
                 HasError     = true;
-                ErrorMessage = "Failed to attach workspace. Check connection or credentials.";
+                ErrorMessage = "Не удалось подключить рабочее пространство. Проверьте соединение и учётные данные.";
                 return;
             }
 
             Workspace     = dto;
-            StatusMessage = "Workspace attached successfully.";
+            StatusMessage = "Рабочее пространство успешно подключено.";
             OnPropertyChanged(nameof(IsAttached));
             OnPropertyChanged(nameof(IsNotAttached));
             await RefreshPendingCountAsync(ct);
@@ -144,7 +144,7 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject
 
         IsSyncing    = true;
         HasError     = false;
-        StatusMessage = "Scanning files…";
+        StatusMessage = "Сканирование файлов…";
         try
         {
             var result = await _syncService.SnapshotAsync(
@@ -155,15 +155,15 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject
             if (result is null)
             {
                 HasError     = true;
-                ErrorMessage = "Snapshot failed. Server did not respond.";
+                ErrorMessage = "Не удалось отправить снимок. Сервер не ответил.";
                 return;
             }
 
             StatusMessage =
-                $"Snapshot done — rev {result.ServerRevision}. " +
+                $"Снимок отправлен — ревизия {result.ServerRevision}. " +
                 $"+{result.FilesAdded} ~{result.FilesUpdated} -{result.FilesRemoved}" +
                 (result.ConflictingPaths.Count > 0
-                    ? $" | {result.ConflictingPaths.Count} conflict(s)"
+                    ? $" | конфликтов: {result.ConflictingPaths.Count}"
                     : string.Empty);
 
             await RefreshPendingCountAsync(ct);
