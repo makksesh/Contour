@@ -11,8 +11,11 @@
 /// </summary>
 
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ContourAI.Entities.Workspace;
@@ -33,8 +36,33 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject
 
     // ── Attach-форма ─────────────────────────────────────────────────────────
 
-    [ObservableProperty] private string _localRootPath   = string.Empty;
-    [ObservableProperty] private string _serverMirrorPath = string.Empty;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ServerMirrorPath))]
+    private string _localRootPath = string.Empty;
+
+    // Серверный путь авто-генерируется из имени папки клиента.
+    // Пользователь может переопределить вручную через поле.
+    [ObservableProperty] private string? _serverMirrorPathOverride;
+
+    public string ServerMirrorPath
+    {
+        get => _serverMirrorPathOverride ?? GenerateServerPath(_localRootPath);
+        set
+        {
+            // Если пользователь ввёл что-то отличное от авто-значения — фиксируем как override
+            var auto = GenerateServerPath(_localRootPath);
+            SetProperty(ref _serverMirrorPathOverride, value == auto ? null : value);
+            OnPropertyChanged();
+        }
+    }
+
+    private static string GenerateServerPath(string localPath)
+    {
+        if (string.IsNullOrWhiteSpace(localPath)) return string.Empty;
+        var folderName = Path.GetFileName(localPath.TrimEnd(Path.DirectorySeparatorChar, '/'));
+        if (string.IsNullOrEmpty(folderName)) return string.Empty;
+        return $"/srv/devassistant/mirrors/{folderName}";
+    }
 
     // ── Состояние ────────────────────────────────────────────────────────────
 
@@ -95,14 +123,41 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject
 
     // ── Commands ──────────────────────────────────────────────────────────────
 
+    /// <summary>Открывает диалог выбора папки и устанавливает LocalRootPath.</summary>
+    [RelayCommand]
+    private async Task BrowseLocalPathAsync(TopLevel? topLevel)
+    {
+        if (topLevel is null) return;
+
+        var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(
+            new FolderPickerOpenOptions
+            {
+                Title            = "Select local project folder",
+                AllowMultiple    = false,
+                SuggestedStartLocation = await topLevel.StorageProvider
+                    .TryGetFolderFromPathAsync(
+                        string.IsNullOrWhiteSpace(LocalRootPath)
+                            ? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
+                            : LocalRootPath)
+            });
+
+        if (folders.Count == 0) return;
+
+        var path = folders[0].Path.LocalPath;
+        LocalRootPath = path;
+        // Override сбрасываем — пусть серверный путь пересчитаетсяш
+        _serverMirrorPathOverride = null;
+        OnPropertyChanged(nameof(ServerMirrorPath));
+    }
+
     /// <summary>Attach: POST /api/workspaces/attach</summary>
     [RelayCommand(IncludeCancelCommand = true)]
     private async Task AttachAsync(CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(LocalRootPath) || string.IsNullOrWhiteSpace(ServerMirrorPath))
+        if (string.IsNullOrWhiteSpace(LocalRootPath))
         {
             HasError     = true;
-            ErrorMessage = "Please provide both Local Root Path and Server Mirror Path.";
+            ErrorMessage = "Please select or enter a local project folder path.";
             return;
         }
 

@@ -18,6 +18,15 @@ public sealed class NonEmptyStringConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
+/// <summary>true если строка null или пустая (инверсия NonEmptyStringConverter).</summary>
+public sealed class EmptyStringConverter : IValueConverter
+{
+    public object Convert(object? v, Type t, object? p, CultureInfo c)
+        => v is not string s || string.IsNullOrEmpty(s);
+    public object ConvertBack(object? v, Type t, object? p, CultureInfo c)
+        => throw new NotSupportedException();
+}
+
 /// <summary>true если bool == false (инверсия для IsEnabled).</summary>
 public sealed class NotBoolConverter : IValueConverter
 {
@@ -31,6 +40,7 @@ public sealed class NotBoolConverter : IValueConverter
 public static class WorkspaceSyncViewHelpers
 {
     public static readonly NonEmptyStringConverter IsNonEmpty = new();
+    public static readonly EmptyStringConverter    IsEmpty    = new();
     public static readonly NotBoolConverter        NotBool    = new();
 }
 

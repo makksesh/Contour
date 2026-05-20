@@ -45,28 +45,63 @@
                    FontSize="11" Foreground="{StaticResource ThemeTextMutedBrush}"
                    TextWrapping="Wrap"/>
 
-        <!-- Local root path -->
+        <!-- Local root path — TextBox + Browse button -->
         <StackPanel Spacing="3">
           <TextBlock Text="Local Root Path"
                      FontSize="10" Foreground="{StaticResource ThemeTextMutedBrush}" Margin="0 0 0 3"/>
-          <TextBox Text="{Binding LocalRootPath}"
-                   PlaceholderText="/Users/me/projects/my-app"
-                   Background="{StaticResource ThemeSurfaceAltBrush}"
-                   Foreground="{StaticResource ThemeTextPrimaryBrush}"
-                   BorderBrush="{StaticResource ThemeBorderBrush}"
-                   CornerRadius="5" Padding="8 5" FontSize="12"/>
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+            <TextBox Grid.Column="0"
+                     Text="{Binding LocalRootPath}"
+                     PlaceholderText="/Users/me/projects/my-app"
+                     Background="{StaticResource ThemeSurfaceAltBrush}"
+                     Foreground="{StaticResource ThemeTextPrimaryBrush}"
+                     BorderBrush="{StaticResource ThemeBorderBrush}"
+                     CornerRadius="5" Padding="8 5" FontSize="12"/>
+            <Button Grid.Column="1"
+                    Classes="ghost"
+                    Click="OnBrowseClick"
+                    ToolTip.Tip="Choose folder…"
+                    Padding="8 5"
+                    FontSize="14"
+                    VerticalAlignment="Stretch">
+              &#x1F4C1;
+            </Button>
+          </Grid>
         </StackPanel>
 
-        <!-- Server mirror path -->
+        <!-- Server mirror path — auto-generated, read-only -->
         <StackPanel Spacing="3">
-          <TextBlock Text="Server Mirror Path"
-                     FontSize="10" Foreground="{StaticResource ThemeTextMutedBrush}" Margin="0 0 0 3"/>
-          <TextBox Text="{Binding ServerMirrorPath}"
-                   PlaceholderText="/srv/devassistant/mirrors/my-app"
-                   Background="{StaticResource ThemeSurfaceAltBrush}"
-                   Foreground="{StaticResource ThemeTextPrimaryBrush}"
-                   BorderBrush="{StaticResource ThemeBorderBrush}"
-                   CornerRadius="5" Padding="8 5" FontSize="12"/>
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBlock Grid.Column="0"
+                       Text="Server Mirror Path"
+                       FontSize="10" Foreground="{StaticResource ThemeTextMutedBrush}" Margin="0 0 0 0"
+                       VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="1"
+                       Text="auto-generated"
+                       FontSize="9" FontStyle="Italic"
+                       Foreground="{StaticResource ThemeTextMutedBrush}"
+                       VerticalAlignment="Center"/>
+          </Grid>
+          <Border Background="{StaticResource ThemeSurfaceAltBrush}"
+                  BorderBrush="{StaticResource ThemeBorderBrush}" BorderThickness="1"
+                  CornerRadius="5" Padding="8 6">
+            <TextBlock Text="{Binding ServerMirrorPath}"
+                       FontSize="12"
+                       Foreground="{StaticResource ThemeTextSecondaryBrush}"
+                       FontFamily="Monospace"
+                       TextTrimming="CharacterEllipsis">
+              <TextBlock.IsVisible>
+                <Binding Path="ServerMirrorPath"
+                         Converter="{x:Static vm:WorkspaceSyncViewHelpers.IsNonEmpty}"/>
+              </TextBlock.IsVisible>
+            </TextBlock>
+          </Border>
+          <TextBlock Text="Derived from the local folder name. Select a folder above to populate."
+                     FontSize="10" FontStyle="Italic"
+                     Foreground="{StaticResource ThemeTextMutedBrush}"
+                     IsVisible="{Binding ServerMirrorPath,
+                                 Converter={x:Static vm:WorkspaceSyncViewHelpers.IsEmpty}}"
+                     TextWrapping="Wrap"/>
         </StackPanel>
 
         <StackPanel Orientation="Horizontal" Spacing="8">
@@ -121,18 +156,18 @@
           <Button Classes="primary"
                   Command="{Binding SnapshotCommand}"
                   IsEnabled="{Binding !IsSyncing}">
-            ↑ Sync Snapshot
+            &#x2191; Sync Snapshot
           </Button>
 
           <Button Classes="ghost"
                   Command="{Binding RefreshStatusCommand}"
                   IsEnabled="{Binding !IsLoading}">
-            ↺ Refresh
+            &#x21BA; Refresh
           </Button>
 
           <Button Classes="ghost"
                   Command="{Binding OpenAgentTasksCommand}">
-            🤖 Agent Tasks
+            &#x1F916; Agent Tasks
           </Button>
 
         </StackPanel>
