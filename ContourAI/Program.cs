@@ -102,6 +102,9 @@ internal static class Program
         services.AddSingleton<AgentTasksViewModel>();
         services.AddSingleton<ChangeSetReviewViewModel>();
 
+        // Фаза 8: RAG Search ViewModel (Transient — каждый проект получает свой экземпляр)
+        services.AddTransient<RagSearchViewModel>();
+
         services.AddSingleton<ProjectWorkspaceViewModel>(sp => new ProjectWorkspaceViewModel(
             sp.GetRequiredService<ProjectsService>(),
             sp.GetRequiredService<ChatService>(),
@@ -109,7 +112,8 @@ internal static class Program
             sp.GetRequiredService<ProjectDocumentsViewModel>(),
             sp.GetRequiredService<WorkspaceSyncViewModel>(),
             sp.GetRequiredService<AgentTasksViewModel>(),
-            sp.GetRequiredService<ChangeSetReviewViewModel>()));
+            sp.GetRequiredService<ChangeSetReviewViewModel>(),
+            sp.GetRequiredService<RagSearchViewModel>()));
         
 
         // Window
