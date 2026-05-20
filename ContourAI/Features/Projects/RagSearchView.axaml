@@ -11,6 +11,7 @@
              x:DataType="vm:RagSearchViewModel">
 
   <UserControl.Styles>
+
     <Style Selector="TextBox.rag-input">
       <Setter Property="Background"   Value="{StaticResource ThemeSurfaceAltBrush}"/>
       <Setter Property="Foreground"   Value="{StaticResource ThemeTextPrimaryBrush}"/>
@@ -18,21 +19,45 @@
       <Setter Property="CornerRadius" Value="8"/>
       <Setter Property="Padding"      Value="10 7"/>
       <Setter Property="FontSize"     Value="13"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
+
+    <!--
+      chunk-text: ReadOnly TextBox для выделения текста чанка.
+      IsReadOnly=True сохраняет навигацию курсором и выделение,
+      но запрещает редактирование.
+    -->
+    <Style Selector="TextBox.chunk-text">
+      <Setter Property="IsReadOnly"    Value="True"/>
+      <Setter Property="Background"    Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Padding"       Value="0"/>
+      <Setter Property="Margin"        Value="0 5 0 0"/>
+      <Setter Property="FontSize"      Value="12"/>
+      <Setter Property="Foreground"    Value="{StaticResource ThemeTextPrimaryBrush}"/>
+      <Setter Property="TextWrapping"  Value="Wrap"/>
+      <Setter Property="AcceptsReturn" Value="False"/>
+      <Setter Property="CaretBrush"    Value="Transparent"/>
+      <!-- Убираем рамку при фокусе — выглядит как обычный текст -->
+      <Setter Property="FocusAdorner"  Value="{x:Null}"/>
+    </Style>
+    <Style Selector="TextBox.chunk-text:pointerover /template/ Border#PART_BorderElement">
+      <Setter Property="BorderBrush" Value="Transparent"/>
+      <Setter Property="Background"  Value="Transparent"/>
+    </Style>
+    <Style Selector="TextBox.chunk-text:focus /template/ Border#PART_BorderElement">
+      <Setter Property="BorderBrush" Value="Transparent"/>
+      <Setter Property="Background"  Value="Transparent"/>
+    </Style>
+
     <Style Selector="TextBlock.chunk-location">
-      <Setter Property="FontSize"   Value="10"/>
-      <Setter Property="Foreground" Value="{StaticResource ThemeTextMutedBrush}"/>
+      <Setter Property="FontSize"     Value="10"/>
+      <Setter Property="Foreground"   Value="{StaticResource ThemeTextMutedBrush}"/>
       <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
     </Style>
     <Style Selector="TextBlock.chunk-score">
       <Setter Property="FontSize"   Value="10"/>
       <Setter Property="Foreground" Value="{StaticResource ThemeAccentMutedBrush}"/>
-    </Style>
-    <Style Selector="TextBlock.chunk-content">
-      <Setter Property="FontSize"     Value="12"/>
-      <Setter Property="Foreground"   Value="{StaticResource ThemeTextSecondaryBrush}"/>
-      <Setter Property="TextWrapping" Value="Wrap"/>
-      <Setter Property="Margin"       Value="0 5 0 0"/>
     </Style>
     <Style Selector="Button.expand-btn">
       <Setter Property="Background"      Value="Transparent"/>
@@ -42,25 +67,22 @@
       <Setter Property="FontSize"        Value="11"/>
       <Setter Property="Cursor"          Value="Hand"/>
     </Style>
+
   </UserControl.Styles>
 
   <Grid RowDefinitions="Auto,*">
 
-    <!-- ─── Панель поиска ─────────────────────────────────────────────────── -->
+    <!-- ─── Панель поиска ─────────────────────────────────────────── -->
     <StackPanel Grid.Row="0" Spacing="8" Margin="0 0 0 14">
 
-      <Grid ColumnDefinitions="*,Auto,Auto">
-        <TextBox Grid.Column="0"
-                 Classes="rag-input"
-                 Text="{Binding Query}"
-                 PlaceholderText="Введите поисковый запрос по документам проекта…"
-                 Margin="0 0 8 0">
-          <TextBox.KeyBindings>
-            <KeyBinding Gesture="Return" Command="{Binding SearchCommand}"/>
-          </TextBox.KeyBindings>
-        </TextBox>
+      <!--
+        DockPanel: кнопка «Top-K» и «Найти» привязаны право,
+        TextBox занимает всё оставшееся пространство.
+        LastChildFill=True — дефолт DockPanel, но указываем явно.
+      -->
+      <DockPanel LastChildFill="True">
 
-        <NumericUpDown Grid.Column="1"
+        <NumericUpDown DockPanel.Dock="Right"
                        Value="{Binding TopK}"
                        Minimum="1" Maximum="20" Increment="1" FormatString="0"
                        Width="90"
@@ -69,13 +91,25 @@
                        Foreground="{StaticResource ThemeTextPrimaryBrush}"
                        BorderBrush="{StaticResource ThemeBorderBrush}"
                        FontSize="12"
-                       Margin="0 0 8 0"/>
+                       VerticalAlignment="Center"
+                       Margin="8 0 0 0"/>
 
-        <Button Grid.Column="2"
+        <Button DockPanel.Dock="Right"
                 Classes="primary"
                 Command="{Binding SearchCommand}"
-                IsEnabled="{Binding !IsLoading}">Найти</Button>
-      </Grid>
+                IsEnabled="{Binding !IsLoading}"
+                VerticalAlignment="Center"
+                Margin="8 0 0 0">Найти</Button>
+
+        <TextBox Classes="rag-input"
+                 Text="{Binding Query}"
+                 PlaceholderText="Введите поисковый запрос по документам проекта…">
+          <TextBox.KeyBindings>
+            <KeyBinding Gesture="Return" Command="{Binding SearchCommand}"/>
+          </TextBox.KeyBindings>
+        </TextBox>
+
+      </DockPanel>
 
       <!-- Ошибка -->
       <Border IsVisible="{Binding HasError}"
@@ -88,7 +122,7 @@
 
     </StackPanel>
 
-    <!-- ─── Результаты ───────────────────────────────────────────────────────── -->
+    <!-- ─── Результаты ──────────────────────────────────────────────── -->
     <Panel Grid.Row="1">
 
       <!-- Загрузка -->
@@ -131,9 +165,13 @@
                                Margin="8 0 0 0"/>
                   </Grid>
 
-                  <!-- Текст чанка -->
-                  <TextBlock Classes="chunk-content"
-                             Text="{Binding DisplayContent}"/>
+                  <!--
+                    Текст чанка — ReadOnly TextBox вместо TextBlock.
+                    Позволяет выделять и копировать текст,
+                    но запрещает редактирование.
+                  -->
+                  <TextBox Classes="chunk-text"
+                           Text="{Binding DisplayContent}"/>
 
                   <!-- Кнопка «Развернуть / Свернуть» -->
                   <Button Classes="expand-btn"
