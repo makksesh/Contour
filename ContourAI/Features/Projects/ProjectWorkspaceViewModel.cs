@@ -23,6 +23,7 @@ using CommunityToolkit.Mvvm.Input;
 using ContourAI.Entities.Chat;
 using ContourAI.Entities.Projects;
 using ContourAI.Features.Chat;
+using ContourAI.Features.Workspace;
 using ContourAI.Shared.Api;
 using ContourAI.Shared.State;
 
@@ -34,17 +35,22 @@ public enum WorkspaceTab
     Settings  = 0,
     Folder    = 1,
     Documents = 2,
-    Chat      = 3
+    Chat      = 3,
+    Sync      = 4
 }
 
 public sealed partial class ProjectWorkspaceViewModel : ObservableObject
 {
-    private readonly ProjectsService  _projectsService;
-    private readonly ChatService      _chatService;
-    private readonly ProjectContextStore _projectContextStore;
-    private CancellationTokenSource   _cts = new();
-    private bool                      _documentsLoaded;
-    private bool                      _chatInitialized;
+    private readonly ProjectsService            _projectsService;
+    private readonly ChatService                _chatService;
+    private readonly ProjectContextStore        _projectContextStore;
+    private readonly WorkspaceSyncViewModel     _workspaceSyncViewModel;
+    private readonly AgentTasksViewModel        _agentTasksViewModel;
+    private readonly ChangeSetReviewViewModel   _changeSetReviewViewModel;
+    private CancellationTokenSource             _cts = new();
+    private bool                                _documentsLoaded;
+    private bool                                _chatInitialized;
+    private bool                                _syncInitialized;
 
     // ─── Идентификация ──────────────────────────────────────────────────────────
 
@@ -91,6 +97,19 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
     /// <summary>true — тредов нет, отображается кнопка "Начать чат".</summary>
     public bool ShowStartChatButton => ProjectChatViewModel is null && !IsChatLoading;
 
+    // ─── Sync sub-panels ────────────────────────────────────────────────────
+
+    /// <summary>
+    /// 0 = WorkspaceSyncView (attach + snapshot)
+    /// 1 = AgentTasksView
+    /// 2 = ChangeSetReviewView
+    /// </summary>
+    [ObservableProperty] private int _syncSubPanelIndex;
+
+    public WorkspaceSyncViewModel   SyncViewModel       => _workspaceSyncViewModel;
+    public AgentTasksViewModel      AgentTasksViewModel => _agentTasksViewModel;
+    public ChangeSetReviewViewModel ReviewViewModel     => _changeSetReviewViewModel;
+
     // ─── События ───────────────────────────────────────────────────────────────
 
     public event Action? BackRequested;
@@ -100,12 +119,23 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         ProjectsService           projectsService,
         ChatService               chatService,
         ProjectContextStore       projectContextStore,
-        ProjectDocumentsViewModel documentsViewModel)
+        ProjectDocumentsViewModel documentsViewModel,
+        WorkspaceSyncViewModel    workspaceSyncViewModel,
+        AgentTasksViewModel       agentTasksViewModel,
+        ChangeSetReviewViewModel  changeSetReviewViewModel)
     {
-        _projectsService     = projectsService;
-        _chatService         = chatService;
-        _projectContextStore = projectContextStore;
-        DocumentsViewModel   = documentsViewModel;
+        _projectsService          = projectsService;
+        _chatService              = chatService;
+        _projectContextStore      = projectContextStore;
+        DocumentsViewModel        = documentsViewModel;
+        _workspaceSyncViewModel   = workspaceSyncViewModel;
+        _agentTasksViewModel      = agentTasksViewModel;
+        _changeSetReviewViewModel = changeSetReviewViewModel;
+
+        // Wiring: Sync → AgentTasks → ChangeSetReview navigation
+        _workspaceSyncViewModel.NavigateToAgentTasksRequested += OnNavigateToAgentTasks;
+        _agentTasksViewModel.NavigateToReviewRequested        += OnNavigateToReview;
+        _changeSetReviewViewModel.BackRequested               += OnReviewBack;
     }
 
     // ─── Инициализация ─────────────────────────────────────────────────────────
@@ -115,8 +145,10 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
     {
         _cts.Cancel();
         _cts = new CancellationTokenSource();
-        _documentsLoaded = false;
-        _chatInitialized = false;
+        _documentsLoaded  = false;
+        _chatInitialized  = false;
+        _syncInitialized  = false;
+        SyncSubPanelIndex = 0;
 
         ProjectId        = projectId;
         ProjectName      = projectName;
@@ -177,12 +209,19 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
             _ = DocumentsViewModel.LoadAsync(ProjectId, _cts.Token);
         }
 
-        // Lazy-инициализация Chat — один раз за жизнь проекта.
-        // При повторном переключении на Chat ничего лишнего не делаем.
+        // Lazy-инициализация Chat.
         if (tab == WorkspaceTab.Chat && !_chatInitialized)
         {
             _chatInitialized = true;
             _ = InitializeChatAsync(_cts.Token);
+        }
+
+        // Lazy-инициализация Sync — при первом переходе на вкладку.
+        if (tab == WorkspaceTab.Sync && !_syncInitialized)
+        {
+            _syncInitialized = true;
+            _ = _workspaceSyncViewModel.InitializeAsync(ProjectId, _cts.Token);
+            _ = _agentTasksViewModel.InitializeAsync(_cts.Token);
         }
     }
 
@@ -258,6 +297,30 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
 
     // ─── Кнопка «Назад» ────────────────────────────────────────────────────────
 
+    // ─── Sync sub-panel navigation ─────────────────────────────────────────
+
+    private void OnNavigateToAgentTasks()
+    {
+        SyncSubPanelIndex = 1;
+        _ = _agentTasksViewModel.InitializeAsync(_cts.Token);
+    }
+
+    private void OnNavigateToReview(AgentTaskViewModel taskVm)
+    {
+        SyncSubPanelIndex = 2;
+        if (taskVm.ChangeSetId.HasValue)
+            _ = _changeSetReviewViewModel.LoadAsync(
+                taskVm.WorkspaceId, taskVm.ChangeSetId.Value, _cts.Token);
+    }
+
+    private void OnReviewBack() => SyncSubPanelIndex = 1;
+
+    // ─── Кнопка «Назад» ────────────────────────────────────────────────────
+
     [RelayCommand]
-    private void GoBack() => BackRequested?.Invoke();
+    private void GoBack()
+    {
+        _agentTasksViewModel.Cleanup();
+        BackRequested?.Invoke();
+    }
 }

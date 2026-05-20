@@ -1,13 +1,14 @@
 <!--
   ProjectWorkspaceView — workspace проекта.
-  Вкладки: Settings, Folder, Documents, Chat.
-  Documents: список документов + Upload + Delete + Requeue + Refresh.
+  Вкладки: Settings, Folder, Documents, Chat, Sync.
+  Sync: WorkspaceSyncView / AgentTasksView / ChangeSetReviewView (внутренная навигация).
   Проект: DevAssistant / ContourAI.
 -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:ContourAI.Features.Projects"
              xmlns:chat="clr-namespace:ContourAI.Features.Chat"
+             xmlns:ws="clr-namespace:ContourAI.Features.Workspace"
              x:Class="ContourAI.Features.Projects.ProjectWorkspaceView"
              x:DataType="vm:ProjectWorkspaceViewModel">
 
@@ -117,6 +118,10 @@
                 Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsChat}}"
                 Command="{Binding SelectTabCommand}"
                 CommandParameter="{x:Static vm:WorkspaceTab.Chat}">Chat</Button>
+        <Button Classes="tab-btn"
+                Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsSync}}"
+                Command="{Binding SelectTabCommand}"
+                CommandParameter="{x:Static vm:WorkspaceTab.Sync}">Sync</Button>
 
         <TextBlock IsVisible="{Binding IsLoading}"
                    Text="…" Foreground="{StaticResource ThemeTextMutedBrush}" FontSize="12"
@@ -403,6 +408,33 @@
             <Panel IsVisible="{Binding ShowChatView}">
               <chat:ChatView DataContext="{Binding ProjectChatViewModel}"/>
             </Panel>
+
+        </Panel>
+
+        <!-- ── SYNC TAB ───────────────────────────────────────────────────── -->
+        <!--
+          Внутренная навигация внутри вкладки Sync:
+            SyncSubPanelIndex = 0 → WorkspaceSyncView
+            SyncSubPanelIndex = 1 → AgentTasksView
+            SyncSubPanelIndex = 2 → ChangeSetReviewView
+        -->
+        <Panel IsVisible="{Binding SelectedTabIndex,
+                           Converter={x:Static vm:WorkspaceTabConverter.IsSync}}">
+
+          <!-- 0: WorkspaceSyncView -->
+          <ws:WorkspaceSyncView
+            DataContext="{Binding SyncViewModel}"
+            IsVisible="{Binding SyncSubPanelIndex, Converter={x:Static ws:SyncSubPanelConverter.IsSync}}"/>
+
+          <!-- 1: AgentTasksView -->
+          <ws:AgentTasksView
+            DataContext="{Binding AgentTasksViewModel}"
+            IsVisible="{Binding SyncSubPanelIndex, Converter={x:Static ws:SyncSubPanelConverter.IsAgentTasks}}"/>
+
+          <!-- 2: ChangeSetReviewView -->
+          <ws:ChangeSetReviewView
+            DataContext="{Binding ReviewViewModel}"
+            IsVisible="{Binding SyncSubPanelIndex, Converter={x:Static ws:SyncSubPanelConverter.IsReview}}"/>
 
         </Panel>
 

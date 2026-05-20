@@ -1,0 +1,188 @@
+<!--
+  ChangeSetReviewView — просмотр и применение изменений одного ChangeSet.
+  Слева: список FileChange (иконка + путь + IsSelected CheckBox).
+  Справа: preview содержимого выбранного файла.
+  Снизу: Apply / Cancel / Back.
+  Проект: DevAssistant / ContourAI.
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:ContourAI.Features.Workspace"
+             x:Class="ContourAI.Features.Workspace.ChangeSetReviewView"
+             x:DataType="vm:ChangeSetReviewViewModel">
+
+  <Grid RowDefinitions="Auto,*,Auto">
+
+    <!-- ── Header ─────────────────────────────────────────────────────────── -->
+    <Border Grid.Row="0"
+            BorderBrush="{StaticResource ThemeBorderBrush}" BorderThickness="0 0 0 1"
+            Padding="0 0 0 10" Margin="0 0 0 12">
+      <StackPanel Orientation="Horizontal" Spacing="10" Height="36">
+        <Button Classes="ghost" Command="{Binding GoBackCommand}">← Back</Button>
+        <Border Width="1" Background="{StaticResource ThemeBorderBrush}" Margin="0 6"/>
+        <TextBlock Text="Review ChangeSet"
+                   FontSize="13" FontWeight="SemiBold"
+                   Foreground="{StaticResource ThemeTextPrimaryBrush}"
+                   VerticalAlignment="Center"/>
+        <TextBlock IsVisible="{Binding IsLoading}"
+                   Text="Loading…"
+                   FontSize="11" Foreground="{StaticResource ThemeTextMutedBrush}"
+                   VerticalAlignment="Center"/>
+      </StackPanel>
+    </Border>
+
+    <!-- ── Body ───────────────────────────────────────────────────────────── -->
+    <Grid Grid.Row="1" ColumnDefinitions="280,*" ColumnSpacing="12">
+
+      <!-- File list (left) -->
+      <Grid Grid.Column="0" RowDefinitions="Auto,*">
+
+        <!-- Select-all toolbar -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="6" Margin="0 0 0 6">
+          <Button Classes="ghost" FontSize="10" Padding="6 3"
+                  Command="{Binding SelectAllFilesCommand}">All</Button>
+          <Button Classes="ghost" FontSize="10" Padding="6 3"
+                  Command="{Binding DeselectAllFilesCommand}">None</Button>
+        </StackPanel>
+
+        <!-- Empty state -->
+        <StackPanel Grid.Row="1"
+                    IsVisible="{Binding !FileChanges.Count}"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+          <TextBlock Text="No file changes."
+                     FontSize="12" Foreground="{StaticResource ThemeTextMutedBrush}"
+                     HorizontalAlignment="Center"/>
+          <TextBlock Text="The ChangeSet detail endpoint may not be available yet."
+                     FontSize="10" Foreground="{StaticResource ThemeTextMutedBrush}"
+                     HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="240" TextAlignment="Center"/>
+        </StackPanel>
+
+        <!-- List -->
+        <ScrollViewer Grid.Row="1"
+                      IsVisible="{Binding FileChanges.Count}"
+                      VerticalScrollBarVisibility="Auto">
+          <ItemsControl ItemsSource="{Binding FileChanges}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:FileChangeItemViewModel">
+                <Border Margin="0 0 0 3"
+                        CornerRadius="5" Padding="6 4"
+                        Background="{StaticResource ThemeSurfaceAltBrush}"
+                        Cursor="Hand">
+                  <Border.InputBindings>
+                    <PointerBinding Gesture="LeftClick"
+                                    Command="{Binding $parent[ItemsControl].((vm:ChangeSetReviewViewModel)DataContext).SelectFileChangeCommand}"
+                                    CommandParameter="{Binding}"/>
+                  </Border.InputBindings>
+                  <Grid ColumnDefinitions="Auto,*,Auto">
+
+                    <!-- Change type icon -->
+                    <TextBlock Grid.Column="0" Text="{Binding Icon}"
+                               FontSize="11" Foreground="{StaticResource ThemeAccentBrush}"
+                               VerticalAlignment="Center" Width="16"/>
+
+                    <!-- Path -->
+                    <TextBlock Grid.Column="1" Text="{Binding Label}"
+                               FontSize="11" Foreground="{StaticResource ThemeTextSecondaryBrush}"
+                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                               Margin="4 0"/>
+
+                    <!-- Checkbox -->
+                    <CheckBox Grid.Column="2"
+                              IsChecked="{Binding IsSelected}"
+                              VerticalAlignment="Center"/>
+
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+
+      </Grid>
+
+      <!-- Preview (right) -->
+      <Border Grid.Column="1"
+              Background="{StaticResource ThemeSurfaceAltBrush}"
+              BorderBrush="{StaticResource ThemeBorderBrush}" BorderThickness="1"
+              CornerRadius="8" Padding="12 10">
+        <Panel>
+
+          <!-- No selection placeholder -->
+          <StackPanel IsVisible="{Binding !HasPreview}"
+                      HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+            <TextBlock Text="Select a file to preview its content."
+                       FontSize="12" Foreground="{StaticResource ThemeTextMutedBrush}"
+                       HorizontalAlignment="Center"/>
+          </StackPanel>
+
+          <!-- Content preview -->
+          <ScrollViewer IsVisible="{Binding HasPreview}"
+                        VerticalScrollBarVisibility="Auto"
+                        HorizontalScrollBarVisibility="Auto">
+            <TextBlock Text="{Binding PreviewContent}"
+                       FontFamily="Cascadia Code, Consolas, Menlo, monospace"
+                       FontSize="11"
+                       Foreground="{StaticResource ThemeTextSecondaryBrush}"
+                       TextWrapping="NoWrap"/>
+          </ScrollViewer>
+
+        </Panel>
+      </Border>
+
+    </Grid>
+
+    <!-- ── Footer ─────────────────────────────────────────────────────────── -->
+    <Border Grid.Row="2"
+            BorderBrush="{StaticResource ThemeBorderBrush}" BorderThickness="0 1 0 0"
+            Padding="0 10 0 0" Margin="0 8 0 0">
+      <Grid ColumnDefinitions="*,Auto">
+
+        <!-- Messages -->
+        <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
+          <Border IsVisible="{Binding HasError}"
+                  Background="{StaticResource ThemeDangerSoftBrush}"
+                  CornerRadius="4" Padding="8 4">
+            <TextBlock Text="{Binding ErrorMessage}"
+                       FontSize="11" Foreground="{StaticResource ThemeDangerTextBrush}"
+                       TextWrapping="Wrap"/>
+          </Border>
+          <Border IsVisible="{Binding SuccessMessage,
+                              Converter={x:Static vm:WorkspaceSyncViewHelpers.IsNonEmpty}}"
+                  Background="{StaticResource ThemeAccentSoftBrush}"
+                  CornerRadius="4" Padding="8 4">
+            <TextBlock Text="{Binding SuccessMessage}"
+                       FontSize="11" Foreground="{StaticResource ThemeTextSecondaryBrush}"/>
+          </Border>
+        </StackPanel>
+
+        <!-- Action buttons -->
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+          <Button Classes="ghost"
+                  Command="{Binding GoBackCommand}"
+                  IsEnabled="{Binding !IsApplying}">
+            Cancel
+          </Button>
+          <Button Classes="primary"
+                  Command="{Binding ApplyCommand}"
+                  IsEnabled="{Binding !IsApplied}"
+                  IsVisible="{Binding !IsApplied}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <TextBlock Text="Apply to local files"
+                         IsVisible="{Binding !IsApplying}" FontSize="12"/>
+              <TextBlock Text="Applying…"
+                         IsVisible="{Binding IsApplying}" FontSize="12"/>
+            </StackPanel>
+          </Button>
+          <Button Classes="ghost"
+                  IsVisible="{Binding IsApplied}"
+                  Command="{Binding GoBackCommand}">
+            Done ✔
+          </Button>
+        </StackPanel>
+
+      </Grid>
+    </Border>
+
+  </Grid>
+
+</UserControl>

@@ -16,7 +16,9 @@ using ContourAI.Features.Chat;
 using ContourAI.Features.Documents;
 using ContourAI.Features.Projects;
 using ContourAI.Features.Shell;
+using ContourAI.Features.Workspace;
 using ContourAI.Shared.Api;
+using ContourAI.Shared.Client;
 using ContourAI.Shared.State;
 using ContourAI.Widgets.SystemMetrics;
 
@@ -60,6 +62,9 @@ internal static class Program
         // Фаза 5: chat state
         services.AddSingleton<ChatStore>();
 
+        // Фаза 7: workspace state
+        services.AddSingleton<WorkspaceStore>();
+
         // API-сервисы
         services.AddSingleton<AuthService>();
         services.AddSingleton<ProjectsService>();
@@ -67,6 +72,12 @@ internal static class Program
         services.AddSingleton<ChatService>();
         services.AddSingleton<IndexingService>();
         services.AddSingleton<SystemMetricsService>();
+        services.AddSingleton<WorkspaceService>();
+
+        // Workspace client services
+        services.AddSingleton<ConflictResolutionService>();
+        services.AddSingleton<ChangeSetApplyService>();
+        services.AddSingleton<LocalWorkspaceSyncService>();
 
         // ViewModels
         services.AddTransient<LoginViewModel>();
@@ -85,11 +96,18 @@ internal static class Program
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<ProjectDocumentsViewModel>();
         
+        services.AddSingleton<WorkspaceSyncViewModel>();
+        services.AddSingleton<AgentTasksViewModel>();
+        services.AddSingleton<ChangeSetReviewViewModel>();
+
         services.AddSingleton<ProjectWorkspaceViewModel>(sp => new ProjectWorkspaceViewModel(
             sp.GetRequiredService<ProjectsService>(),
             sp.GetRequiredService<ChatService>(),
             sp.GetRequiredService<ProjectContextStore>(),
-            sp.GetRequiredService<ProjectDocumentsViewModel>()));
+            sp.GetRequiredService<ProjectDocumentsViewModel>(),
+            sp.GetRequiredService<WorkspaceSyncViewModel>(),
+            sp.GetRequiredService<AgentTasksViewModel>(),
+            sp.GetRequiredService<ChangeSetReviewViewModel>()));
         
 
         // Window

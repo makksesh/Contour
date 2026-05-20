@@ -1,0 +1,150 @@
+<!--
+  WorkspaceSyncView — вкладка Sync рабочего пространства.
+  Состояния:
+    IsNotAttached → форма Attach (пути + кнопка)
+    IsAttached    → статус + кнопки Snapshot / Refresh / Agent Tasks
+  Проект: DevAssistant / ContourAI.
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:ContourAI.Features.Workspace"
+             x:Class="ContourAI.Features.Workspace.WorkspaceSyncView"
+             x:DataType="vm:WorkspaceSyncViewModel">
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel Spacing="16" MaxWidth="560" Margin="0 4 0 0">
+
+      <!-- ── Ошибка ─────────────────────────────────────────────────────── -->
+      <Border IsVisible="{Binding HasError}"
+              Background="{StaticResource ThemeDangerSoftBrush}"
+              BorderBrush="{StaticResource ThemeDangerBrush}" BorderThickness="1"
+              CornerRadius="6" Padding="10 7">
+        <TextBlock Text="{Binding ErrorMessage}"
+                   Foreground="{StaticResource ThemeDangerTextBrush}"
+                   FontSize="12" TextWrapping="Wrap"/>
+      </Border>
+
+      <!-- ── Статус ─────────────────────────────────────────────────────── -->
+      <Border IsVisible="{Binding StatusMessage, Converter={x:Static vm:WorkspaceSyncViewHelpers.IsNonEmpty}}"
+              Background="{StaticResource ThemeAccentSoftBrush}"
+              CornerRadius="6" Padding="10 7">
+        <TextBlock Text="{Binding StatusMessage}"
+                   Foreground="{StaticResource ThemeTextSecondaryBrush}"
+                   FontSize="11"/>
+      </Border>
+
+      <!-- ════════════════════════════════════════════════════════════════════
+           НЕ ПОДКЛЮЧЁН — форма Attach
+      ════════════════════════════════════════════════════════════════════ -->
+      <StackPanel IsVisible="{Binding IsNotAttached}" Spacing="14">
+
+        <TextBlock Text="Connect workspace to server"
+                   FontSize="13" FontWeight="SemiBold"
+                   Foreground="{StaticResource ThemeTextPrimaryBrush}"/>
+        <TextBlock Text="Link the local project folder to a server-side mirror path so the AI agent can read and modify files."
+                   FontSize="11" Foreground="{StaticResource ThemeTextMutedBrush}"
+                   TextWrapping="Wrap"/>
+
+        <!-- Local root path -->
+        <StackPanel Spacing="3">
+          <TextBlock Text="Local Root Path"
+                     FontSize="10" Foreground="{StaticResource ThemeTextMutedBrush}" Margin="0 0 0 3"/>
+          <TextBox Text="{Binding LocalRootPath}"
+                   PlaceholderText="/Users/me/projects/my-app"
+                   Background="{StaticResource ThemeSurfaceAltBrush}"
+                   Foreground="{StaticResource ThemeTextPrimaryBrush}"
+                   BorderBrush="{StaticResource ThemeBorderBrush}"
+                   CornerRadius="5" Padding="8 5" FontSize="12"/>
+        </StackPanel>
+
+        <!-- Server mirror path -->
+        <StackPanel Spacing="3">
+          <TextBlock Text="Server Mirror Path"
+                     FontSize="10" Foreground="{StaticResource ThemeTextMutedBrush}" Margin="0 0 0 3"/>
+          <TextBox Text="{Binding ServerMirrorPath}"
+                   PlaceholderText="/srv/devassistant/mirrors/my-app"
+                   Background="{StaticResource ThemeSurfaceAltBrush}"
+                   Foreground="{StaticResource ThemeTextPrimaryBrush}"
+                   BorderBrush="{StaticResource ThemeBorderBrush}"
+                   CornerRadius="5" Padding="8 5" FontSize="12"/>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <Button Classes="primary"
+                  Command="{Binding AttachCommand}"
+                  IsEnabled="{Binding !IsLoading}">
+            Connect
+          </Button>
+          <TextBlock IsVisible="{Binding IsLoading}"
+                     Text="Connecting…"
+                     FontSize="12" Foreground="{StaticResource ThemeTextMutedBrush}"
+                     VerticalAlignment="Center"/>
+        </StackPanel>
+
+      </StackPanel>
+
+      <!-- ════════════════════════════════════════════════════════════════════
+           ПОДКЛЮЧЁН — статус + действия
+      ════════════════════════════════════════════════════════════════════ -->
+      <StackPanel IsVisible="{Binding IsAttached}" Spacing="14">
+
+        <!-- Workspace info card -->
+        <Border Background="{StaticResource ThemeSurfaceAltBrush}"
+                BorderBrush="{StaticResource ThemeBorderBrush}" BorderThickness="1"
+                CornerRadius="8" Padding="14 12">
+          <StackPanel Spacing="8">
+
+            <Grid ColumnDefinitions="Auto,*">
+              <TextBlock Grid.Column="0" Text="Local Root"
+                         FontSize="10" Foreground="{StaticResource ThemeTextMutedBrush}"
+                         Width="110" VerticalAlignment="Center"/>
+              <TextBlock Grid.Column="1" Text="{Binding LocalRootPath}"
+                         FontSize="12" Foreground="{StaticResource ThemeTextSecondaryBrush}"
+                         TextTrimming="CharacterEllipsis"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="Auto,*">
+              <TextBlock Grid.Column="0" Text="Server Mirror"
+                         FontSize="10" Foreground="{StaticResource ThemeTextMutedBrush}"
+                         Width="110" VerticalAlignment="Center"/>
+              <TextBlock Grid.Column="1" Text="{Binding ServerMirrorPath}"
+                         FontSize="12" Foreground="{StaticResource ThemeTextSecondaryBrush}"
+                         TextTrimming="CharacterEllipsis"/>
+            </Grid>
+
+          </StackPanel>
+        </Border>
+
+        <!-- Кнопки действий -->
+        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0 4 0 0">
+
+          <Button Classes="primary"
+                  Command="{Binding SnapshotCommand}"
+                  IsEnabled="{Binding !IsSyncing}">
+            ↑ Sync Snapshot
+          </Button>
+
+          <Button Classes="ghost"
+                  Command="{Binding RefreshStatusCommand}"
+                  IsEnabled="{Binding !IsLoading}">
+            ↺ Refresh
+          </Button>
+
+          <Button Classes="ghost"
+                  Command="{Binding OpenAgentTasksCommand}">
+            🤖 Agent Tasks
+          </Button>
+
+        </StackPanel>
+
+        <TextBlock IsVisible="{Binding IsSyncing}"
+                   Text="Scanning files and sending snapshot to server…"
+                   FontSize="11" Foreground="{StaticResource ThemeTextMutedBrush}"
+                   TextWrapping="Wrap"/>
+
+      </StackPanel>
+
+    </StackPanel>
+  </ScrollViewer>
+
+</UserControl>

@@ -1,0 +1,158 @@
+<!--
+  AgentTasksView — панель управления AgentTask.
+  Сверху: TextBox для промпта + кнопка Run.
+  Список задач: статус, CanReview → кнопка Review, CanRollback → кнопка Rollback.
+  Проект: DevAssistant / ContourAI.
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:ContourAI.Features.Workspace"
+             x:Class="ContourAI.Features.Workspace.AgentTasksView"
+             x:DataType="vm:AgentTasksViewModel">
+
+  <Grid RowDefinitions="Auto,*,Auto">
+
+    <!-- ── Prompt bar ──────────────────────────────────────────────────────── -->
+    <Border Grid.Row="0"
+            BorderBrush="{StaticResource ThemeBorderBrush}" BorderThickness="0 0 0 1"
+            Padding="0 0 0 12" Margin="0 0 0 12">
+      <StackPanel Spacing="8">
+
+        <TextBlock Text="Ask the AI agent to modify files in this workspace:"
+                   FontSize="11" Foreground="{StaticResource ThemeTextMutedBrush}"/>
+
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+          <TextBox Grid.Column="0"
+                   Text="{Binding PromptText}"
+                   PlaceholderText="e.g. Add XML doc-comments to all public methods in Services/"
+                   Background="{StaticResource ThemeSurfaceAltBrush}"
+                   Foreground="{StaticResource ThemeTextPrimaryBrush}"
+                   BorderBrush="{StaticResource ThemeBorderBrush}"
+                   CornerRadius="5" Padding="8 6" FontSize="12"
+                   AcceptsReturn="False"/>
+          <Button Grid.Column="1"
+                  Classes="primary"
+                  Command="{Binding TriggerTaskCommand}"
+                  IsEnabled="{Binding !IsTriggeringTask}"
+                  VerticalAlignment="Stretch">
+            Run
+          </Button>
+        </Grid>
+
+        <TextBlock IsVisible="{Binding IsTriggeringTask}"
+                   Text="Creating task…"
+                   FontSize="11" Foreground="{StaticResource ThemeTextMutedBrush}"/>
+
+        <!-- Ошибка -->
+        <Border IsVisible="{Binding HasError}"
+                Background="{StaticResource ThemeDangerSoftBrush}"
+                BorderBrush="{StaticResource ThemeDangerBrush}" BorderThickness="1"
+                CornerRadius="6" Padding="8 6">
+          <TextBlock Text="{Binding ErrorMessage}"
+                     Foreground="{StaticResource ThemeDangerTextBrush}"
+                     FontSize="12" TextWrapping="Wrap"/>
+        </Border>
+
+      </StackPanel>
+    </Border>
+
+    <!-- ── Task list ───────────────────────────────────────────────────────── -->
+    <Panel Grid.Row="1">
+
+      <!-- Loading -->
+      <StackPanel IsVisible="{Binding IsLoading}"
+                  HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+        <TextBlock Text="Loading tasks…"
+                   FontSize="13" Foreground="{StaticResource ThemeTextMutedBrush}"
+                   HorizontalAlignment="Center"/>
+      </StackPanel>
+
+      <!-- Empty state -->
+      <StackPanel IsVisible="{Binding IsEmpty}"
+                  HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+        <TextBlock Text="🤖"
+                   FontSize="36" HorizontalAlignment="Center"/>
+        <TextBlock Text="No agent tasks yet"
+                   FontSize="13" FontWeight="Medium"
+                   Foreground="{StaticResource ThemeTextPrimaryBrush}"
+                   HorizontalAlignment="Center"/>
+        <TextBlock Text="Enter a prompt above and press Run to let the AI agent modify your workspace."
+                   FontSize="11" Foreground="{StaticResource ThemeTextMutedBrush}"
+                   HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="320"
+                   TextAlignment="Center"/>
+      </StackPanel>
+
+      <!-- Tasks list -->
+      <ScrollViewer IsVisible="{Binding HasTasks}"
+                    VerticalScrollBarVisibility="Auto">
+        <ItemsControl ItemsSource="{Binding Tasks}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:AgentTaskViewModel">
+              <Border Background="{StaticResource ThemeSurfaceAltBrush}"
+                      BorderBrush="{StaticResource ThemeBorderBrush}" BorderThickness="1"
+                      CornerRadius="8" Padding="12 10" Margin="0 0 0 6">
+                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+
+                  <!-- Prompt + status label -->
+                  <StackPanel Grid.Row="0" Grid.Column="0" Spacing="3">
+                    <TextBlock Text="{Binding Prompt}"
+                               FontSize="12" FontWeight="Medium"
+                               Foreground="{StaticResource ThemeTextPrimaryBrush}"
+                               TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding StatusLabel}"
+                               FontSize="10"
+                               Foreground="{StaticResource ThemeTextMutedBrush}"/>
+                  </StackPanel>
+
+                  <!-- Action buttons -->
+                  <StackPanel Grid.Row="0" Grid.Column="1"
+                              Orientation="Horizontal" Spacing="6"
+                              VerticalAlignment="Center">
+                    <Button Classes="primary"
+                            IsVisible="{Binding CanReview}"
+                            Command="{Binding OpenReviewCommand}"
+                            FontSize="11" Padding="10 4">
+                      Review ChangeSet
+                    </Button>
+                    <Button Classes="danger"
+                            IsVisible="{Binding CanRollback}"
+                            Command="{Binding RequestRollbackCommand}"
+                            IsEnabled="{Binding !IsRollingBack}"
+                            FontSize="11" Padding="8 4">
+                      Rollback
+                    </Button>
+                  </StackPanel>
+
+                  <!-- Error message -->
+                  <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                             IsVisible="{Binding ErrorMessage,
+                                         Converter={x:Static vm:WorkspaceSyncViewHelpers.IsNonEmpty}}"
+                             Text="{Binding ErrorMessage}"
+                             FontSize="10"
+                             Foreground="{StaticResource ThemeDangerBrush}"
+                             TextWrapping="Wrap" Margin="0 4 0 0"/>
+
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+
+    </Panel>
+
+    <!-- ── Footer: Refresh ────────────────────────────────────────────────── -->
+    <Border Grid.Row="2"
+            BorderBrush="{StaticResource ThemeBorderBrush}" BorderThickness="0 1 0 0"
+            Padding="0 8 0 0" Margin="0 6 0 0">
+      <Button Classes="ghost"
+              Command="{Binding RefreshCommand}"
+              IsEnabled="{Binding !IsLoading}"
+              HorizontalAlignment="Left">
+        ↺ Refresh
+      </Button>
+    </Border>
+
+  </Grid>
+
+</UserControl>
