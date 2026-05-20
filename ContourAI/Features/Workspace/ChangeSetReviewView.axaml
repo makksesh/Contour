@@ -64,15 +64,14 @@
           <ItemsControl ItemsSource="{Binding FileChanges}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vm:FileChangeItemViewModel">
-                <Border Margin="0 0 0 3"
+                <Button Margin="0 0 0 3"
                         CornerRadius="5" Padding="6 4"
                         Background="{StaticResource ThemeSurfaceAltBrush}"
-                        Cursor="Hand">
-                  <Border.InputBindings>
-                    <PointerBinding Gesture="LeftClick"
-                                    Command="{Binding $parent[ItemsControl].((vm:ChangeSetReviewViewModel)DataContext).SelectFileChangeCommand}"
-                                    CommandParameter="{Binding}"/>
-                  </Border.InputBindings>
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch"
+                        BorderThickness="0"
+                        Command="{Binding $parent[ItemsControl].((vm:ChangeSetReviewViewModel)DataContext).SelectFileChangeCommand}"
+                        CommandParameter="{Binding}">
                   <Grid ColumnDefinitions="Auto,*,Auto">
 
                     <!-- Change type icon -->
@@ -92,7 +91,7 @@
                               VerticalAlignment="Center"/>
 
                   </Grid>
-                </Border>
+                </Button>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>

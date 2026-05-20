@@ -424,17 +424,20 @@
           <!-- 0: WorkspaceSyncView -->
           <ws:WorkspaceSyncView
             DataContext="{Binding SyncViewModel}"
-            IsVisible="{Binding SyncSubPanelIndex, Converter={x:Static ws:SyncSubPanelConverter.IsSync}}"/>
+            IsVisible="{Binding $parent[UserControl].((vm:ProjectWorkspaceViewModel)DataContext).SyncSubPanelIndex,
+                        Converter={x:Static ws:SyncSubPanelConverter.IsSync}}"/>
 
           <!-- 1: AgentTasksView -->
           <ws:AgentTasksView
             DataContext="{Binding AgentTasksViewModel}"
-            IsVisible="{Binding SyncSubPanelIndex, Converter={x:Static ws:SyncSubPanelConverter.IsAgentTasks}}"/>
+            IsVisible="{Binding $parent[UserControl].((vm:ProjectWorkspaceViewModel)DataContext).SyncSubPanelIndex,
+                        Converter={x:Static ws:SyncSubPanelConverter.IsAgentTasks}}"/>
 
           <!-- 2: ChangeSetReviewView -->
           <ws:ChangeSetReviewView
             DataContext="{Binding ReviewViewModel}"
-            IsVisible="{Binding SyncSubPanelIndex, Converter={x:Static ws:SyncSubPanelConverter.IsReview}}"/>
+            IsVisible="{Binding $parent[UserControl].((vm:ProjectWorkspaceViewModel)DataContext).SyncSubPanelIndex,
+                        Converter={x:Static ws:SyncSubPanelConverter.IsReview}}"/>
 
         </Panel>
 
