@@ -1,0 +1,130 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:ContourAI.Features.Projects"
+             x:Class="ContourAI.Features.Projects.RagSearchView"
+             x:DataType="local:RagSearchViewModel">
+
+  <Grid RowDefinitions="Auto,Auto,*" Margin="16">
+
+    <!-- ── Строка поиска ─────────────────────────────────────────────── -->
+    <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,8">
+
+      <TextBox Grid.Column="0"
+               Text="{Binding Query, Mode=TwoWay}"
+               Watermark="Введите запрос для поиска по базе знаний…"
+               VerticalContentAlignment="Center"
+               Margin="0,0,8,0">
+        <TextBox.KeyBindings>
+          <KeyBinding Gesture="Enter" Command="{Binding SearchCommand}" />
+        </TextBox.KeyBindings>
+      </TextBox>
+
+      <!-- TopK -->
+      <NumericUpDown Grid.Column="1"
+                     Value="{Binding TopK}"
+                     Minimum="1" Maximum="20" Increment="1"
+                     Width="72" Margin="0,0,8,0"
+                     ToolTip.Tip="Количество чанков (top-K)"
+                     VerticalAlignment="Center" />
+
+      <Button Grid.Column="2"
+              Content="Найти"
+              Command="{Binding SearchCommand}"
+              VerticalAlignment="Center" />
+    </Grid>
+
+    <!-- ── Статус / прогресс ─────────────────────────────────────────── -->
+    <Grid Grid.Row="1" Margin="0,0,0,8">
+
+      <ProgressBar IsIndeterminate="True" Height="2"
+                   IsVisible="{Binding IsLoading}" />
+
+      <TextBlock Text="{Binding ResultsSummary}"
+                 FontSize="12" Opacity="0.6"
+                 IsVisible="{Binding !IsLoading}" />
+    </Grid>
+
+    <!-- ── Контентная область ────────────────────────────────────────── -->
+    <Grid Grid.Row="2">
+
+      <!-- Пустое состояние: ничего не искали -->
+      <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                  IsVisible="{Binding !HasSearched}" Spacing="8">
+        <TextBlock Text="🔍" FontSize="32" HorizontalAlignment="Center" />
+        <TextBlock Text="Введите запрос и нажмите «Найти»"
+                   Opacity="0.5" HorizontalAlignment="Center" />
+      </StackPanel>
+
+      <!-- Пустое состояние: поиск выполнен, результатов нет -->
+      <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
+                  IsVisible="{Binding IsEmpty}">
+        <TextBlock Text="○" FontSize="32" HorizontalAlignment="Center" />
+        <TextBlock Text="Ничего не найдено. Попробуйте изменить запрос."
+                   Opacity="0.5" HorizontalAlignment="Center" />
+      </StackPanel>
+
+      <!-- Ошибка -->
+      <Border Background="#20FF4444" CornerRadius="6" Padding="12"
+              IsVisible="{Binding HasError}" VerticalAlignment="Top">
+        <TextBlock Text="{Binding ErrorMessage}" Foreground="#FF6B6B"
+                   TextWrapping="Wrap" />
+      </Border>
+
+      <!-- Список чанков -->
+      <ScrollViewer IsVisible="{Binding !IsEmpty}">
+        <ItemsControl ItemsSource="{Binding Results}" Margin="0,0,4,0">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="local:RagChunkItemViewModel">
+              <Border Background="{DynamicResource CardBackgroundBrush}"
+                      BorderBrush="{DynamicResource CardBorderBrush}"
+                      BorderThickness="1" CornerRadius="6"
+                      Padding="12" Margin="0,0,0,8">
+                <StackPanel Spacing="6">
+
+                  <!-- Заголовок: имя файла + score -->
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding FileName}"
+                               FontWeight="SemiBold" FontSize="13"
+                               TextTrimming="CharacterEllipsis" />
+                    <Border Grid.Column="1"
+                            CornerRadius="4" Padding="6,2"
+                            Background="{DynamicResource AccentHighlightBrush}">
+                      <TextBlock Text="{Binding ScorePercent, StringFormat='{}{0}%'}"
+                                 FontSize="11" FontWeight="Medium" />
+                    </Border>
+                  </Grid>
+
+                  <!-- Путь + строка -->
+                  <TextBlock Text="{Binding LocationLabel}"
+                             FontSize="11" Opacity="0.5"
+                             TextTrimming="CharacterEllipsis" />
+
+                  <!-- Preview (свёрнут) -->
+                  <SelectableTextBlock Text="{Binding Preview}"
+                                       TextWrapping="Wrap" FontSize="12"
+                                       IsVisible="{Binding !IsExpanded}" />
+
+                  <!-- FullContent (развёрнут) -->
+                  <SelectableTextBlock Text="{Binding FullContent}"
+                                       TextWrapping="Wrap" FontSize="12"
+                                       FontFamily="Monospace"
+                                       IsVisible="{Binding IsExpanded}" />
+
+                  <!-- Кнопка развернуть/свернуть -->
+                  <Button Content="{Binding ExpandButtonLabel}"
+                          Command="{Binding ToggleExpandCommand}"
+                          IsVisible="{Binding HasMore}"
+                          HorizontalAlignment="Left"
+                          Padding="4,2" FontSize="11" />
+
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+
+    </Grid>
+  </Grid>
+</UserControl>
