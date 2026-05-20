@@ -1,7 +1,8 @@
 /// <summary>
 /// DTO одного чанка, возвращаемого RAG-поиском.
 /// POST /api/rag/search → RagChunkDto[].
-/// Score — косинусное сходство [0..1]; LineStart — первая строка чанка в исходном файле.
+/// Score    — косинусное сходство [0..1].
+/// LineStart/LineEnd — диапазон строк чанка в исходном файле (могут быть null).
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -14,4 +15,5 @@ public sealed record RagChunkDto(
     double  Score,
     string? FileName,
     string? FilePath,
-    int?    LineStart);
+    int?    LineStart,
+    int?    LineEnd);
