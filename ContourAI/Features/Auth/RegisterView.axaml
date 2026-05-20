@@ -22,7 +22,7 @@
                    FontSize="30"
                    FontWeight="SemiBold"
                    Foreground="{StaticResource ThemeTextPrimaryBrush}" />
-        <TextBlock Text="Регистрация в ContourAI"
+        <TextBlock Text="Регистрация в системе ContourAI"
                    FontSize="15"
                    Classes="secondary" />
       </StackPanel>
@@ -48,19 +48,19 @@
           </Border>
 
           <StackPanel Spacing="6">
-            <TextBlock Text="Username"
+            <TextBlock Text="Имя пользователя"
                        FontWeight="SemiBold"
                        Classes="on-light" />
-            <TextBox PlaceholderText="Введите username"
+            <TextBox PlaceholderText="Введите имя пользователя"
                      Text="{Binding Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Classes="auth-input" />
           </StackPanel>
 
           <StackPanel Spacing="6">
-            <TextBlock Text="Email"
+            <TextBlock Text="Электронная почта"
                        FontWeight="SemiBold"
                        Classes="on-light" />
-            <TextBox PlaceholderText="Введите email"
+            <TextBox PlaceholderText="Введите электронную почту"
                      Text="{Binding Email, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Classes="auth-input" />
           </StackPanel>

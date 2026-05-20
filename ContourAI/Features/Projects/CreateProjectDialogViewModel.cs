@@ -48,7 +48,7 @@ public sealed partial class CreateProjectDialogViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(Name))
         {
-            ErrorMessage = "Project name is required.";
+            ErrorMessage = "Укажите название проекта.";
             HasError     = true;
             return;
         }
@@ -66,7 +66,7 @@ public sealed partial class CreateProjectDialogViewModel : ObservableObject
             var dto = await _projectsService.CreateProjectAsync(request);
             if (dto == null)
             {
-                ErrorMessage = "Failed to create project. Please try again.";
+                ErrorMessage = "Не удалось создать проект. Попробуйте ещё раз.";
                 HasError     = true;
                 return;
             }

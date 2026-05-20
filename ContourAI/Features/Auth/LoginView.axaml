@@ -18,11 +18,11 @@
                    FontSize="30"
                    FontWeight="SemiBold"
                    Foreground="{StaticResource ThemeTextPrimaryBrush}" />
-        <TextBlock Text="Desktop workspace for local AI workflows"
+        <TextBlock Text="Настольное рабочее пространство для локальных AI-сценариев"
                    FontSize="12"
                    FontWeight="Medium"
                    Classes="secondary" />
-        <TextBlock Text="Вход в DevAssistant UI"
+        <TextBlock Text="Вход в ContourAI"
                    FontSize="15"
                    Classes="secondary" />
       </StackPanel>
@@ -40,17 +40,17 @@
             <TextBox PlaceholderText="Например: 192.168.3.50"
                      Text="{Binding ServerIp, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Classes="auth-input" />
-            <TextBlock Text="Указывается только IP или host, без порта. Настройка сохраняется в памяти приложения."
+            <TextBlock Text="Указывается только IP или имя хоста, без порта. Настройка сохраняется в памяти приложения."
                        TextWrapping="Wrap"
                        FontSize="12"
                        Classes="on-light-secondary" />
           </StackPanel>
 
           <StackPanel Spacing="6">
-            <TextBlock Text="Email или username"
+            <TextBlock Text="Email или имя пользователя"
                        FontWeight="SemiBold"
                        Classes="on-light" />
-            <TextBox PlaceholderText="Введите email или username"
+            <TextBox PlaceholderText="Введите email или имя пользователя"
                      Text="{Binding Identifier, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Classes="auth-input" />
           </StackPanel>

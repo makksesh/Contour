@@ -129,7 +129,7 @@ public sealed partial class ChangeSetReviewViewModel : ObservableObject
             if (pending is null)
             {
                 HasError     = true;
-                ErrorMessage = "Failed to load pending changes.";
+                ErrorMessage = "Не удалось загрузить ожидающие изменения.";
                 return;
             }
 
@@ -142,7 +142,7 @@ public sealed partial class ChangeSetReviewViewModel : ObservableObject
             if (summary is null)
             {
                 HasError     = true;
-                ErrorMessage = $"ChangeSet {changeSetId} not found.";
+                ErrorMessage = $"ChangeSet {changeSetId} не найден.";
                 return;
             }
 
@@ -225,8 +225,8 @@ public sealed partial class ChangeSetReviewViewModel : ObservableObject
 
             IsApplied = true;
             SuccessMessage =
-                $"Applied {result.AppliedIds.Count} file(s). " +
-                (result.FailedIds.Count > 0 ? $"{result.FailedIds.Count} skipped." : string.Empty);
+                $"Применено файлов: {result.AppliedIds.Count}. " +
+                (result.FailedIds.Count > 0 ? $"Пропущено: {result.FailedIds.Count}." : string.Empty);
         }
         catch (OperationCanceledException) { }
         catch (Exception ex) { HasError = true; ErrorMessage = ex.Message; }

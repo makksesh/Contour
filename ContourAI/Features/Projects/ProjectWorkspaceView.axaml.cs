@@ -30,7 +30,7 @@ public partial class ProjectWorkspaceView : UserControl
             var files = await window.StorageProvider.OpenFilePickerAsync(
                 new FilePickerOpenOptions
                 {
-                    Title         = "Select a document",
+                    Title         = "Выберите документ",
                     AllowMultiple = false
                 });
 

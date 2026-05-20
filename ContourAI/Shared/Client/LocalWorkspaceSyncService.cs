@@ -178,7 +178,7 @@ public sealed class LocalWorkspaceSyncService : IDisposable
         var root    = new DirectoryInfo(rootPath);
 
         if (!root.Exists)
-            throw new DirectoryNotFoundException($"Local workspace root not found: '{rootPath}'");
+            throw new DirectoryNotFoundException($"Локальный корневой каталог не найден: '{rootPath}'");
 
         await Task.Run(() => ScanDirectory(root, root, entries, ct), ct);
         return entries.AsReadOnly();

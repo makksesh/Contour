@@ -4,6 +4,9 @@
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
+using System;
+using System.Collections.Generic;
+
 namespace ContourAI.Entities.Workspace;
 
 // ── Workspace summary ──────────────────────────────────────────────────────────

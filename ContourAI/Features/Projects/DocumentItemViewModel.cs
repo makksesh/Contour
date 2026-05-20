@@ -49,12 +49,12 @@ public sealed partial class DocumentItemViewModel : ObservableObject
 
     public string StatusLabel => TaskStatus switch
     {
-        IndexingTaskStatus.Queued    => "⏳ Queued",
-        IndexingTaskStatus.Running   => "⚡ Indexing",
-        IndexingTaskStatus.Completed => "✓ Indexed",
-        IndexingTaskStatus.Failed    => "✗ Failed",
-        null when DocStatus == DocumentStatus.Indexed => "✓ Indexed",
-        _                            => "○ Uploaded"
+        IndexingTaskStatus.Queued    => "⏳ В очереди",
+        IndexingTaskStatus.Running   => "⚡ Индексация",
+        IndexingTaskStatus.Completed => "✓ Индексирован",
+        IndexingTaskStatus.Failed    => "✗ Ошибка",
+        null when DocStatus == DocumentStatus.Indexed => "✓ Индексирован",
+        _                            => "○ Загружен"
     };
 
     public DocumentItemViewModel(DocumentDto dto)

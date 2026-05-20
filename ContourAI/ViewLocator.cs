@@ -25,13 +25,13 @@ public sealed class ViewLocator : IDataTemplate
 
         var name = param.GetType().FullName?.Replace("ViewModel", "View", StringComparison.Ordinal);
         if (name is null)
-            return new TextBlock { Text = "View not resolved." };
+            return new TextBlock { Text = "Представление не найдено." };
 
         var type = Type.GetType(name);
         if (type is not null)
             return (Control)Activator.CreateInstance(type)!;
 
-        return new TextBlock { Text = $"Not Found: {name}" };
+        return new TextBlock { Text = $"Не найдено представление: {name}" };
     }
 
     /// <summary>

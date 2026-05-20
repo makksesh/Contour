@@ -185,7 +185,7 @@ public sealed class MarkdownView : UserControl
             });
         }
 
-        var copyButton = CreateCodeActionButton("Copy", async (_, _) => await CopyCodeToClipboardAsync(block.Code));
+        var copyButton = CreateCodeActionButton("Копировать", async (_, _) => await CopyCodeToClipboardAsync(block.Code));
         Grid.SetColumn(copyButton, 1);
         header.Children.Add(copyButton);
         stack.Children.Add(header);

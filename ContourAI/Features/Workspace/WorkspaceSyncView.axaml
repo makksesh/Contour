@@ -38,16 +38,16 @@
       ════════════════════════════════════════════════════════════════════ -->
       <StackPanel IsVisible="{Binding IsNotAttached}" Spacing="14">
 
-        <TextBlock Text="Connect workspace to server"
+        <TextBlock Text="Подключение рабочего пространства к серверу"
                    FontSize="13" FontWeight="SemiBold"
                    Foreground="{StaticResource ThemeTextPrimaryBrush}"/>
-        <TextBlock Text="Link the local project folder to a server-side mirror path so the AI agent can read and modify files."
+        <TextBlock Text="Свяжите локальную папку проекта с серверным зеркальным путём, чтобы AI-агент мог читать и изменять файлы."
                    FontSize="11" Foreground="{StaticResource ThemeTextMutedBrush}"
                    TextWrapping="Wrap"/>
 
         <!-- Local root path — TextBox + Browse button -->
         <StackPanel Spacing="3">
-          <TextBlock Text="Local Root Path"
+          <TextBlock Text="Локальный путь к корню"
                      FontSize="10" Foreground="{StaticResource ThemeTextMutedBrush}" Margin="0 0 0 3"/>
           <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
             <TextBox Grid.Column="0"
@@ -108,10 +108,10 @@
           <Button Classes="primary"
                   Command="{Binding AttachCommand}"
                   IsEnabled="{Binding !IsLoading}">
-            Connect
+            Подключить
           </Button>
           <TextBlock IsVisible="{Binding IsLoading}"
-                     Text="Connecting…"
+                     Text="Подключение…"
                      FontSize="12" Foreground="{StaticResource ThemeTextMutedBrush}"
                      VerticalAlignment="Center"/>
         </StackPanel>
@@ -130,7 +130,7 @@
           <StackPanel Spacing="8">
 
             <Grid ColumnDefinitions="Auto,*">
-              <TextBlock Grid.Column="0" Text="Local Root"
+              <TextBlock Grid.Column="0" Text="Локальный корень"
                          FontSize="10" Foreground="{StaticResource ThemeTextMutedBrush}"
                          Width="110" VerticalAlignment="Center"/>
               <TextBlock Grid.Column="1" Text="{Binding LocalRootPath}"
@@ -139,7 +139,7 @@
             </Grid>
 
             <Grid ColumnDefinitions="Auto,*">
-              <TextBlock Grid.Column="0" Text="Server Mirror"
+              <TextBlock Grid.Column="0" Text="Зеркало на сервере"
                          FontSize="10" Foreground="{StaticResource ThemeTextMutedBrush}"
                          Width="110" VerticalAlignment="Center"/>
               <TextBlock Grid.Column="1" Text="{Binding ServerMirrorPath}"
@@ -173,7 +173,7 @@
         </StackPanel>
 
         <TextBlock IsVisible="{Binding IsSyncing}"
-                   Text="Scanning files and sending snapshot to server…"
+                   Text="Сканирование файлов и отправка снимка на сервер…"
                    FontSize="11" Foreground="{StaticResource ThemeTextMutedBrush}"
                    TextWrapping="Wrap"/>
 

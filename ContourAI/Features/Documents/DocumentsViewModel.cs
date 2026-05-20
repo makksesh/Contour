@@ -61,12 +61,12 @@ public sealed partial class DocumentsViewModel : ObservableObject
     {
         _documentsService = documentsService;
         _projectContext   = projectContext;
-        ProjectName       = projectContext.SelectedProjectName ?? "Project";
+        ProjectName       = projectContext.SelectedProjectName ?? "Проект";
     }
 
     public async Task InitializeAsync()
     {
-        ProjectName = _projectContext.SelectedProjectName ?? "Project";
+        ProjectName = _projectContext.SelectedProjectName ?? "Проект";
         await LoadAsync();
     }
 
@@ -159,7 +159,7 @@ public sealed partial class DocumentsViewModel : ObservableObject
 
         var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title         = "Select document to upload",
+            Title         = "Выберите документ для загрузки",
             AllowMultiple = false
         });
 
@@ -175,7 +175,7 @@ public sealed partial class DocumentsViewModel : ObservableObject
             var dto = await _documentsService.UploadDocumentAsync(projectId.Value, localPath);
             if (dto == null)
             {
-                ErrorMessage = "Upload failed. Please try again.";
+                ErrorMessage = "Не удалось загрузить файл. Попробуйте ещё раз.";
                 HasError     = true;
                 return;
             }

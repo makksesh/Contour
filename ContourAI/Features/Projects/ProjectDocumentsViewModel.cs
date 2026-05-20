@@ -82,7 +82,7 @@ public sealed partial class ProjectDocumentsViewModel : ObservableObject
         try
         {
             var docs = await _documentsService.GetProjectDocumentsAsync(_projectId, ct);
-            if (docs == null) { HasError = true; ErrorMessage = "Failed to load documents."; return; }
+            if (docs == null) { HasError = true; ErrorMessage = "Не удалось загрузить документы."; return; }
 
             Documents.Clear();
             foreach (var dto in docs)
@@ -118,7 +118,7 @@ public sealed partial class ProjectDocumentsViewModel : ObservableObject
             if (docDto == null)
             {
                 HasError     = true;
-                ErrorMessage = "Upload failed.";
+                ErrorMessage = "Не удалось загрузить файл.";
                 return;
             }
 
@@ -144,7 +144,7 @@ public sealed partial class ProjectDocumentsViewModel : ObservableObject
         try
         {
             var ok = await _documentsService.DeleteDocumentAsync(item.Id);
-            if (!ok) { HasError = true; ErrorMessage = "Delete failed."; return; }
+            if (!ok) { HasError = true; ErrorMessage = "Не удалось удалить документ."; return; }
             Documents.Remove(item);
             IsEmpty = Documents.Count == 0;
         }

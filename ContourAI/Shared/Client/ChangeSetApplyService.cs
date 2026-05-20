@@ -30,7 +30,7 @@ public sealed record ApplyChangeSetResult(
     IReadOnlyList<Guid> FailedIds);
 
 public sealed class ConflictException(string existingContent)
-    : Exception("File conflict detected.")
+    : Exception("Обнаружен конфликт файла.")
 {
     public string ExistingContent { get; } = existingContent;
 }
@@ -154,7 +154,7 @@ public sealed class ChangeSetApplyService(
         var combined       = Path.GetFullPath(Path.Combine(normalizedRoot, normalized));
 
         if (!combined.StartsWith(normalizedRoot, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException($"Path traversal: '{relativePath}'");
+            throw new InvalidOperationException($"Недопустимый путь вне рабочей директории: '{relativePath}'");
 
         return combined;
     }

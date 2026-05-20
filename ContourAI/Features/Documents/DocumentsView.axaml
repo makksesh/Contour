@@ -28,20 +28,20 @@
       <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0 0 0 16">
         <StackPanel Grid.Column="0" Spacing="3">
           <StackPanel Orientation="Horizontal" Spacing="8">
-            <TextBlock Text="Documents" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource ThemeTextPrimaryBrush}"/>
+            <TextBlock Text="Документы" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource ThemeTextPrimaryBrush}"/>
             <Border Classes="card" Background="{StaticResource ThemeSandAltBrush}" CornerRadius="8" Padding="10 3" VerticalAlignment="Center">
               <TextBlock Text="{Binding ProjectName}" FontSize="12" Classes="on-light" FontWeight="SemiBold"/>
             </Border>
           </StackPanel>
-          <TextBlock Text="Upload and manage project documents" FontSize="13" Classes="secondary"/>
+          <TextBlock Text="Загружайте документы проекта и управляйте ими" FontSize="13" Classes="secondary"/>
         </StackPanel>
         <!-- Upload: handled via Click in code-behind to pass TopLevel -->
         <Button x:Name="UploadButton"
                 Grid.Column="1" Classes="primary"
                 IsEnabled="{Binding !IsUploading}">
           <Panel>
-            <TextBlock Text="↑ Upload File" IsVisible="{Binding !IsUploading}"/>
-            <TextBlock Text="Uploading..."   IsVisible="{Binding IsUploading}"/>
+            <TextBlock Text="↑ Загрузить файл" IsVisible="{Binding !IsUploading}"/>
+            <TextBlock Text="Загрузка..."   IsVisible="{Binding IsUploading}"/>
           </Panel>
         </Button>
       </Grid>
@@ -50,27 +50,27 @@
       <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6" Margin="0 0 0 16">
         <Button Classes="filter"
                 Classes.active="{Binding IsFilterAll}"
-                Command="{Binding SetFilterCommand}" CommandParameter="0">All</Button>
+                Command="{Binding SetFilterCommand}" CommandParameter="0">Все</Button>
         <Button Classes="filter"
                 Classes.active="{Binding IsFilterIndexed}"
-                Command="{Binding SetFilterCommand}" CommandParameter="1">Indexed</Button>
+                Command="{Binding SetFilterCommand}" CommandParameter="1">Индексированы</Button>
         <Button Classes="filter"
                 Classes.active="{Binding IsFilterPending}"
-                Command="{Binding SetFilterCommand}" CommandParameter="2">Pending</Button>
+                Command="{Binding SetFilterCommand}" CommandParameter="2">Ожидают</Button>
         <Button Classes="filter"
                 Classes.active="{Binding IsFilterProcessing}"
-                Command="{Binding SetFilterCommand}" CommandParameter="3">Processing</Button>
+                Command="{Binding SetFilterCommand}" CommandParameter="3">Обрабатываются</Button>
         <Button Classes="filter"
                 Classes.active="{Binding IsFilterFailed}"
-                Command="{Binding SetFilterCommand}" CommandParameter="4">Failed</Button>
-        <Button Classes="ghost" Command="{Binding LoadCommand}" FontSize="12">↻ Refresh</Button>
+                Command="{Binding SetFilterCommand}" CommandParameter="4">С ошибкой</Button>
+        <Button Classes="ghost" Command="{Binding LoadCommand}" FontSize="12">↻ Обновить</Button>
       </StackPanel>
 
       <!-- Content area -->
       <Grid Grid.Row="2">
         <!-- Loading -->
         <TextBlock IsVisible="{Binding IsLoading}"
-                   Text="Loading documents..."
+                   Text="Загрузка документов..."
                    Classes="muted"
                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
@@ -78,15 +78,15 @@
         <StackPanel IsVisible="{Binding HasError}"
                     HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
           <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource ThemeDangerBrush}" HorizontalAlignment="Center"/>
-          <Button Classes="primary" Command="{Binding LoadCommand}" HorizontalAlignment="Center">Retry</Button>
+          <Button Classes="primary" Command="{Binding LoadCommand}" HorizontalAlignment="Center">Повторить</Button>
         </StackPanel>
 
         <!-- Empty -->
         <StackPanel IsVisible="{Binding IsEmpty}"
                     HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
-          <TextBlock Text="No documents yet" FontSize="16" FontWeight="Medium"
+          <TextBlock Text="Документов пока нет" FontSize="16" FontWeight="Medium"
                      Foreground="{StaticResource ThemeTextPrimaryBrush}" HorizontalAlignment="Center"/>
-          <TextBlock Text="Upload files to index them for RAG search"
+          <TextBlock Text="Загрузите файлы, чтобы подготовить их для RAG-поиска"
                      FontSize="13" Classes="secondary" HorizontalAlignment="Center"/>
         </StackPanel>
 
@@ -143,15 +143,15 @@
               HorizontalAlignment="Center" VerticalAlignment="Center"
               Padding="28 24">
         <StackPanel Spacing="16">
-          <TextBlock Text="Delete Document" FontSize="18" FontWeight="SemiBold" Classes="on-light"/>
+          <TextBlock Text="Удалить документ" FontSize="18" FontWeight="SemiBold" Classes="on-light"/>
           <TextBlock TextWrapping="Wrap" Classes="on-light-secondary" FontSize="13">
-            <Run Text="Are you sure you want to delete "/>
+            <Run Text="Вы уверены, что хотите удалить документ "/>
             <Run Text="{Binding DeleteConfirmName}" FontWeight="SemiBold" Foreground="{StaticResource ThemeTextOnLightBrush}"/>
-            <Run Text="? This cannot be undone."/>
+            <Run Text="? Это действие нельзя отменить."/>
           </TextBlock>
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-            <Button Classes="ghost"  Command="{Binding CancelDeleteCommand}">Cancel</Button>
-            <Button Classes="danger" Command="{Binding ConfirmDeleteCommand}">Delete</Button>
+            <Button Classes="ghost"  Command="{Binding CancelDeleteCommand}">Отмена</Button>
+            <Button Classes="danger" Command="{Binding ConfirmDeleteCommand}">Удалить</Button>
           </StackPanel>
         </StackPanel>
       </Border>
