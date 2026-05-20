@@ -33,7 +33,6 @@ using ContourAI.Shared.State;
 
 namespace ContourAI.Features.Projects;
 
-/// <summary>Индекс активной вкладки workspace.</summary>
 public enum WorkspaceTab
 {
     Settings  = 0,
@@ -56,33 +55,19 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
     private bool                                _documentsLoaded;
     private bool                                _chatInitialized;
     private bool                                _syncInitialized;
-
-    // ─── Идентификация ────────────────────────────────────────────────────────
+    private bool                                _useRagContext;
+    private int                                 _ragTopK = 5;
 
     public Guid ProjectId { get; private set; }
 
-    // ─── Заголовок ────────────────────────────────────────────────────────────
-
     [ObservableProperty] private string _projectName = string.Empty;
-
-    // ─── Вкладки ──────────────────────────────────────────────────────────────
-
     [ObservableProperty] private int _selectedTabIndex = (int)WorkspaceTab.Settings;
-
-    // ─── Состояния загрузки ────────────────────────────────────────────────────
-
     [ObservableProperty] private bool   _isLoading;
     [ObservableProperty] private bool   _hasError;
     [ObservableProperty] private string _errorMessage = string.Empty;
-
-    // ─── Вложенные ViewModel ──────────────────────────────────────────────────
-
     [ObservableProperty] private ProjectSettingsDialogViewModel? _settingsViewModel;
 
-    /// <summary>ViewModel вкладки Documents.</summary>
     public ProjectDocumentsViewModel DocumentsViewModel { get; }
-
-    // ─── Chat ───────────────────────────────────────────────────────────────
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowChatView))]
@@ -94,20 +79,13 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
     public bool ShowChatView        => ProjectChatViewModel is not null;
     public bool ShowStartChatButton => ProjectChatViewModel is null && !IsChatLoading;
 
-    // ─── RagSearch ──────────────────────────────────────────────────────────
-
-    /// <summary>ViewModel вкладки RAG Search.</summary>
     public RagSearchViewModel RagSearchViewModel { get; }
-
-    // ─── Sync sub-panels ────────────────────────────────────────────────────
 
     [ObservableProperty] private int _syncSubPanelIndex;
 
     public WorkspaceSyncViewModel   SyncViewModel       => _workspaceSyncViewModel;
     public AgentTasksViewModel      AgentTasksViewModel => _agentTasksViewModel;
     public ChangeSetReviewViewModel ReviewViewModel     => _changeSetReviewViewModel;
-
-    // ─── События ─────────────────────────────────────────────────────────────
 
     public event Action? BackRequested;
     public event Action? ProjectDeleted;
@@ -136,8 +114,6 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         _changeSetReviewViewModel.BackRequested               += OnReviewBack;
     }
 
-    // ─── Инициализация ─────────────────────────────────────────────────────
-
     public async Task OpenAsync(Guid projectId, string projectName, int folderCount = 0)
     {
         _cts.Cancel();
@@ -145,6 +121,8 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         _documentsLoaded  = false;
         _chatInitialized  = false;
         _syncInitialized  = false;
+        _useRagContext    = false;
+        _ragTopK          = 5;
         SyncSubPanelIndex = 0;
 
         ProjectId        = projectId;
@@ -165,8 +143,6 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         await LoadSettingsAsync(_cts.Token);
     }
 
-    // ─── Загрузка настроек ────────────────────────────────────────────────────
-
     [RelayCommand]
     private async Task LoadSettingsAsync(CancellationToken ct = default)
     {
@@ -176,14 +152,14 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         {
             var settings = await _projectsService.GetProjectSettingsAsync(ProjectId, ct);
             if (settings != null && SettingsViewModel != null)
-                ApplySettings(settings, SettingsViewModel);
+                ApplySettings(settings, SettingsViewModel, this);
         }
         catch (OperationCanceledException) { }
         catch (Exception ex) { HasError = true; ErrorMessage = ex.Message; }
         finally { IsLoading = false; }
     }
 
-    private static void ApplySettings(ProjectSettingsDto dto, ProjectSettingsDialogViewModel vm)
+    private static void ApplySettings(ProjectSettingsDto dto, ProjectSettingsDialogViewModel vm, ProjectWorkspaceViewModel owner)
     {
         vm.SystemPrompt      = dto.SystemPrompt;
         vm.MaxTokens         = dto.MaxTokens;
@@ -191,9 +167,10 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         vm.RagTopK           = dto.RagTopK;
         vm.UseRagContext     = dto.UseRagContext;
         vm.ContextWindowSize = dto.ContextWindowSize;
-    }
 
-    // ─── Навигация по вкладкам ─────────────────────────────────────────────────
+        owner._useRagContext = dto.UseRagContext;
+        owner._ragTopK       = dto.RagTopK;
+    }
 
     [RelayCommand]
     private void SelectTab(WorkspaceTab tab)
@@ -219,12 +196,9 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
             _ = _agentTasksViewModel.InitializeAsync(_cts.Token);
         }
 
-        // RagSearch: SetProject уже вызван в OpenAsync; повторный вызов безопасен (idempotent).
         if (tab == WorkspaceTab.RagSearch)
             RagSearchViewModel.SetProject(ProjectId);
     }
-
-    // ─── Chat ───────────────────────────────────────────────────────────────
 
     private async Task InitializeChatAsync(CancellationToken ct)
     {
@@ -275,9 +249,9 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         => new(_chatService, _projectContextStore,
                projectId:      ProjectId,
                headerTitle:    ProjectName,
-               showBackButton: false);
-
-    // ─── Sync sub-panel navigation ───────────────────────────────────────────────
+               showBackButton: false,
+               isRagEnabled:   _useRagContext,
+               ragTopK:        _ragTopK);
 
     private void OnNavigateToAgentTasks()
     {
@@ -294,8 +268,6 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
     }
 
     private void OnReviewBack() => SyncSubPanelIndex = 1;
-
-    // ─── Кнопка «Назад» ──────────────────────────────────────────────────────
 
     [RelayCommand]
     private void GoBack()

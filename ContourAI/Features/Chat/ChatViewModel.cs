@@ -76,15 +76,22 @@ public sealed partial class ChatViewModel : ObservableObject
     [ObservableProperty] private string _headerTitle     = "AI-ассистент";
     [ObservableProperty] private string _threadListTitle = "Чаты";
     [ObservableProperty] private bool   _showBackButton  = true;
+    [ObservableProperty] private bool   _isRagEnabled;
+    [ObservableProperty] private int    _ragTopK = 5;
 
     private readonly Guid? _projectId;
+
+    public bool RagBadgeVisible => _projectId.HasValue && IsRagEnabled;
+    public string RagBadgeText  => $"🔍 RAG активен · {RagTopK} чанков";
 
     public ChatViewModel(
         ChatService         chatService,
         ProjectContextStore projectContext,
         Guid?               projectId      = null,
         string?             headerTitle    = null,
-        bool                showBackButton = true)
+        bool                showBackButton = true,
+        bool                isRagEnabled   = false,
+        int                 ragTopK        = 5)
     {
         _chatService    = chatService;
         _projectContext = projectContext;
@@ -94,6 +101,8 @@ public sealed partial class ChatViewModel : ObservableObject
         ThreadListTitle = projectId is null ? "Чаты" : "Чаты проекта";
         ShowBackButton  = showBackButton;
         ScopeLabel      = projectId is null ? "ГЛОБАЛЬНЫЙ" : "ПРОЕКТ";
+        IsRagEnabled    = isRagEnabled;
+        RagTopK         = ragTopK;
     }
 
     public async Task InitializeAsync()
@@ -382,6 +391,4 @@ public sealed partial class ChatViewModel : ObservableObject
         else
             Threads.Add(item);
     }
-    
-
 }

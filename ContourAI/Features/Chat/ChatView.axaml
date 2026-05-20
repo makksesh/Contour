@@ -48,16 +48,25 @@
       <Setter Property="FontSize" Value="14"/>
       <Setter Property="LineHeight" Value="21"/>
     </Style>
+
+    <Style Selector="Border.rag-badge">
+      <Setter Property="Background" Value="{StaticResource ThemeAccentSoftBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource ThemeAccentBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="999"/>
+      <Setter Property="Padding" Value="10 4"/>
+      <Setter Property="HorizontalAlignment" Value="Left"/>
+    </Style>
+
+    <Style Selector="TextBlock.rag-badge-text">
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="{StaticResource ThemeAccentBrush}"/>
+    </Style>
   </UserControl.Styles>
 
-  <!--
-    Grid: 3 строки — хедер / лента сообщений / поле ввода.
-    Список тредов и переключатель Global/Project убраны:
-    навигация по тредам находится в SidebarView.
-  -->
   <Grid RowDefinitions="Auto,*,Auto">
 
-    <!-- ─── Хедер: название активного треда ─────────────────────── -->
     <Border Grid.Row="0"
             Background="Transparent"
             BorderBrush="{StaticResource ThemeBorderBrush}"
@@ -69,13 +78,11 @@
                  Foreground="{StaticResource ThemeTextSecondaryBrush}"/>
     </Border>
 
-    <!-- ─── Лента сообщений ───────────────────────────────────────── -->
     <ScrollViewer Grid.Row="1"
                   x:Name="MessagesScroll"
                   VerticalScrollBarVisibility="Auto">
       <Grid Margin="20 16">
 
-        <!-- Нет активного треда — выбор через Sidebar -->
         <StackPanel IsVisible="{Binding !HasActiveThread}"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
@@ -88,7 +95,6 @@
                      HorizontalAlignment="Center"/>
         </StackPanel>
 
-        <!-- Пустой тред -->
         <StackPanel IsVisible="{Binding IsMessagesEmpty}"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
@@ -103,7 +109,6 @@
                      HorizontalAlignment="Center"/>
         </StackPanel>
 
-        <!-- Загрузка сообщений -->
         <TextBlock IsVisible="{Binding IsLoadingMessages}"
                    Text="Загрузка сообщений..."
                    Classes="muted"
@@ -111,21 +116,12 @@
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center"/>
 
-        <!-- Список сообщений -->
         <ItemsControl ItemsSource="{Binding Messages}"
                       IsVisible="{Binding !IsLoadingMessages}">
           <ItemsControl.ItemTemplate>
-            <!--
-              DataType = ChatMessageViewModel:
-                Role: MessageRole.User | Assistant
-                Content: string (обновляется токен за токеном при SSE)
-                IsStreaming: bool
-                IsUser / IsAssistant: bool
-            -->
             <DataTemplate DataType="vm:ChatMessageViewModel">
               <Grid Margin="0 4">
 
-                <!-- Сообщение пользователя — справа -->
                 <Border IsVisible="{Binding IsUser}"
                         Background="{StaticResource ThemeSandBrush}"
                         BorderBrush="{StaticResource ThemeBorderSoftBrush}"
@@ -138,7 +134,6 @@
                                        Classes="message-text user-message"/>
                 </Border>
 
-                <!-- Ответ ассистента — слева -->
                 <Border IsVisible="{Binding IsAssistant}"
                         Background="{StaticResource ThemeSurfaceBrush}"
                         CornerRadius="10 10 10 2"
@@ -148,8 +143,6 @@
                         MaxWidth="680"
                         HorizontalAlignment="Left">
                   <StackPanel Spacing="4">
-
-                    <!-- Лейбл роли -->
                     <TextBlock Text="Ассистент"
                                FontSize="11"
                                Foreground="{StaticResource ThemeAccentBrush}"
@@ -164,59 +157,59 @@
                                            MaxWidth="640"
                                            IsVisible="{Binding !IsStreaming}"/>
 
-                    <!-- Индикатор стриминга -->
                     <TextBlock IsVisible="{Binding IsStreaming}"
                                Text="●●●"
                                Foreground="{StaticResource ThemeAccentBrush}"
                                FontSize="12"
                                Margin="4 0 0 0"
                                Opacity="0.7"/>
-
                   </StackPanel>
                 </Border>
-
               </Grid>
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
-
       </Grid>
     </ScrollViewer>
 
-    <!-- ─── Панель ввода ──────────────────────────────────────────── -->
     <Border Grid.Row="2"
             Background="Transparent"
             BorderBrush="{StaticResource ThemeBorderBrush}"
             BorderThickness="0 1 0 0"
             Padding="16 12">
-      <Grid ColumnDefinitions="*,Auto,Auto">
+      <StackPanel Spacing="8">
 
-        <TextBox Grid.Column="0"
-                 Classes="chat-input"
-                 Text="{Binding InputText}"
-                 PlaceholderText="Напишите ассистенту..."
-                 AcceptsReturn="True"
-                 KeyDown="Input_KeyDown"/>
+        <Border Classes="rag-badge"
+                IsVisible="{Binding RagBadgeVisible}">
+          <TextBlock Classes="rag-badge-text"
+                     Text="{Binding RagBadgeText}"/>
+        </Border>
 
-        <!-- Кнопка отмены SSE -->
-        <Button Grid.Column="1"
-                Classes="ghost"
-                Margin="8 0 0 0"
-                IsVisible="{Binding IsSending}"
-                Command="{Binding CancelSendCommand}">
-          ✕
-        </Button>
+        <Grid ColumnDefinitions="*,Auto,Auto">
+          <TextBox Grid.Column="0"
+                   Classes="chat-input"
+                   Text="{Binding InputText}"
+                   PlaceholderText="Напишите ассистенту..."
+                   AcceptsReturn="True"
+                   KeyDown="Input_KeyDown"/>
 
-        <!-- Кнопка отправки -->
-        <Button Grid.Column="2"
-                Classes="primary"
-                Margin="8 0 0 0"
-                Command="{Binding SendCommand}"
-                IsEnabled="{Binding !IsSending}">
-          Отправить
-        </Button>
+          <Button Grid.Column="1"
+                  Classes="ghost"
+                  Margin="8 0 0 0"
+                  IsVisible="{Binding IsSending}"
+                  Command="{Binding CancelSendCommand}">
+            ✕
+          </Button>
 
-      </Grid>
+          <Button Grid.Column="2"
+                  Classes="primary"
+                  Margin="8 0 0 0"
+                  Command="{Binding SendCommand}"
+                  IsEnabled="{Binding !IsSending}">
+            Отправить
+          </Button>
+        </Grid>
+      </StackPanel>
     </Border>
 
   </Grid>
