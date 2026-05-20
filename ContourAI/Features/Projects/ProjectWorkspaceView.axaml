@@ -1,6 +1,6 @@
 <!--
   ProjectWorkspaceView — workspace проекта.
-  Вкладки: Settings, Folder, Documents, Chat, Sync.
+  Вкладки: Settings, Folder, Documents, Chat, Sync, RagSearch.
   Sync: WorkspaceSyncView / AgentTasksView / ChangeSetReviewView (внутренная навигация).
   Проект: DevAssistant / ContourAI.
 -->
@@ -119,6 +119,10 @@
                 Command="{Binding SelectTabCommand}"
                 CommandParameter="{x:Static vm:WorkspaceTab.Chat}">Чат</Button>
         <Button Classes="tab-btn"
+                Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsRagSearch}}"
+                Command="{Binding SelectTabCommand}"
+                CommandParameter="{x:Static vm:WorkspaceTab.RagSearch}">RAG Search</Button>
+        <Button Classes="tab-btn"
                 Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsSync}}"
                 Command="{Binding SelectTabCommand}"
                 CommandParameter="{x:Static vm:WorkspaceTab.Sync}">Синхронизация</Button>
@@ -133,7 +137,7 @@
     <Border Grid.Row="1" Background="Transparent" Padding="20 14">
       <Panel>
 
-        <!-- ── SETTINGS TAB ───────────────────────────────────────────── -->
+        <!-- ── SETTINGS TAB ────────────────────────────────────────────────── -->
         <ScrollViewer IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsSettings}}"
                       VerticalScrollBarVisibility="Auto">
           <StackPanel Spacing="14" MaxWidth="580"
@@ -199,7 +203,7 @@
           </StackPanel>
         </ScrollViewer>
 
-        <!-- ── FOLDER TAB ──────────────────────────────────────────────────── -->
+        <!-- ── FOLDER TAB ───────────────────────────────────────────────────── -->
         <ScrollViewer IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsFolder}}"
                       VerticalScrollBarVisibility="Auto">
           <StackPanel Spacing="14" MaxWidth="580" DataContext="{Binding SettingsViewModel}">
@@ -251,7 +255,6 @@
         <Grid IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsDocuments}}"
               RowDefinitions="Auto,*,Auto">
 
-          <!-- Топ-бар: кнопки Upload + Refresh -->
           <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0 0 0 12">
             <Button Classes="primary"
                     Command="{Binding DocumentsViewModel.UploadCommand}"
@@ -271,10 +274,7 @@
                        VerticalAlignment="Center" Margin="4 0"/>
           </StackPanel>
 
-          <!-- Список / empty state -->
           <Panel Grid.Row="1">
-
-            <!-- Empty state -->
             <StackPanel IsVisible="{Binding DocumentsViewModel.IsEmpty}"
                         HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
               <TextBlock Text="Документов пока нет."
@@ -283,7 +283,6 @@
                          Foreground="{StaticResource ThemeTextMutedBrush}" FontSize="11" HorizontalAlignment="Center"/>
             </StackPanel>
 
-            <!-- Список документов -->
             <ScrollViewer IsVisible="{Binding !DocumentsViewModel.IsEmpty}"
                           VerticalScrollBarVisibility="Auto">
               <ItemsControl ItemsSource="{Binding DocumentsViewModel.Documents}">
@@ -293,13 +292,10 @@
                             Background="{StaticResource ThemeSandBrush}"
                             CornerRadius="10" Padding="12 9" Margin="0 0 0 6">
                       <Grid ColumnDefinitions="*,Auto">
-
-                        <!-- Левая часть: название + мета -->
                         <StackPanel Grid.Column="0" Spacing="3">
                           <TextBlock Text="{Binding FileName}"
                                      FontSize="12" Foreground="{StaticResource ThemeTextOnLightBrush}"
-                                     TextTrimming="CharacterEllipsis"
-                                     MaxWidth="400"/>
+                                     TextTrimming="CharacterEllipsis" MaxWidth="400"/>
                           <StackPanel Orientation="Horizontal" Spacing="10">
                             <TextBlock Text="{Binding SizeDisplay}"
                                        FontSize="10" Foreground="{StaticResource ThemeTextOnLightSecondaryBrush}"/>
@@ -311,40 +307,26 @@
                                        TextTrimming="CharacterEllipsis" MaxWidth="200"/>
                           </StackPanel>
                         </StackPanel>
-
-                        <!-- Правая часть: кнопки -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
-
-                          <!-- Requeue (только если Failed) -->
                           <Button Classes="icon-btn"
                                   IsVisible="{Binding TaskStatus, Converter={x:Static vm:WorkspaceTabConverter.IsTaskFailed}}"
                                   Command="{Binding $parent[ItemsControl].((vm:ProjectDocumentsViewModel)DataContext).RequeueCommand}"
                                   CommandParameter="{Binding}"
-                                  ToolTip.Tip="Повторить индексацию">
-                            ↻
-                          </Button>
-
-                          <!-- Delete -->
+                                  ToolTip.Tip="Повторить индексацию">↻</Button>
                           <Button Classes="icon-btn del"
                                   Command="{Binding $parent[ItemsControl].((vm:ProjectDocumentsViewModel)DataContext).DeleteCommand}"
                                   CommandParameter="{Binding}"
                                   IsEnabled="{Binding !IsDeleting}"
-                                  ToolTip.Tip="Удалить документ">
-                            ✕
-                          </Button>
-
+                                  ToolTip.Tip="Удалить документ">✕</Button>
                         </StackPanel>
-
                       </Grid>
                     </Border>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
             </ScrollViewer>
-
           </Panel>
 
-          <!-- Ошибка низу -->
           <Border Grid.Row="2"
                   IsVisible="{Binding HasError}"
                   Background="{StaticResource ThemeDangerSoftBrush}" BorderBrush="{StaticResource ThemeDangerBrush}" BorderThickness="0 1 0 0"
@@ -354,91 +336,51 @@
 
         </Grid>
 
-        <!-- ── CHAT TAB ─────────────────────────────────────────────────────── -->
-        <Panel IsVisible="{Binding SelectedTabIndex,
-                          Converter={x:Static vm:WorkspaceTabConverter.IsChat}}">
-
-            <!--
-              Состояние загрузки тредов.
-              IsChatLoading=true → крутилка,
-              IsChatLoading=false + ShowStartChatButton=true  → кнопка "Начать чат",
-              IsChatLoading=false + ShowChatView=true         → ChatView.
-            -->
-
-            <!-- Загрузка -->
+        <!-- ── CHAT TAB ────────────────────────────────────────────────────── -->
+        <Panel IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsChat}}">
             <StackPanel IsVisible="{Binding IsChatLoading}"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Spacing="8">
+                        HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
                 <TextBlock Text="Загрузка чата…"
                            FontSize="13" Foreground="{StaticResource ThemeTextMutedBrush}"
                            HorizontalAlignment="Center"/>
             </StackPanel>
-
-            <!-- Нет чата — кнопка "Начать чат" -->
             <StackPanel IsVisible="{Binding ShowStartChatButton}"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Spacing="12">
-                <TextBlock Text="&#x1F4AC;"
-                           FontSize="40"
-                           HorizontalAlignment="Center"/>
+                        HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+                <TextBlock Text="&#x1F4AC;" FontSize="40" HorizontalAlignment="Center"/>
                 <TextBlock Text="Чат ещё не создан"
                            FontSize="14" FontWeight="Medium"
                            Foreground="{StaticResource ThemeTextPrimaryBrush}"
                            HorizontalAlignment="Center"/>
                 <TextBlock Text="Начните диалог с AI-ассистентом в контексте этого проекта."
                            FontSize="12" Foreground="{StaticResource ThemeTextMutedBrush}"
-                           HorizontalAlignment="Center"
-                           TextWrapping="Wrap" MaxWidth="340"
-                           TextAlignment="Center"/>
-                <Button Classes="primary"
-                        HorizontalAlignment="Center"
-                        Command="{Binding StartChatCommand}">
-                    Начать чат
-                </Button>
+                           HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="340" TextAlignment="Center"/>
+                <Button Classes="primary" HorizontalAlignment="Center"
+                        Command="{Binding StartChatCommand}">Начать чат</Button>
             </StackPanel>
-
-            <!--
-              Чат загружен — рендерим ChatView.
-              DataContext переключается на ProjectChatViewModel.
-              IsVisible привязан к ShowChatView чтобы Panel не занимал место
-              пока VM ещё null.
-            -->
             <Panel IsVisible="{Binding ShowChatView}">
               <chat:ChatView DataContext="{Binding ProjectChatViewModel}"/>
             </Panel>
-
         </Panel>
 
-        <!-- ── SYNC TAB ───────────────────────────────────────────────────── -->
-        <!--
-          Внутренная навигация внутри вкладки Sync:
-            SyncSubPanelIndex = 0 → WorkspaceSyncView
-            SyncSubPanelIndex = 1 → AgentTasksView
-            SyncSubPanelIndex = 2 → ChangeSetReviewView
-        -->
-        <Panel IsVisible="{Binding SelectedTabIndex,
-                           Converter={x:Static vm:WorkspaceTabConverter.IsSync}}">
+        <!-- ── RAG SEARCH TAB ─────────────────────────────────────────────── -->
+        <vm:RagSearchView
+          IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsRagSearch}}"
+          DataContext="{Binding RagSearchViewModel}" />
 
-          <!-- 0: WorkspaceSyncView -->
+        <!-- ── SYNC TAB ────────────────────────────────────────────────────── -->
+        <Panel IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsSync}}">
           <ws:WorkspaceSyncView
             DataContext="{Binding SyncViewModel}"
             IsVisible="{Binding $parent[UserControl].((vm:ProjectWorkspaceViewModel)DataContext).SyncSubPanelIndex,
                         Converter={x:Static ws:SyncSubPanelConverter.IsSync}}"/>
-
-          <!-- 1: AgentTasksView -->
           <ws:AgentTasksView
             DataContext="{Binding AgentTasksViewModel}"
             IsVisible="{Binding $parent[UserControl].((vm:ProjectWorkspaceViewModel)DataContext).SyncSubPanelIndex,
                         Converter={x:Static ws:SyncSubPanelConverter.IsAgentTasks}}"/>
-
-          <!-- 2: ChangeSetReviewView -->
           <ws:ChangeSetReviewView
             DataContext="{Binding ReviewViewModel}"
             IsVisible="{Binding $parent[UserControl].((vm:ProjectWorkspaceViewModel)DataContext).SyncSubPanelIndex,
                         Converter={x:Static ws:SyncSubPanelConverter.IsReview}}"/>
-
         </Panel>
 
       </Panel>

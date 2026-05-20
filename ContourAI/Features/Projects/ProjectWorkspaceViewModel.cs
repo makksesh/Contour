@@ -1,7 +1,7 @@
 /// <summary>
 /// ViewModel рабочего пространства проекта.
 /// Открывается по клику на проект из SidebarView.
-/// Вкладки: Settings, Folder, Documents, Chat.
+/// Вкладки: Settings, Folder, Documents, Chat, Sync, RagSearch.
 ///
 /// Chat-вкладка (lazy):
 ///   При первом переключении на WorkspaceTab.Chat вызывается InitializeChatAsync:
@@ -9,6 +9,10 @@
 ///   - Нет тредов → HasProjectChat = false (показывается кнопка "Начать чат")
 ///   - Есть треды  → берётся первый, создаётся ChatViewModel, загружается история
 ///   - StartChatCommand → POST /api/chat/threads → InitializeChatAsync повторно
+///
+/// RagSearch-вкладка (lazy):
+///   При первом переключении вызывается RagSearchViewModel.SetProject(projectId).
+///   Дальнейшая ленивая инициализация не нужна — VM безсостоятельна до первой команды SearchCommand.
 ///
 /// При создании нового проекта (CreateProjectAsync) чат создаётся автоматически.
 /// Проект: DevAssistant / ContourAI.
@@ -36,7 +40,8 @@ public enum WorkspaceTab
     Folder    = 1,
     Documents = 2,
     Chat      = 3,
-    Sync      = 4
+    Sync      = 4,
+    RagSearch = 5
 }
 
 public sealed partial class ProjectWorkspaceViewModel : ObservableObject
@@ -52,15 +57,15 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
     private bool                                _chatInitialized;
     private bool                                _syncInitialized;
 
-    // ─── Идентификация ──────────────────────────────────────────────────────────
+    // ─── Идентификация ────────────────────────────────────────────────────────
 
     public Guid ProjectId { get; private set; }
 
-    // ─── Заголовок ─────────────────────────────────────────────────────────────
+    // ─── Заголовок ────────────────────────────────────────────────────────────
 
     [ObservableProperty] private string _projectName = string.Empty;
 
-    // ─── Вкладки ───────────────────────────────────────────────────────────────
+    // ─── Вкладки ──────────────────────────────────────────────────────────────
 
     [ObservableProperty] private int _selectedTabIndex = (int)WorkspaceTab.Settings;
 
@@ -70,47 +75,39 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
     [ObservableProperty] private bool   _hasError;
     [ObservableProperty] private string _errorMessage = string.Empty;
 
-    // ─── Вложенные ViewModel ───────────────────────────────────────────────────
+    // ─── Вложенные ViewModel ──────────────────────────────────────────────────
 
     [ObservableProperty] private ProjectSettingsDialogViewModel? _settingsViewModel;
 
     /// <summary>ViewModel вкладки Documents.</summary>
     public ProjectDocumentsViewModel DocumentsViewModel { get; }
 
-    // ─── Chat ──────────────────────────────────────────────────────────────────
+    // ─── Chat ───────────────────────────────────────────────────────────────
 
-    /// <summary>
-    /// ViewModel чата проекта. Null пока чат не инициализирован
-    /// или пока нет ни одного треда.
-    /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowChatView))]
     [NotifyPropertyChangedFor(nameof(ShowStartChatButton))]
     private ChatViewModel? _projectChatViewModel;
 
-    /// <summary>true — идёт загрузка тредов на вкладке Chat.</summary>
     [ObservableProperty] private bool _isChatLoading;
 
-    /// <summary>true — тред найден, ChatView отображается.</summary>
     public bool ShowChatView        => ProjectChatViewModel is not null;
-
-    /// <summary>true — тредов нет, отображается кнопка "Начать чат".</summary>
     public bool ShowStartChatButton => ProjectChatViewModel is null && !IsChatLoading;
+
+    // ─── RagSearch ──────────────────────────────────────────────────────────
+
+    /// <summary>ViewModel вкладки RAG Search.</summary>
+    public RagSearchViewModel RagSearchViewModel { get; }
 
     // ─── Sync sub-panels ────────────────────────────────────────────────────
 
-    /// <summary>
-    /// 0 = WorkspaceSyncView (attach + snapshot)
-    /// 1 = AgentTasksView
-    /// 2 = ChangeSetReviewView
-    /// </summary>
     [ObservableProperty] private int _syncSubPanelIndex;
 
     public WorkspaceSyncViewModel   SyncViewModel       => _workspaceSyncViewModel;
     public AgentTasksViewModel      AgentTasksViewModel => _agentTasksViewModel;
     public ChangeSetReviewViewModel ReviewViewModel     => _changeSetReviewViewModel;
 
-    // ─── События ───────────────────────────────────────────────────────────────
+    // ─── События ─────────────────────────────────────────────────────────────
 
     public event Action? BackRequested;
     public event Action? ProjectDeleted;
@@ -122,7 +119,8 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         ProjectDocumentsViewModel documentsViewModel,
         WorkspaceSyncViewModel    workspaceSyncViewModel,
         AgentTasksViewModel       agentTasksViewModel,
-        ChangeSetReviewViewModel  changeSetReviewViewModel)
+        ChangeSetReviewViewModel  changeSetReviewViewModel,
+        RagSearchViewModel        ragSearchViewModel)
     {
         _projectsService          = projectsService;
         _chatService              = chatService;
@@ -131,16 +129,15 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         _workspaceSyncViewModel   = workspaceSyncViewModel;
         _agentTasksViewModel      = agentTasksViewModel;
         _changeSetReviewViewModel = changeSetReviewViewModel;
+        RagSearchViewModel        = ragSearchViewModel;
 
-        // Wiring: Sync → AgentTasks → ChangeSetReview navigation
         _workspaceSyncViewModel.NavigateToAgentTasksRequested += OnNavigateToAgentTasks;
         _agentTasksViewModel.NavigateToReviewRequested        += OnNavigateToReview;
         _changeSetReviewViewModel.BackRequested               += OnReviewBack;
     }
 
-    // ─── Инициализация ─────────────────────────────────────────────────────────
+    // ─── Инициализация ─────────────────────────────────────────────────────
 
-    /// <summary>Вызывается из Shell при клике на проект в Sidebar.</summary>
     public async Task OpenAsync(Guid projectId, string projectName, int folderCount = 0)
     {
         _cts.Cancel();
@@ -156,8 +153,8 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         HasError         = false;
         ErrorMessage     = string.Empty;
 
-        // Сбрасываем старый ChatViewModel при смене проекта
         ProjectChatViewModel = null;
+        RagSearchViewModel.SetProject(projectId);
 
         var settingsVm            = new ProjectSettingsDialogViewModel(projectId, _projectsService);
         settingsVm.Closed        += () => BackRequested?.Invoke();
@@ -168,7 +165,7 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         await LoadSettingsAsync(_cts.Token);
     }
 
-    // ─── Загрузка настроек ─────────────────────────────────────────────────────
+    // ─── Загрузка настроек ────────────────────────────────────────────────────
 
     [RelayCommand]
     private async Task LoadSettingsAsync(CancellationToken ct = default)
@@ -209,29 +206,26 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
             _ = DocumentsViewModel.LoadAsync(ProjectId, _cts.Token);
         }
 
-        // Lazy-инициализация Chat.
         if (tab == WorkspaceTab.Chat && !_chatInitialized)
         {
             _chatInitialized = true;
             _ = InitializeChatAsync(_cts.Token);
         }
 
-        // Lazy-инициализация Sync — при первом переходе на вкладку.
         if (tab == WorkspaceTab.Sync && !_syncInitialized)
         {
             _syncInitialized = true;
             _ = _workspaceSyncViewModel.InitializeAsync(ProjectId, _cts.Token);
             _ = _agentTasksViewModel.InitializeAsync(_cts.Token);
         }
+
+        // RagSearch: SetProject уже вызван в OpenAsync; повторный вызов безопасен (idempotent).
+        if (tab == WorkspaceTab.RagSearch)
+            RagSearchViewModel.SetProject(ProjectId);
     }
 
-    // ─── Chat ──────────────────────────────────────────────────────────────────
+    // ─── Chat ───────────────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Загружает треды проекта.
-    /// Если треды есть — берёт первый, создаёт ChatViewModel, загружает историю.
-    /// Если тредов нет — ProjectChatViewModel остаётся null (кнопка "Начать чат").
-    /// </summary>
     private async Task InitializeChatAsync(CancellationToken ct)
     {
         IsChatLoading        = true;
@@ -240,14 +234,11 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         {
             var threads = await _chatService.GetThreadsByProjectAsync(ProjectId, ct);
             if (threads == null || threads.Count == 0)
-                return; // кнопка "Начать чат"
+                return;
 
-            // Берём первый попавшийся тред
             var firstThread = threads.First();
             var vm = BuildChatViewModel();
             await vm.InitializeAsync();
-
-            // Сразу открываем нужный тред без ожидания пользовательского клика
             await vm.OpenThreadByIdAsync(firstThread.Id);
 
             ProjectChatViewModel = vm;
@@ -257,10 +248,6 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         finally { IsChatLoading = false; }
     }
 
-    /// <summary>
-    /// Команда кнопки "Начать чат".
-    /// POST /api/chat/threads → инициализирует ChatViewModel с новым тредом.
-    /// </summary>
     [RelayCommand]
     private async Task StartChatAsync()
     {
@@ -284,20 +271,13 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         finally { IsChatLoading = false; }
     }
 
-    /// <summary>
-    /// Создаёт ChatViewModel в режиме проектного чата.
-    /// showBackButton=false — кнопка «Назад» не нужна (вкладка workspace),
-    /// headerTitle=null — берётся дефолтный "Project Chat".
-    /// </summary>
     private ChatViewModel BuildChatViewModel()
         => new(_chatService, _projectContextStore,
                projectId:      ProjectId,
                headerTitle:    ProjectName,
                showBackButton: false);
 
-    // ─── Кнопка «Назад» ────────────────────────────────────────────────────────
-
-    // ─── Sync sub-panel navigation ─────────────────────────────────────────
+    // ─── Sync sub-panel navigation ───────────────────────────────────────────────
 
     private void OnNavigateToAgentTasks()
     {
@@ -315,7 +295,7 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
 
     private void OnReviewBack() => SyncSubPanelIndex = 1;
 
-    // ─── Кнопка «Назад» ────────────────────────────────────────────────────
+    // ─── Кнопка «Назад» ──────────────────────────────────────────────────────
 
     [RelayCommand]
     private void GoBack()

@@ -1,6 +1,6 @@
 /// <summary>
 /// Конвертеры для вкладок ProjectWorkspaceView.
-/// IsSettings, IsFolder, IsDocuments, IsChat, IsSync — преобразуют int в bool.
+/// IsSettings, IsFolder, IsDocuments, IsChat, IsSync, IsRagSearch — преобразуют int в bool.
 /// IsNotNull    — true если значение не null.
 /// IsTaskFailed — true если IndexingTaskStatus == Failed.
 /// Проект: DevAssistant / ContourAI.
@@ -49,6 +49,7 @@ public static class WorkspaceTabConverter
     public static readonly IsTabConverter    IsDocuments = new((int)WorkspaceTab.Documents);
     public static readonly IsTabConverter    IsChat      = new((int)WorkspaceTab.Chat);
     public static readonly IsTabConverter    IsSync      = new((int)WorkspaceTab.Sync);
+    public static readonly IsTabConverter    IsRagSearch = new((int)WorkspaceTab.RagSearch);
     public static readonly NotNullConverter  IsNotNull   = new();
     public static readonly TaskFailedConverter IsTaskFailed = new();
 }
