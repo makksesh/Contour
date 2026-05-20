@@ -60,7 +60,7 @@
             <Button Grid.Column="1"
                     Classes="ghost"
                     Click="OnBrowseClick"
-                    ToolTip.Tip="Choose folder…"
+                    ToolTip.Tip="Выбрать папку…"
                     Padding="8 5"
                     FontSize="14"
                     VerticalAlignment="Stretch">
@@ -73,11 +73,11 @@
         <StackPanel Spacing="3">
           <Grid ColumnDefinitions="*,Auto">
             <TextBlock Grid.Column="0"
-                       Text="Server Mirror Path"
+                       Text="Зеркальный путь на сервере"
                        FontSize="10" Foreground="{StaticResource ThemeTextMutedBrush}" Margin="0 0 0 0"
                        VerticalAlignment="Center"/>
             <TextBlock Grid.Column="1"
-                       Text="auto-generated"
+                       Text="авто"
                        FontSize="9" FontStyle="Italic"
                        Foreground="{StaticResource ThemeTextMutedBrush}"
                        VerticalAlignment="Center"/>
@@ -96,7 +96,7 @@
               </TextBlock.IsVisible>
             </TextBlock>
           </Border>
-          <TextBlock Text="Derived from the local folder name. Select a folder above to populate."
+          <TextBlock Text="Путь формируется автоматически из имени выбранной папки."
                      FontSize="10" FontStyle="Italic"
                      Foreground="{StaticResource ThemeTextMutedBrush}"
                      IsVisible="{Binding ServerMirrorPath,
@@ -156,18 +156,18 @@
           <Button Classes="primary"
                   Command="{Binding SnapshotCommand}"
                   IsEnabled="{Binding !IsSyncing}">
-            &#x2191; Sync Snapshot
+            &#x2191; Отправить снимок
           </Button>
 
           <Button Classes="ghost"
                   Command="{Binding RefreshStatusCommand}"
                   IsEnabled="{Binding !IsLoading}">
-            &#x21BA; Refresh
+            &#x21BA; Обновить
           </Button>
 
           <Button Classes="ghost"
                   Command="{Binding OpenAgentTasksCommand}">
-            &#x1F916; Agent Tasks
+            &#x1F916; Задачи агента
           </Button>
 
         </StackPanel>
