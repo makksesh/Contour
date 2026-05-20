@@ -12,11 +12,11 @@
 
 using System;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using ContourAI.Entities.Rag;
 using ContourAI.Shared.Api;
 
 namespace ContourAI.Features.Projects;
@@ -48,12 +48,22 @@ public sealed partial class RagSearchViewModel : ObservableObject
     [ObservableProperty] private bool   _hasError;
     [ObservableProperty] private string _errorMessage = string.Empty;
 
+    /// <summary>
+    /// True когда не идёт загрузка и список пуст.
+    /// Триггерится и по IsLoading, и по CollectionChanged у Results.
+    /// </summary>
     public bool IsEmpty => !IsLoading && Results.Count == 0;
 
-    // ─── ctor ──────────────────────────────────────────────────────────────
+    // ─── ctor ─────────────────────────────────────────────────────────────────
 
     public RagSearchViewModel(RagService ragService)
-        => _ragService = ragService;
+    {
+        _ragService = ragService;
+        Results.CollectionChanged += OnResultsChanged;
+    }
+
+    private void OnResultsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        => OnPropertyChanged(nameof(IsEmpty));
 
     // ─── Инициализация ────────────────────────────────────────────────────────
 
@@ -79,7 +89,6 @@ public sealed partial class RagSearchViewModel : ObservableObject
         IsLoading = true;
         HasError  = false;
         Results.Clear();
-        OnPropertyChanged(nameof(IsEmpty));
 
         try
         {
@@ -97,7 +106,6 @@ public sealed partial class RagSearchViewModel : ObservableObject
         finally
         {
             IsLoading = false;
-            OnPropertyChanged(nameof(IsEmpty));
         }
     }
 
