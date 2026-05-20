@@ -5,6 +5,7 @@
 ///   Фаза 4 — Projects
 ///   Фаза 5 — Chat (Global + Project)
 ///   Фаза 6 — Documents
+///   Фаза 8 — RAG Search
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -73,6 +74,7 @@ internal static class Program
         services.AddSingleton<IndexingService>();
         services.AddSingleton<SystemMetricsService>();
         services.AddSingleton<WorkspaceService>();
+        services.AddSingleton<RagService>();
 
         // Workspace client services
         services.AddSingleton<ConflictResolutionService>();
