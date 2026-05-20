@@ -1,9 +1,12 @@
 /// <summary>
-/// ViewModel одного чанка в результатах RAG-поиска.
-/// Хранит RagChunkDto + UI-состояние IsExpanded (раскрыть полный текст).
-/// ScorePercent — Score [0..1] в процентах для отображения.
-/// LocationLabel — «FileName : строка N» (или только FileName).
-/// Preview — первые 300 символов Content; FullContent — весь текст.
+/// ViewModel одного чанка в списке результатов RAG-поиска.
+///
+/// Создаётся из RagChunkDto и предоставляет подготовленные для View свойства:
+///   - LocationLabel  — «имяфайла : строка N» или просто имя файла
+///   - ScoreLabel     — процент релевантности, например «87%»
+///   - ContentPreview — первые 400 символов текста чанка
+///   - IsExpanded     — показывать полный текст по кнопке «Развернуть»
+///
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
@@ -16,51 +19,49 @@ namespace ContourAI.Features.Projects;
 
 public sealed partial class RagChunkItemViewModel : ObservableObject
 {
-    private const int PreviewLength = 300;
+    // ─── Идентификаторы ─────────────────────────────────────────────────────
 
-    // ─── Данные чанка ────────────────────────────────────────────────────────
+    public Guid   ChunkId    { get; }
+    public Guid   DocumentId { get; }
 
-    public Guid    ChunkId    { get; }
-    public Guid    DocumentId { get; }
-    public string  FileName   { get; }
-    public string  FullContent { get; }
-    public int     ScorePercent { get; }
+    // ─── Отображаемые свойства ──────────────────────────────────────────────
 
-    // ─── UI-состояние ────────────────────────────────────────────────────────
+    public string FileName      { get; }
+    public string LocationLabel { get; }
+    public string ScoreLabel    { get; }
+    public string FullContent   { get; }
+    public string ContentPreview { get; }
+    public bool   HasMore        { get; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DisplayContent))]
     [NotifyPropertyChangedFor(nameof(ExpandButtonLabel))]
     private bool _isExpanded;
 
-    // ─── Дисплей-свойства ────────────────────────────────────────────────────
-
-    public string LocationLabel { get; }
-
-    public string Preview => FullContent.Length <= PreviewLength
-        ? FullContent
-        : FullContent[..PreviewLength] + "…";
-
-    public bool HasMore => FullContent.Length > PreviewLength;
-
+    public string DisplayContent    => IsExpanded ? FullContent : ContentPreview;
     public string ExpandButtonLabel => IsExpanded ? "Свернуть" : "Развернуть";
 
-    // ─── Команды ─────────────────────────────────────────────────────────────
-
-    [RelayCommand]
-    private void ToggleExpand() => IsExpanded = !IsExpanded;
-
-    // ─── Конструктор ─────────────────────────────────────────────────────────
+    // ─── ctor ─────────────────────────────────────────────────────────────────
 
     public RagChunkItemViewModel(RagChunkDto dto)
     {
         ChunkId      = dto.ChunkId;
         DocumentId   = dto.DocumentId;
         FullContent  = dto.Content;
-        ScorePercent = (int)Math.Round(dto.Score * 100);
-        FileName     = dto.FileName ?? dto.FilePath ?? "Неизвестный файл";
+        ScoreLabel   = $"{(int)Math.Round(dto.Score * 100)}%";
+        FileName     = dto.FileName ?? "Неизвестный файл";
 
         LocationLabel = dto.LineStart.HasValue
             ? $"{FileName} : строка {dto.LineStart}"
             : FileName;
+
+        const int previewLength = 400;
+        HasMore        = dto.Content.Length > previewLength;
+        ContentPreview = HasMore ? dto.Content[..previewLength] + "…" : dto.Content;
     }
+
+    // ─── Команды ──────────────────────────────────────────────────────────────
+
+    [RelayCommand]
+    private void ToggleExpand() => IsExpanded = !IsExpanded;
 }

@@ -37,7 +37,7 @@ public sealed partial class RagSearchViewModel : ObservableObject
 
     // ─── Результаты ───────────────────────────────────────────────────────────
 
-    public ObservableCollection<RagChunkDto> Results { get; } = [];
+    public ObservableCollection<RagChunkItemViewModel> Results { get; } = [];
 
     // ─── Состояния ────────────────────────────────────────────────────────────
 
@@ -50,7 +50,7 @@ public sealed partial class RagSearchViewModel : ObservableObject
 
     public bool IsEmpty => !IsLoading && Results.Count == 0;
 
-    // ─── ctor ─────────────────────────────────────────────────────────────────
+    // ─── ctor ──────────────────────────────────────────────────────────────
 
     public RagSearchViewModel(RagService ragService)
         => _ragService = ragService;
@@ -86,7 +86,7 @@ public sealed partial class RagSearchViewModel : ObservableObject
             var chunks = await _ragService.SearchAsync(_projectId, Query, TopK, _cts.Token);
             if (chunks != null)
                 foreach (var c in chunks)
-                    Results.Add(c);
+                    Results.Add(new RagChunkItemViewModel(c));
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)

@@ -1,6 +1,6 @@
 <!--
   RagSearchView — вкладка «RAG Search» в ProjectWorkspaceView.
-  Отображает поисковую строку, TopK и список найденных чанков.
+  Отображает поисковую строку, TopK и список RagChunkItemViewModel.
   DataContext: RagSearchViewModel.
   Проект: DevAssistant / ContourAI.
 -->
@@ -19,9 +19,10 @@
       <Setter Property="Padding"      Value="10 7"/>
       <Setter Property="FontSize"     Value="13"/>
     </Style>
-    <Style Selector="TextBlock.chunk-source">
+    <Style Selector="TextBlock.chunk-location">
       <Setter Property="FontSize"   Value="10"/>
       <Setter Property="Foreground" Value="{StaticResource ThemeTextMutedBrush}"/>
+      <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
     </Style>
     <Style Selector="TextBlock.chunk-score">
       <Setter Property="FontSize"   Value="10"/>
@@ -31,7 +32,15 @@
       <Setter Property="FontSize"     Value="12"/>
       <Setter Property="Foreground"   Value="{StaticResource ThemeTextSecondaryBrush}"/>
       <Setter Property="TextWrapping" Value="Wrap"/>
-      <Setter Property="Margin"       Value="0 4 0 0"/>
+      <Setter Property="Margin"       Value="0 5 0 0"/>
+    </Style>
+    <Style Selector="Button.expand-btn">
+      <Setter Property="Background"      Value="Transparent"/>
+      <Setter Property="Foreground"      Value="{StaticResource ThemeAccentBrush}"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Padding"         Value="0 2"/>
+      <Setter Property="FontSize"        Value="11"/>
+      <Setter Property="Cursor"          Value="Hand"/>
     </Style>
   </UserControl.Styles>
 
@@ -106,24 +115,33 @@
       <ScrollViewer IsVisible="{Binding !IsEmpty}" VerticalScrollBarVisibility="Auto">
         <ItemsControl ItemsSource="{Binding Results}">
           <ItemsControl.ItemTemplate>
-            <DataTemplate x:DataType="vm:RagChunkDto">
+            <DataTemplate x:DataType="vm:RagChunkItemViewModel">
               <Border Background="{StaticResource ThemeSandBrush}"
                       CornerRadius="10" Padding="12 10" Margin="0 0 0 8">
-                <StackPanel Spacing="2">
-                  <!-- Шапка чанка: имя файла + оценка релевантности -->
+                <StackPanel Spacing="0">
+
+                  <!-- Шапка: локация + оценка -->
                   <Grid ColumnDefinitions="*,Auto">
                     <TextBlock Grid.Column="0"
-                               Classes="chunk-source"
-                               Text="{Binding FileName}"
-                               TextTrimming="CharacterEllipsis"/>
+                               Classes="chunk-location"
+                               Text="{Binding LocationLabel}"/>
                     <TextBlock Grid.Column="1"
                                Classes="chunk-score"
-                               Text="{Binding ScoreDisplay}"
+                               Text="{Binding ScoreLabel}"
                                Margin="8 0 0 0"/>
                   </Grid>
+
                   <!-- Текст чанка -->
                   <TextBlock Classes="chunk-content"
-                             Text="{Binding ContentPreview}"/>
+                             Text="{Binding DisplayContent}"/>
+
+                  <!-- Кнопка «Развернуть / Свернуть» -->
+                  <Button Classes="expand-btn"
+                          IsVisible="{Binding HasMore}"
+                          Command="{Binding ToggleExpandCommand}"
+                          Content="{Binding ExpandButtonLabel}"
+                          Margin="0 4 0 0"/>
+
                 </StackPanel>
               </Border>
             </DataTemplate>
