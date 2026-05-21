@@ -135,8 +135,7 @@ public sealed partial class ProjectsViewModel : ObservableObject
                 dto.Name,
                 dto.Description,
                 dto.AccessMode,
-                dto.CreatedAtUtc,
-                FolderCount: 0);
+                dto.CreatedAtUtc);
 
             var card = new ProjectCardViewModel(summary);
             AddCard(card);

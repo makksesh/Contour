@@ -239,7 +239,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
 
             var summary = new ProjectSummaryDto(
                 dto.Id, dto.Name, dto.Description,
-                dto.AccessMode, dto.CreatedAtUtc, FolderCount: 0);
+                dto.AccessMode, dto.CreatedAtUtc);
             Projects.InjectCard(new ProjectCardViewModel(summary), insertAtTop: true);
 
             // Автоматически создаём первый чат-тред для нового проекта
@@ -347,7 +347,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         _previousContent = CurrentContent;
         CurrentContent   = Workspace;
         RaiseActiveFlags();
-        await Workspace.OpenAsync(card.Id, card.Name, card.FolderCount);
+        await Workspace.OpenAsync(card.Id, card.Name);
     }
 
     private void OnWorkspaceBackRequested()

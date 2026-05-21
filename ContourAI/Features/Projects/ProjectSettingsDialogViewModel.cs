@@ -35,7 +35,6 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
     // ─── Folder fields ───────────────────────────────────────────────────────────
 
     /// <summary>Выставляется напрямую из ProjectWorkspaceViewModel по FolderCount.</summary>
-    [ObservableProperty] private bool    _hasFolderAttached;
     [ObservableProperty] private string? _folderPath;
     [ObservableProperty] private bool    _permRead;
     [ObservableProperty] private bool    _permEdit;
@@ -145,69 +144,5 @@ public sealed partial class ProjectSettingsDialogViewModel : ObservableObject
             IsDeleteConfirmVisible = false;
         }
         finally { IsBusy = false; }
-    }
-
-    // ─── Folder: attach ─────────────────────────────────────────────────────────────
-
-    [RelayCommand]
-    private async Task AttachFolderAsync()
-    {
-        if (string.IsNullOrWhiteSpace(FolderPath)) return;
-        IsBusy = true; HasError = false;
-        try
-        {
-            var dto = await _projectsService.AddFolderAsync(_projectId,
-                new AddProjectFolderRequest(FolderPath, BuildPermission()));
-            if (dto == null) { ErrorMessage = "Не удалось подключить папку."; HasError = true; return; }
-            HasFolderAttached = true;
-            FolderPath        = dto.Path;
-        }
-        catch (Exception ex) { ErrorMessage = ex.Message; HasError = true; }
-        finally { IsBusy = false; }
-    }
-
-    // ─── Folder: change permissions ──────────────────────────────────────────────────────
-
-    [RelayCommand]
-    private async Task SaveFolderPermissionsAsync()
-    {
-        IsBusy = true; HasError = false;
-        try
-        {
-            var ok = await _projectsService.ChangeFolderPermissionAsync(_projectId, BuildPermission());
-            if (!ok) { ErrorMessage = "Не удалось обновить разрешения."; HasError = true; }
-        }
-        catch (Exception ex) { ErrorMessage = ex.Message; HasError = true; }
-        finally { IsBusy = false; }
-    }
-
-    // ─── Folder: detach ───────────────────────────────────────────────────────────────
-
-    [RelayCommand]
-    private async Task DetachFolderAsync()
-    {
-        IsBusy = true; HasError = false;
-        try
-        {
-            var ok = await _projectsService.RemoveFolderAsync(_projectId);
-            if (!ok) { ErrorMessage = "Не удалось отключить папку."; HasError = true; return; }
-            HasFolderAttached          = false;
-            FolderPath                 = null;
-            PermRead = PermEdit = PermDelete = false;
-        }
-        catch (Exception ex) { ErrorMessage = ex.Message; HasError = true; }
-        finally { IsBusy = false; }
-    }
-
-    [RelayCommand]
-    private void Cancel() => Closed?.Invoke();
-
-    private FolderPermission BuildPermission()
-    {
-        var p = FolderPermission.None;
-        if (PermRead)   p |= FolderPermission.Read;
-        if (PermEdit)   p |= FolderPermission.Edit;
-        if (PermDelete) p |= FolderPermission.Delete;
-        return p;
     }
 }

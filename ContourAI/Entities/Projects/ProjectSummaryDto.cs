@@ -12,5 +12,4 @@ public sealed record ProjectSummaryDto(
     string            Name,
     string?           Description,
     ProjectAccessMode AccessMode,
-    DateTime          CreatedAtUtc,
-    int               FolderCount);
+    DateTime          CreatedAtUtc);

@@ -6,6 +6,8 @@
 /// Проект: DevAssistant / ContourAI.
 /// </summary>
 
+using System;
+
 namespace ContourAI.Entities.Rag;
 
 public sealed record RagChunkDto(

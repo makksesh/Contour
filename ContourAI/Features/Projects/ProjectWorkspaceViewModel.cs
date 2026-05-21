@@ -36,11 +36,10 @@ namespace ContourAI.Features.Projects;
 public enum WorkspaceTab
 {
     Settings  = 0,
-    Folder    = 1,
-    Documents = 2,
-    Chat      = 3,
-    Sync      = 4,
-    RagSearch = 5
+    Documents = 1,
+    Chat      = 2,
+    Sync      = 3,
+    RagSearch = 4
 }
 
 public sealed partial class ProjectWorkspaceViewModel : ObservableObject
@@ -114,7 +113,7 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
         _changeSetReviewViewModel.BackRequested               += OnReviewBack;
     }
 
-    public async Task OpenAsync(Guid projectId, string projectName, int folderCount = 0)
+    public async Task OpenAsync(Guid projectId, string projectName)
     {
         _cts.Cancel();
         _cts = new CancellationTokenSource();
@@ -136,7 +135,6 @@ public sealed partial class ProjectWorkspaceViewModel : ObservableObject
 
         var settingsVm            = new ProjectSettingsDialogViewModel(projectId, _projectsService);
         settingsVm.Closed        += () => BackRequested?.Invoke();
-        settingsVm.HasFolderAttached = folderCount > 0;
         settingsVm.Deleted += () => ProjectDeleted?.Invoke();
         SettingsViewModel = settingsVm;
 

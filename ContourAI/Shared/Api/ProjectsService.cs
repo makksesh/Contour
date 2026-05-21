@@ -126,36 +126,4 @@ public sealed class ProjectsService
         return IsSuccess(response.StatusCode);
     }
 
-    // ─── POST /api/projects/{id}/folders ───────────────────────────────────────────────
-
-    public async Task<FolderDto?> AddFolderAsync(Guid projectId, AddProjectFolderRequest request, CancellationToken ct = default)
-    {
-        var http     = _httpFactory.CreateAuthorized();
-        var response = await http.PostAsJsonAsync($"api/projects/{projectId}/folders", request, JsonOptions, ct);
-        if (HandleAuth(response.StatusCode)) return null;
-        response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<FolderDto>(JsonOptions, ct);
-    }
-
-    // ─── PATCH /api/projects/{id}/folder/permission ──────────────────────────────────────
-
-    public async Task<bool> ChangeFolderPermissionAsync(Guid projectId, FolderPermission permission, CancellationToken ct = default)
-    {
-        var http     = _httpFactory.CreateAuthorized();
-        var request  = new ChangeFolderPermissionRequest(permission);
-        var content  = JsonContent.Create(request, options: JsonOptions);
-        var response = await http.PatchAsync($"api/projects/{projectId}/folder/permission", content, ct);
-        if (HandleAuth(response.StatusCode)) return false;
-        return IsSuccess(response.StatusCode);
-    }
-
-    // ─── DELETE /api/projects/{id}/folder ────────────────────────────────────────────────────
-
-    public async Task<bool> RemoveFolderAsync(Guid projectId, CancellationToken ct = default)
-    {
-        var http     = _httpFactory.CreateAuthorized();
-        var response = await http.DeleteAsync($"api/projects/{projectId}/folder", ct);
-        if (HandleAuth(response.StatusCode)) return false;
-        return IsSuccess(response.StatusCode);
-    }
 }

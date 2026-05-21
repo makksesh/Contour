@@ -1,6 +1,6 @@
 <!--
   ProjectWorkspaceView — workspace проекта.
-  Вкладки: Settings, Folder, Documents, Chat, Sync, RagSearch.
+  Вкладки: Settings, Documents, Chat, Sync, RagSearch.
   Sync: WorkspaceSyncView / AgentTasksView / ChangeSetReviewView (внутренная навигация).
   Проект: DevAssistant / ContourAI.
 -->
@@ -107,10 +107,6 @@
                 Command="{Binding SelectTabCommand}"
                 CommandParameter="{x:Static vm:WorkspaceTab.Settings}">Настройки</Button>
         <Button Classes="tab-btn"
-                Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsFolder}}"
-                Command="{Binding SelectTabCommand}"
-                CommandParameter="{x:Static vm:WorkspaceTab.Folder}">Папка</Button>
-        <Button Classes="tab-btn"
                 Classes.active="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsDocuments}}"
                 Command="{Binding SelectTabCommand}"
                 CommandParameter="{x:Static vm:WorkspaceTab.Documents}">Документы</Button>
@@ -199,54 +195,6 @@
                 </Border>
               </StackPanel>
             </Border>
-
-          </StackPanel>
-        </ScrollViewer>
-
-        <!-- ── FOLDER TAB ───────────────────────────────────────────────────── -->
-        <ScrollViewer IsVisible="{Binding SelectedTabIndex, Converter={x:Static vm:WorkspaceTabConverter.IsFolder}}"
-                      VerticalScrollBarVisibility="Auto">
-          <StackPanel Spacing="14" MaxWidth="580" DataContext="{Binding SettingsViewModel}">
-
-            <Border IsVisible="{Binding HasError}" Background="{StaticResource ThemeDangerSoftBrush}" BorderBrush="{StaticResource ThemeDangerBrush}" BorderThickness="1" CornerRadius="6" Padding="10 7">
-              <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource ThemeDangerTextBrush}" FontSize="12" TextWrapping="Wrap"/>
-            </Border>
-
-            <StackPanel IsVisible="{Binding !HasFolderAttached}" Spacing="14">
-              <TextBlock Text="Папка не подключена." Foreground="{StaticResource ThemeTextMutedBrush}" FontSize="12"/>
-              <StackPanel Spacing="3">
-                <TextBlock Classes="field-label" Text="Путь к папке"/>
-                <TextBox Classes="settings-input" Text="{Binding FolderPath}" PlaceholderText="/абсолютный/путь/к/папке"/>
-              </StackPanel>
-              <StackPanel Spacing="3">
-                <TextBlock Classes="field-label" Text="Разрешения"/>
-                <StackPanel Orientation="Horizontal" Spacing="12">
-                  <CheckBox IsChecked="{Binding PermRead}"   Content="Чтение"   Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
-                  <CheckBox IsChecked="{Binding PermEdit}"   Content="Изменение"   Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
-                  <CheckBox IsChecked="{Binding PermDelete}" Content="Удаление" Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
-                </StackPanel>
-              </StackPanel>
-              <Button Classes="primary" Command="{Binding AttachFolderCommand}">Подключить папку</Button>
-            </StackPanel>
-
-            <StackPanel IsVisible="{Binding HasFolderAttached}" Spacing="14">
-              <StackPanel Spacing="3">
-                <TextBlock Classes="field-label" Text="Подключённый путь"/>
-                <TextBlock Text="{Binding FolderPath}" Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12" TextWrapping="Wrap"/>
-              </StackPanel>
-              <StackPanel Spacing="3">
-                <TextBlock Classes="field-label" Text="Разрешения"/>
-                <StackPanel Orientation="Horizontal" Spacing="12">
-                  <CheckBox IsChecked="{Binding PermRead}"   Content="Чтение"   Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
-                  <CheckBox IsChecked="{Binding PermEdit}"   Content="Изменение"   Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
-                  <CheckBox IsChecked="{Binding PermDelete}" Content="Удаление" Foreground="{StaticResource ThemeTextSecondaryBrush}" FontSize="12"/>
-                </StackPanel>
-              </StackPanel>
-              <StackPanel Orientation="Horizontal" Spacing="8">
-                <Button Classes="primary" Command="{Binding SaveFolderPermissionsCommand}">Сохранить разрешения</Button>
-                <Button Classes="danger"  Command="{Binding DetachFolderCommand}">Отключить</Button>
-              </StackPanel>
-            </StackPanel>
 
           </StackPanel>
         </ScrollViewer>

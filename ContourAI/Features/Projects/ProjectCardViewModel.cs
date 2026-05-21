@@ -58,7 +58,6 @@ public sealed partial class ProjectCardViewModel : ObservableObject
         Description = dto.Description ?? string.Empty;
         AccessMode  = dto.AccessMode;
         CreatedAt   = dto.CreatedAtUtc;
-        FolderCount = dto.FolderCount;
     }
 
     // ── Команды ───────────────────────────────────────────────────────────────

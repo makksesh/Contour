@@ -45,7 +45,6 @@ public sealed class TaskFailedConverter : IValueConverter
 public static class WorkspaceTabConverter
 {
     public static readonly IsTabConverter    IsSettings  = new((int)WorkspaceTab.Settings);
-    public static readonly IsTabConverter    IsFolder    = new((int)WorkspaceTab.Folder);
     public static readonly IsTabConverter    IsDocuments = new((int)WorkspaceTab.Documents);
     public static readonly IsTabConverter    IsChat      = new((int)WorkspaceTab.Chat);
     public static readonly IsTabConverter    IsSync      = new((int)WorkspaceTab.Sync);
