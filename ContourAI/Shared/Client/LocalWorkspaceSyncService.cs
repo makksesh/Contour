@@ -85,6 +85,23 @@ public sealed class LocalWorkspaceSyncService : IDisposable
     }
 
     /// <summary>
+    /// Запрашивает актуальное состояние workspace с сервера и обновляет Store.
+    /// Используется при инициализации после перезапуска приложения для
+    /// получения актуальной серверной ревизии перед первым снапшотом.
+    /// </summary>
+    public async Task<WorkspaceDto?> RefreshFromServerAsync(
+        Guid              workspaceId,
+        CancellationToken ct = default)
+    {
+        var dto = await _workspaceService.GetStatusAsync(workspaceId, ct);
+
+        if (dto is not null)
+            _workspaceStore.Apply(dto);
+
+        return dto;
+    }
+
+    /// <summary>
     /// Сканирует локальную ФС и отправляет snapshot на сервер.
     /// Обновляет LastServerRevision в WorkspaceStore.
     /// </summary>
