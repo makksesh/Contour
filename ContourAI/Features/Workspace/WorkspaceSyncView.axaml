@@ -2,7 +2,7 @@
   WorkspaceSyncView — вкладка Sync рабочего пространства.
   Состояния:
     IsNotAttached → форма Attach (пути + кнопка)
-    IsAttached    → статус + кнопки Snapshot / Refresh / Agent Tasks
+    IsAttached    → статус + индикатор авто-синхронизации + кнопка Agent Tasks
   Проект: DevAssistant / ContourAI.
 -->
 <UserControl xmlns="https://github.com/avaloniaui"
@@ -119,7 +119,7 @@
       </StackPanel>
 
       <!-- ════════════════════════════════════════════════════════════════════
-           ПОДКЛЮЧЁН — статус + действия
+           ПОДКЛЮЧЁН — статус + авто-синхронизация
       ════════════════════════════════════════════════════════════════════ -->
       <StackPanel IsVisible="{Binding IsAttached}" Spacing="14">
 
@@ -150,32 +150,27 @@
           </StackPanel>
         </Border>
 
-        <!-- Кнопки действий -->
+        <!-- Индикатор авто-синхронизации -->
+        <StackPanel Spacing="6">
+          <ProgressBar IsVisible="{Binding IsSyncing}"
+                       IsIndeterminate="True"
+                       Height="3"
+                       CornerRadius="2"
+                       Foreground="{StaticResource ThemeAccentBrush}"
+                       Background="{StaticResource ThemeBorderBrush}"/>
+          <TextBlock IsVisible="{Binding IsSyncing}"
+                     Text="Синхронизация с сервером…"
+                     FontSize="11" Foreground="{StaticResource ThemeTextMutedBrush}"
+                     TextWrapping="Wrap"/>
+        </StackPanel>
+
+        <!-- Кнопка Agent Tasks -->
         <StackPanel Orientation="Horizontal" Spacing="8" Margin="0 4 0 0">
-
-          <Button Classes="primary"
-                  Command="{Binding SnapshotCommand}"
-                  IsEnabled="{Binding !IsSyncing}">
-            &#x2191; Отправить снимок
-          </Button>
-
-          <Button Classes="ghost"
-                  Command="{Binding RefreshStatusCommand}"
-                  IsEnabled="{Binding !IsLoading}">
-            &#x21BA; Обновить
-          </Button>
-
           <Button Classes="ghost"
                   Command="{Binding OpenAgentTasksCommand}">
             &#x1F916; Задачи агента
           </Button>
-
         </StackPanel>
-
-        <TextBlock IsVisible="{Binding IsSyncing}"
-                   Text="Сканирование файлов и отправка снимка на сервер…"
-                   FontSize="11" Foreground="{StaticResource ThemeTextMutedBrush}"
-                   TextWrapping="Wrap"/>
 
       </StackPanel>
 

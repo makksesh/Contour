@@ -1,10 +1,10 @@
 /// <summary>
 /// ViewModel вкладки «Sync» в ProjectWorkspaceView.
-/// Позволяет: Attach workspace → Snapshot → просматривать статус → открывать AgentTasks.
+/// Позволяет: Attach workspace → авто-синхронизация → просматривать статус → открывать AgentTasks.
 ///
 /// Поток:
 ///   1) IsAttached=false → пользователь вводит LocalRootPath + ServerMirrorPath → AttachCommand
-///   2) IsAttached=true  → SnapshotCommand (вручную), статус workspace, кол-во pending ChangeSet
+///   2) IsAttached=true  → авто-снэпшот каждые 15 сек (без участия пользователя)
 ///   3) NavigateToAgentTasksRequested → родитель показывает AgentTasksView
 ///
 /// Проект: DevAssistant / ContourAI.
@@ -24,11 +24,14 @@ using ContourAI.Shared.State;
 
 namespace ContourAI.Features.Workspace;
 
-public sealed partial class WorkspaceSyncViewModel : ObservableObject
+public sealed partial class WorkspaceSyncViewModel : ObservableObject, IDisposable
 {
     private readonly LocalWorkspaceSyncService _syncService;
     private readonly WorkspaceStore            _workspaceStore;
     private CancellationTokenSource            _cts = new();
+    private Timer?                             _autoSyncTimer;
+
+    private const int AutoSyncIntervalMs = 15_000;
 
     // ── Идентификация проекта ────────────────────────────────────────────────
 
@@ -49,7 +52,6 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject
         get => _serverMirrorPathOverride ?? GenerateServerPath(_localRootPath);
         set
         {
-            // Если пользователь ввёл что-то отличное от авто-значения — фиксируем как override
             var auto = GenerateServerPath(_localRootPath);
             SetProperty(ref _serverMirrorPathOverride, value == auto ? null : value);
             OnPropertyChanged();
@@ -117,7 +119,7 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject
         {
             LocalRootPath    = _workspaceStore.LocalRootPath;
             ServerMirrorPath = _workspaceStore.ServerMirrorPath;
-            await RefreshStatusAsync(_cts.Token);
+            StartAutoSync();
         }
     }
 
@@ -145,7 +147,6 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject
 
         var path = folders[0].Path.LocalPath;
         LocalRootPath = path;
-        // Override сбрасываем — пусть серверный путь пересчитаетсяш
         _serverMirrorPathOverride = null;
         OnPropertyChanged(nameof(ServerMirrorPath));
     }
@@ -180,7 +181,9 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject
             StatusMessage = "Рабочее пространство успешно подключено.";
             OnPropertyChanged(nameof(IsAttached));
             OnPropertyChanged(nameof(IsNotAttached));
-            await RefreshPendingCountAsync(ct);
+
+            // Запускаем авто-синхронизацию сразу после подключения
+            StartAutoSync();
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)
@@ -191,14 +194,28 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject
         finally { IsLoading = false; }
     }
 
-    /// <summary>Snapshot: POST /api/workspaces/{id}/snapshot</summary>
-    [RelayCommand(IncludeCancelCommand = true)]
-    private async Task SnapshotAsync(CancellationToken ct)
+    [RelayCommand]
+    private void OpenAgentTasks() => NavigateToAgentTasksRequested?.Invoke();
+
+    // ── Auto-sync ─────────────────────────────────────────────────────────────
+
+    private void StartAutoSync()
+    {
+        _autoSyncTimer?.Dispose();
+        _autoSyncTimer = new Timer(
+            _ => _ = ExecuteSnapshotAsync(_cts.Token),
+            null,
+            dueTime: TimeSpan.Zero,
+            period:  TimeSpan.FromMilliseconds(AutoSyncIntervalMs));
+    }
+
+    private async Task ExecuteSnapshotAsync(CancellationToken ct)
     {
         if (!_workspaceStore.IsAttached || !_workspaceStore.WorkspaceId.HasValue) return;
+        if (IsSyncing) return; // пропускаем тик если предыдущий ещё идёт
 
-        IsSyncing    = true;
-        HasError     = false;
+        IsSyncing     = true;
+        HasError      = false;
         StatusMessage = "Сканирование файлов…";
         try
         {
@@ -215,13 +232,11 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject
             }
 
             StatusMessage =
-                $"Снимок отправлен — ревизия {result.ServerRevision}. " +
+                $"Синхронизировано — ревизия {result.ServerRevision}. " +
                 $"+{result.FilesAdded} ~{result.FilesUpdated} -{result.FilesRemoved}" +
                 (result.ConflictingPaths.Count > 0
                     ? $" | конфликтов: {result.ConflictingPaths.Count}"
                     : string.Empty);
-
-            await RefreshPendingCountAsync(ct);
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)
@@ -232,35 +247,12 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject
         finally { IsSyncing = false; }
     }
 
-    /// <summary>Refresh: GET /api/workspaces/{id} + pending-changes count</summary>
-    [RelayCommand]
-    private async Task RefreshStatusAsync(CancellationToken ct = default)
+    // ── Dispose ───────────────────────────────────────────────────────────────
+
+    public void Dispose()
     {
-        if (!_workspaceStore.IsAttached || !_workspaceStore.WorkspaceId.HasValue) return;
-
-        IsLoading = true;
-        try
-        {
-            await RefreshPendingCountAsync(ct);
-        }
-        catch (OperationCanceledException) { }
-        catch (Exception ex) { HasError = true; ErrorMessage = ex.Message; }
-        finally { IsLoading = false; }
-    }
-
-    [RelayCommand]
-    private void OpenAgentTasks() => NavigateToAgentTasksRequested?.Invoke();
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    private async Task RefreshPendingCountAsync(CancellationToken ct)
-    {
-        if (!_workspaceStore.WorkspaceId.HasValue) return;
-        // WorkspaceService injected via LocalWorkspaceSyncService — use store value
-        // We delegate count to the store indirectly; a direct API call is fine here
-        // but we'll keep it lightweight: store already tracks revision.
-        // A full pending-changes call is done by AgentTasksViewModel.
-        PendingChangeSetsCount = 0; // reset; AgentTasksVM will fill it when opened
-        await Task.CompletedTask;
+        _autoSyncTimer?.Dispose();
+        _cts.Cancel();
+        _cts.Dispose();
     }
 }
