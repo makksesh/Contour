@@ -1,5 +1,5 @@
 /// <summary>
-/// ViewModel вкладки «Sync» в ProjectWorkspaceView.
+/// ViewModel вкладки «Синх» в ProjectWorkspaceView.
 /// Позволяет: Attach workspace → авто-синхронизация → просматривать статус → открывать AgentTasks.
 ///
 /// Поток:
@@ -33,11 +33,11 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject, IDisposab
 
     private const int AutoSyncIntervalMs = 15_000;
 
-    // ── Идентификация проекта ────────────────────────────────────────────────
+    // ── Идентификация проекта ───────────────────────────────────────────
 
     public Guid ProjectId { get; private set; }
 
-    // ── Attach-форма ─────────────────────────────────────────────────────────
+    // ── Attach-форма ─────────────────────────────────────────────────────────────
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ServerMirrorPath))]
@@ -66,7 +66,7 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject, IDisposab
         return $"/srv/devassistant/mirrors/{folderName}";
     }
 
-    // ── Состояние ────────────────────────────────────────────────────────────
+    // ── Состояние ─────────────────────────────────────────────────────────────
 
     [ObservableProperty] private bool   _isLoading;
     [ObservableProperty] private bool   _isSyncing;
@@ -74,7 +74,7 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject, IDisposab
     [ObservableProperty] private string _errorMessage = string.Empty;
     [ObservableProperty] private string _statusMessage = string.Empty;
 
-    // ── Workspace-данные ─────────────────────────────────────────────────────
+    // ── Workspace-данные ───────────────────────────────────────────────────────────
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsAttached))]
@@ -87,12 +87,12 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject, IDisposab
     /// <summary>Кол-во ожидающих ChangeSet (pending).</summary>
     [ObservableProperty] private int _pendingChangeSetsCount;
 
-    // ── События ──────────────────────────────────────────────────────────────
+    // ── События ────────────────────────────────────────────────────────────────
 
     /// <summary>Запрос на открытие панели AgentTasks.</summary>
     public event Action? NavigateToAgentTasksRequested;
 
-    // ── Constructor ──────────────────────────────────────────────────────────
+    // ── Constructor ────────────────────────────────────────────────────────────
 
     public WorkspaceSyncViewModel(
         LocalWorkspaceSyncService syncService,
@@ -102,7 +102,7 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject, IDisposab
         _workspaceStore = workspaceStore;
     }
 
-    // ── Public API ────────────────────────────────────────────────────────────
+    // ── Public API ─────────────────────────────────────────────────────────────
 
     public async Task InitializeAsync(Guid projectId, CancellationToken ct = default)
     {
@@ -114,11 +114,21 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject, IDisposab
         ErrorMessage     = string.Empty;
         StatusMessage    = string.Empty;
 
-        // Восстанавливаем из store, если уже подключали
+        // Восстанавливаем из store, если уже подключали ранее
         if (_workspaceStore.IsAttached && _workspaceStore.WorkspaceId.HasValue)
         {
             LocalRootPath    = _workspaceStore.LocalRootPath;
             ServerMirrorPath = _workspaceStore.ServerMirrorPath;
+
+            // До первого снапшота подтягиваем актуальную ревизию с сервера,
+            // чтобы избежать workspace.stale_client_revision (400)
+            // после перезапуска приложения.
+            var freshDto = await _syncService.RefreshFromServerAsync(
+                _workspaceStore.WorkspaceId.Value, ct);
+
+            if (freshDto is not null)
+                Workspace = freshDto;
+
             StartAutoSync();
         }
     }
@@ -232,7 +242,7 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject, IDisposab
             }
 
             StatusMessage =
-                $"Синхронизировано — ревизия {result.ServerRevision}. " +
+                $"Синхронизовано — ревизия {result.ServerRevision}. " +
                 $"+{result.FilesAdded} ~{result.FilesUpdated} -{result.FilesRemoved}" +
                 (result.ConflictingPaths.Count > 0
                     ? $" | конфликтов: {result.ConflictingPaths.Count}"
@@ -247,7 +257,7 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject, IDisposab
         finally { IsSyncing = false; }
     }
 
-    // ── Dispose ───────────────────────────────────────────────────────────────
+    // ── Dispose ────────────────────────────────────────────────────────────────
 
     public void Dispose()
     {
