@@ -27,6 +27,20 @@ public sealed class LocalWorkspaceSyncService : IDisposable
         "__pycache__", ".vs", ".idea", ".workspace-backup"
     };
 
+    // Расширения бинарных файлов, для которых Content не передаётся (только хэш)
+    private static readonly HashSet<string> BinaryExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".exe", ".dll", ".so", ".dylib", ".pdb",
+        ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico", ".webp", ".tiff",
+        ".mp3", ".mp4", ".wav", ".ogg", ".avi", ".mkv",
+        ".zip", ".rar", ".7z", ".tar", ".gz",
+        ".pdf", ".doc", ".docx", ".xls", ".xlsx",
+        ".sqlite", ".db",
+    };
+
+    // Максимальный размер файла, содержимое которого включается в снапшот (1 МБ)
+    private const long MaxTextFileSizeBytes = 1 * 1024 * 1024;
+
     // Стабильный ID клиента — читается из переменной окружения или генерируется один раз
     private static readonly string ClientInstanceId =
         Environment.GetEnvironmentVariable("DEVASSISTANT_CLIENT_ID")
@@ -208,15 +222,33 @@ public sealed class LocalWorkspaceSyncService : IDisposable
 
                 var hash = ComputeSha256(file.FullName);
 
-                // Content передаём null при первом сканировании для экономии трафика;
-                // сервер запросит полный контент только для изменённых файлов через diff.
+                // Передаём текстовое содержимое файла, если:
+                //   1) расширение не входит в список бинарных,
+                //   2) размер файла не превышает MaxTextFileSizeBytes.
+                // Для бинарных и крупных файлов Content = null — сервер учтёт их
+                // только в метаданных, но не будет индексировать в RAG.
+                string? content = null;
+                var ext = file.Extension;
+                if (!BinaryExtensions.Contains(ext) && file.Length <= MaxTextFileSizeBytes)
+                {
+                    try
+                    {
+                        content = File.ReadAllText(file.FullName, Encoding.UTF8);
+                    }
+                    catch (Exception readEx)
+                    {
+                        Console.Error.WriteLine(
+                            $"[LocalWorkspaceSyncService] Cannot read text '{file.FullName}': {readEx.Message}");
+                    }
+                }
+
                 entries.Add(new SnapshotFileEntry(
                     relativePath,
-                    MimeType:           "application/octet-stream",
-                    SizeBytes:          file.Length,
-                    ContentHash:        hash,
+                    MimeType:            DetermineMimeType(ext),
+                    SizeBytes:           file.Length,
+                    ContentHash:         hash,
                     ClientModifiedAtUtc: file.LastWriteTimeUtc,
-                    Content:            null));
+                    Content:             content));
             }
             catch (IOException ex)
             {
@@ -225,6 +257,32 @@ public sealed class LocalWorkspaceSyncService : IDisposable
             }
         }
     }
+
+    private static string DetermineMimeType(string extension) =>
+        extension.ToLowerInvariant() switch
+        {
+            ".cs"   => "text/x-csharp",
+            ".ts"   => "text/typescript",
+            ".js"   => "text/javascript",
+            ".py"   => "text/x-python",
+            ".java" => "text/x-java",
+            ".go"   => "text/x-go",
+            ".rs"   => "text/x-rust",
+            ".cpp" or ".cc" or ".cxx" => "text/x-c++src",
+            ".c"    => "text/x-csrc",
+            ".h" or ".hpp" => "text/x-chdr",
+            ".html" or ".htm" => "text/html",
+            ".css"  => "text/css",
+            ".json" => "application/json",
+            ".xml"  => "application/xml",
+            ".yaml" or ".yml" => "text/yaml",
+            ".toml" => "text/toml",
+            ".md"   => "text/markdown",
+            ".txt"  => "text/plain",
+            ".sh"   => "text/x-sh",
+            ".sql"  => "application/sql",
+            _       => "application/octet-stream"
+        };
 
     private static string ComputeSha256(string filePath)
     {
