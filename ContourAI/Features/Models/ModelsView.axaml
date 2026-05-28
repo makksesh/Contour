@@ -1,0 +1,222 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:ContourAI.Features.Models"
+             x:Class="ContourAI.Features.Models.ModelsView"
+             x:DataType="vm:ModelsViewModel">
+
+  <UserControl.Styles>
+    <Style Selector="TextBlock.section-title">
+      <Setter Property="FontSize" Value="16"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="{StaticResource ThemeTextPrimaryBrush}"/>
+    </Style>
+
+    <Style Selector="TextBlock.field-label">
+      <Setter Property="FontSize" Value="10"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="{StaticResource ThemeTextMutedBrush}"/>
+      <Setter Property="Margin" Value="0 0 0 4"/>
+    </Style>
+
+    <Style Selector="Border.model-row">
+      <Setter Property="Background" Value="{StaticResource ThemeSurfaceAltBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource ThemeBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="14"/>
+      <Setter Property="Padding" Value="14 12"/>
+      <Setter Property="Margin" Value="0 0 0 8"/>
+    </Style>
+
+    <Style Selector="Border.model-chip">
+      <Setter Property="Background" Value="{StaticResource ThemeHighlightBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource ThemeBorderSoftBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="999"/>
+      <Setter Property="Padding" Value="8 3"/>
+    </Style>
+  </UserControl.Styles>
+
+  <Grid ColumnDefinitions="1.1*,0.9*" ColumnSpacing="18">
+
+    <Border Grid.Column="0" Classes="panel" Padding="18">
+      <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <StackPanel Grid.Row="0" Spacing="4">
+          <TextBlock Classes="section-title" Text="Модели"/>
+          <TextBlock Text="Администрирование model endpoint'ов сервера."
+                     Foreground="{StaticResource ThemeTextMutedBrush}"
+                     FontSize="11"/>
+        </StackPanel>
+
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="10" Margin="0 14 0 12">
+          <ComboBox Grid.Column="0"
+                    ItemsSource="{Binding FilterOptions}"
+                    SelectedItem="{Binding SelectedFilter}"/>
+          <Button Grid.Column="1"
+                  Classes="ghost"
+                  Command="{Binding CreateNewCommand}">
+            Новый
+          </Button>
+        </Grid>
+
+        <Panel Grid.Row="2">
+          <StackPanel IsVisible="{Binding IsEmpty}"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Center"
+                      Spacing="6">
+            <TextBlock Text="{Binding EmptyMessage}" HorizontalAlignment="Center"/>
+            <TextBlock Text="Создайте endpoint или смените фильтр."
+                       HorizontalAlignment="Center"
+                       Foreground="{StaticResource ThemeTextMutedBrush}"
+                       FontSize="11"/>
+          </StackPanel>
+
+          <ScrollViewer IsVisible="{Binding !IsEmpty}"
+                        VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Endpoints}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:ModelEndpointItemViewModel">
+                  <Border Classes="model-row">
+                    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
+                      <Grid ColumnDefinitions="*,Auto" Grid.Row="0">
+                        <StackPanel Spacing="2">
+                          <TextBlock Text="{Binding DisplayName}"
+                                     FontSize="13"
+                                     FontWeight="SemiBold"/>
+                          <TextBlock Text="{Binding ModelName}"
+                                     FontSize="11"
+                                     Foreground="{StaticResource ThemeTextSecondaryBrush}"/>
+                        </StackPanel>
+                        <Border Grid.Column="1" Classes="model-chip" VerticalAlignment="Top">
+                          <TextBlock Text="{Binding ModelType}"
+                                     FontSize="10"
+                                     Foreground="{StaticResource ThemeTextSecondaryBrush}"/>
+                        </Border>
+                      </Grid>
+
+                      <StackPanel Grid.Row="1" Spacing="2">
+                        <TextBlock Text="{Binding BaseUrl}"
+                                   FontSize="10"
+                                   Foreground="{StaticResource ThemeTextMutedBrush}"
+                                   TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding ContextWindowTokens, StringFormat='Окно контекста: {0}'}"
+                                   FontSize="10"
+                                   Foreground="{StaticResource ThemeTextMutedBrush}"/>
+                      </StackPanel>
+
+                      <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+                        <Border Classes="model-chip">
+                          <TextBlock Text="{Binding StatusLabel}"
+                                     FontSize="10"
+                                     Foreground="{StaticResource ThemeTextSecondaryBrush}"/>
+                        </Border>
+                        <Button Grid.Column="2"
+                                Classes="ghost"
+                                Command="{Binding $parent[UserControl].((vm:ModelsViewModel)DataContext).SelectEndpointCommand}"
+                                CommandParameter="{Binding}">
+                          Открыть
+                        </Button>
+                        <Button Grid.Column="3"
+                                Classes="ghost"
+                                Command="{Binding $parent[UserControl].((vm:ModelsViewModel)DataContext).ToggleEnabledCommand}"
+                                CommandParameter="{Binding}">
+                          <TextBlock Text="{Binding ToggleActionLabel}"/>
+                        </Button>
+                      </Grid>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </Panel>
+
+        <TextBlock Grid.Row="3"
+                   IsVisible="{Binding IsLoading}"
+                   Text="Загрузка endpoint'ов…"
+                   FontSize="11"
+                   Foreground="{StaticResource ThemeTextMutedBrush}"
+                   Margin="0 12 0 0"/>
+      </Grid>
+    </Border>
+
+    <Border Grid.Column="1" Classes="panel-alt" Padding="18">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="12">
+          <TextBlock Classes="section-title" Text="{Binding FormTitle}"/>
+          <TextBlock Text="{Binding StatusMessage}"
+                     FontSize="11"
+                     Foreground="{StaticResource ThemeTextMutedBrush}"
+                     TextWrapping="Wrap"/>
+
+          <Border IsVisible="{Binding HasError}"
+                  Background="{StaticResource ThemeDangerSoftBrush}"
+                  BorderBrush="{StaticResource ThemeDangerBrush}"
+                  BorderThickness="1"
+                  CornerRadius="10"
+                  Padding="12 10">
+            <TextBlock Text="{Binding ErrorMessage}"
+                       Foreground="{StaticResource ThemeDangerTextBrush}"
+                       FontSize="11"
+                       TextWrapping="Wrap"/>
+          </Border>
+
+          <StackPanel Spacing="4">
+            <TextBlock Classes="field-label" Text="Отображаемое имя"/>
+            <TextBox Text="{Binding DisplayName}"/>
+          </StackPanel>
+
+          <StackPanel Spacing="4">
+            <TextBlock Classes="field-label" Text="Имя модели"/>
+            <TextBox Text="{Binding ModelName}"/>
+          </StackPanel>
+
+          <StackPanel Spacing="4">
+            <TextBlock Classes="field-label" Text="Base URL"/>
+            <TextBox Text="{Binding BaseUrl}"/>
+          </StackPanel>
+
+          <StackPanel Spacing="4">
+            <TextBlock Classes="field-label" Text="Тип модели"/>
+            <ComboBox ItemsSource="{Binding TypeOptions}"
+                      SelectedItem="{Binding SelectedModelType}"
+                      IsEnabled="{Binding !IsEditingExisting}"/>
+          </StackPanel>
+
+          <StackPanel Spacing="4">
+            <TextBlock Classes="field-label" Text="Окно контекста"/>
+            <NumericUpDown Value="{Binding ContextWindowTokens}"
+                           Minimum="1"
+                           Maximum="200000"
+                           Increment="256"
+                           FormatString="0"/>
+          </StackPanel>
+
+          <StackPanel Spacing="4">
+            <TextBlock Classes="field-label" Text="API Key"/>
+            <TextBox Text="{Binding ApiKey}"/>
+          </StackPanel>
+
+          <StackPanel Orientation="Horizontal" Spacing="8" Margin="0 6 0 0">
+            <Button Classes="primary"
+                    Command="{Binding SaveCommand}"
+                    IsEnabled="{Binding !IsSaving}">
+              <TextBlock Text="{Binding SaveButtonText}"/>
+            </Button>
+            <Button Classes="ghost"
+                    Command="{Binding CreateNewCommand}"
+                    IsEnabled="{Binding !IsSaving}">
+              Сбросить
+            </Button>
+            <Button Classes="danger"
+                    Command="{Binding DeleteCommand}"
+                    IsVisible="{Binding HasSelection}"
+                    IsEnabled="{Binding !IsSaving}">
+              Удалить
+            </Button>
+          </StackPanel>
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+
+  </Grid>
+</UserControl>
