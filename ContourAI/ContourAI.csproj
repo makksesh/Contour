@@ -12,7 +12,6 @@
         <Folder Include="Entities\" />
         <Folder Include="Features\" />
         <AvaloniaResource Include="Assets\**"/>
-        <Folder Include="Pages\" />
         <Folder Include="Shared\" />
         <Folder Include="Widgets\" />
     </ItemGroup>

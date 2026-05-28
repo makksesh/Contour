@@ -33,6 +33,7 @@ using ContourAI.Entities.Projects;
 using ContourAI.Features.Auth;
 using ContourAI.Features.Chat;
 using ContourAI.Features.Documents;
+using ContourAI.Features.Models;
 using ContourAI.Features.Projects;
 using ContourAI.Shared.Api;
 using ContourAI.Shared.State;
@@ -62,6 +63,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         ProjectsViewModel         projectsViewModel,
         ChatViewModel             chatViewModel,
         DocumentsViewModel        documentsViewModel,
+        ModelsViewModel           modelsViewModel,
         ProjectWorkspaceViewModel projectWorkspaceViewModel)
     {
         _connectionSettingsStore = connectionSettingsStore;
@@ -75,13 +77,14 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         Projects  = projectsViewModel;
         Chat      = chatViewModel;
         Documents = documentsViewModel;
+        Models    = modelsViewModel;
         Workspace = projectWorkspaceViewModel;
 
         LogoutCommand        = new RelayCommand(() => _ = LogoutAsync());
         ShowProjectsCommand  = new AsyncRelayCommand(ShowProjectsAsync);
         ShowChatCommand      = new AsyncRelayCommand(ShowChatAsync);
         ShowDocumentsCommand = new AsyncRelayCommand(ShowDocumentsAsync);
-        ShowSettingsCommand  = new RelayCommand(OnShowSettings);
+        ShowSettingsCommand  = new AsyncRelayCommand(ShowModelsAsync);
 
         SelectGlobalChatCommand       = new AsyncRelayCommand<ChatThreadItemViewModel>(SelectGlobalChatAsync);
         OpenProjectFromSidebarCommand = new AsyncRelayCommand<ProjectCardViewModel>(OpenProjectFromSidebarAsync);
@@ -108,6 +111,11 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         {
             if (args.PropertyName == nameof(AuthSessionStore.CurrentUsername))
                 RaisePropertyChanged(nameof(Username));
+            else if (args.PropertyName is nameof(AuthSessionStore.CurrentUserRole) or nameof(AuthSessionStore.IsAdmin))
+            {
+                RaisePropertyChanged(nameof(IsAdmin));
+                RaisePropertyChanged(nameof(SettingsToolTip));
+            }
         };
 
         Workspace.BackRequested += OnWorkspaceBackRequested;
@@ -122,12 +130,11 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
     }
 
     public event Action? LogoutRequested;
-    public event Action? SettingsRequested;
-
     public SystemMetricsViewModel Metrics { get; }
     public ProjectsViewModel      Projects  { get; }
     public ChatViewModel          Chat      { get; }
     public DocumentsViewModel     Documents { get; }
+    public ModelsViewModel        Models    { get; }
     public ProjectWorkspaceViewModel Workspace { get; }
 
     // ─── Sidebar коллекции ─────────────────────────────────────────────────────
@@ -149,6 +156,10 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
 
     public string Username        => _sessionStore.CurrentUsername;
     public string ServerIpDisplay => _connectionSettingsStore.ServerIpDisplay;
+    public bool IsAdmin => _sessionStore.IsAdmin;
+    public string SettingsToolTip => IsAdmin
+        ? "Управление model endpoint'ами"
+        : "Раздел доступен только администратору";
 
     public object? CurrentContent
     {
@@ -159,6 +170,7 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
     public bool IsProjectsActive  => CurrentContent is ProjectsViewModel;
     public bool IsChatActive      => CurrentContent is ChatViewModel;
     public bool IsDocumentsActive => CurrentContent is DocumentsViewModel;
+    public bool IsModelsActive    => CurrentContent is ModelsViewModel;
 
     // ─── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -328,7 +340,15 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         LogoutRequested?.Invoke();
     }
 
-    private void OnShowSettings() => SettingsRequested?.Invoke();
+    private async Task ShowModelsAsync()
+    {
+        if (!IsAdmin)
+            return;
+
+        CurrentContent = Models;
+        RaiseActiveFlags();
+        await Models.InitializeAsync();
+    }
 
     private async Task SelectGlobalChatAsync(ChatThreadItemViewModel? thread)
     {
@@ -374,5 +394,6 @@ public sealed class AuthenticatedShellViewModel : ViewModelBase
         RaisePropertyChanged(nameof(IsProjectsActive));
         RaisePropertyChanged(nameof(IsChatActive));
         RaisePropertyChanged(nameof(IsDocumentsActive));
+        RaisePropertyChanged(nameof(IsModelsActive));
     }
 }

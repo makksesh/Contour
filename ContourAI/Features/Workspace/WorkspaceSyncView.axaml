@@ -171,6 +171,13 @@
             &#x1F916; Задачи агента
           </Button>
         </StackPanel>
+        
+        <Button Classes="ghost"
+                Command="{Binding DetachCommand}"
+                IsEnabled="{Binding !IsLoading}"
+                ToolTip.Tip="Отвязать рабочее пространство от проекта">
+            &#x1F4E4; Отвязать
+        </Button>
 
       </StackPanel>
 

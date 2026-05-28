@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using ContourAI.Features.Auth;
 using ContourAI.Features.Chat;
 using ContourAI.Features.Documents;
+using ContourAI.Features.Models;
 using ContourAI.Features.Projects;
 using ContourAI.Features.Shell;
 using ContourAI.Features.Workspace;
@@ -75,6 +76,7 @@ internal static class Program
         services.AddSingleton<SystemMetricsService>();
         services.AddSingleton<WorkspaceService>();
         services.AddSingleton<RagService>();
+        services.AddSingleton<ModelsService>();
 
         // Workspace client services
         services.AddSingleton<ConflictResolutionService>();
@@ -93,6 +95,7 @@ internal static class Program
             sp.GetRequiredService<ProjectContextStore>()));
         
         services.AddSingleton<DocumentsViewModel>();
+        services.AddSingleton<ModelsViewModel>();
         services.AddSingleton<ChatViewModel>();     
         services.AddSingleton<AuthenticatedShellViewModel>();
         services.AddSingleton<MainWindowViewModel>();

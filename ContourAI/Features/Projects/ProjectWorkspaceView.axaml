@@ -258,11 +258,11 @@
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
                           <Button Classes="icon-btn"
                                   IsVisible="{Binding TaskStatus, Converter={x:Static vm:WorkspaceTabConverter.IsTaskFailed}}"
-                                  Command="{Binding $parent[ItemsControl].((vm:ProjectDocumentsViewModel)DataContext).RequeueCommand}"
+                                  Command="{Binding $parent[UserControl].((vm:ProjectWorkspaceViewModel)DataContext).DocumentsViewModel.RequeueCommand}"
                                   CommandParameter="{Binding}"
                                   ToolTip.Tip="Повторить индексацию">↻</Button>
                           <Button Classes="icon-btn del"
-                                  Command="{Binding $parent[ItemsControl].((vm:ProjectDocumentsViewModel)DataContext).DeleteCommand}"
+                                  Command="{Binding $parent[UserControl].((vm:ProjectWorkspaceViewModel)DataContext).DocumentsViewModel.DeleteCommand}"
                                   CommandParameter="{Binding}"
                                   IsEnabled="{Binding !IsDeleting}"
                                   ToolTip.Tip="Удалить документ">✕</Button>

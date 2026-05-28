@@ -76,13 +76,42 @@ public sealed class WorkspaceService
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<WorkspaceDto>(JsonOptions, ct);
     }
+    
+    // ─── DELETE /api/workspaces/{id} ──────────────────────────────────────────
 
-    // ─── GET /api/workspaces/{id} ─────────────────────────────────────────────
+    /// <summary>Отвязывает workspace от сервера.</summary>
+    public async Task<bool> DetachAsync(Guid workspaceId, CancellationToken ct = default)
+    {
+        var http     = _httpFactory.CreateAuthorized();
+        var response = await http.DeleteAsync($"api/workspaces/{workspaceId}", ct);
+        if (HandleAuth(response.StatusCode)) return false;
+        return response.IsSuccessStatusCode;
+    }
+
+    // ─── GET /api/workspaces/project/{projectId} ──────────────────────────────
+
+    /// <summary>
+    /// Восстанавливает workspace проекта без повторного attach.
+    /// 204 NoContent означает, что workspace для проекта не привязана.
+    /// </summary>
+    public async Task<WorkspaceDto?> GetByProjectAsync(Guid projectId, CancellationToken ct = default)
+    {
+        var http = _httpFactory.CreateAuthorized();
+        var response = await http.GetAsync($"api/workspaces/project/{projectId}", ct);
+        if (HandleAuth(response.StatusCode)) return null;
+        if (response.StatusCode is HttpStatusCode.NoContent or HttpStatusCode.NotFound)
+            return null;
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<WorkspaceDto>(JsonOptions, ct);
+    }
+
+    // ─── GET /api/workspaces/{id}/status ──────────────────────────────────────
 
     public async Task<WorkspaceDto?> GetStatusAsync(Guid workspaceId, CancellationToken ct = default)
     {
         var http     = _httpFactory.CreateAuthorized();
-        var response = await http.GetAsync($"api/workspaces/{workspaceId}", ct);
+        var response = await http.GetAsync($"api/workspaces/{workspaceId}/status", ct);
         if (HandleAuth(response.StatusCode)) return null;
         if (response.StatusCode == HttpStatusCode.NotFound) return null;
         response.EnsureSuccessStatusCode();

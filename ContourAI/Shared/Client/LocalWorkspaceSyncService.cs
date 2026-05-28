@@ -85,6 +85,24 @@ public sealed class LocalWorkspaceSyncService : IDisposable
     }
 
     /// <summary>
+    /// Восстанавливает workspace проекта с сервера без повторного attach
+    /// и синхронизирует локальный store с ответом backend.
+    /// </summary>
+    public async Task<WorkspaceDto?> RestoreByProjectAsync(
+        Guid projectId,
+        CancellationToken ct = default)
+    {
+        var dto = await _workspaceService.GetByProjectAsync(projectId, ct);
+
+        if (dto is not null)
+            _workspaceStore.Apply(dto);
+        else
+            _workspaceStore.Clear();
+
+        return dto;
+    }
+
+    /// <summary>
     /// Запрашивает актуальное состояние workspace с сервера и обновляет Store.
     /// Используется при инициализации после перезапуска приложения для
     /// получения актуальной серверной ревизии перед первым снапшотом.
@@ -258,7 +276,9 @@ public sealed class LocalWorkspaceSyncService : IDisposable
                             $"[LocalWorkspaceSyncService] Cannot read text '{file.FullName}': {readEx.Message}");
                     }
                 }
-
+                Console.WriteLine(
+                    $"[Snapshot] {relativePath} | ext={ext} | size={file.Length} | " +
+                    $"binary={BinaryExtensions.Contains(ext)} | content={(content is null ? "NULL" : $"{content.Length} chars")}");
                 entries.Add(new SnapshotFileEntry(
                     relativePath,
                     MimeType:            DetermineMimeType(ext),
@@ -273,6 +293,22 @@ public sealed class LocalWorkspaceSyncService : IDisposable
                     $"[LocalWorkspaceSyncService] Skipped '{file.FullName}': {ex.Message}");
             }
         }
+    }
+    
+    /// <summary>
+    /// Отвязывает workspace: останавливает watcher,
+    /// вызывает DELETE на сервере, сбрасывает Store.
+    /// </summary>
+    public async Task<bool> DetachAsync(Guid workspaceId, CancellationToken ct = default)
+    {
+        StopWatching(workspaceId);
+
+        var success = await _workspaceService.DetachAsync(workspaceId, ct);
+
+        if (success)
+            _workspaceStore.Clear();
+
+        return success;
     }
 
     private static string DetermineMimeType(string extension) =>

@@ -31,7 +31,7 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject, IDisposab
     private CancellationTokenSource            _cts = new();
     private Timer?                             _autoSyncTimer;
 
-    private const int AutoSyncIntervalMs = 15_000;
+    private const int AutoSyncIntervalMs = 15_000_000;
 
     // ── Идентификация проекта ───────────────────────────────────────────
 
@@ -39,21 +39,35 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject, IDisposab
 
     // ── Attach-форма ─────────────────────────────────────────────────────────────
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ServerMirrorPath))]
     private string _localRootPath = string.Empty;
 
     // Серверный путь авто-генерируется из имени папки клиента.
     // Пользователь может переопределить вручную через поле.
-    [ObservableProperty] private string? _serverMirrorPathOverride;
+    private string? _serverMirrorPathOverride;
+
+    public string LocalRootPath
+    {
+        get => _localRootPath;
+        set
+        {
+            if (SetProperty(ref _localRootPath, value))
+                OnPropertyChanged(nameof(ServerMirrorPath));
+        }
+    }
+
+    public string? ServerMirrorPathOverride
+    {
+        get => _serverMirrorPathOverride;
+        private set => SetProperty(ref _serverMirrorPathOverride, value);
+    }
 
     public string ServerMirrorPath
     {
-        get => _serverMirrorPathOverride ?? GenerateServerPath(_localRootPath);
+        get => ServerMirrorPathOverride ?? GenerateServerPath(LocalRootPath);
         set
         {
-            var auto = GenerateServerPath(_localRootPath);
-            SetProperty(ref _serverMirrorPathOverride, value == auto ? null : value);
+            var auto = GenerateServerPath(LocalRootPath);
+            ServerMirrorPathOverride = value == auto ? null : value;
             OnPropertyChanged();
         }
     }
@@ -106,30 +120,51 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject, IDisposab
 
     public async Task InitializeAsync(Guid projectId, CancellationToken ct = default)
     {
+        _autoSyncTimer?.Dispose();
+        _autoSyncTimer = null;
         _cts.Cancel();
+        _cts.Dispose();
         _cts = new CancellationTokenSource();
 
         ProjectId        = projectId;
         HasError         = false;
         ErrorMessage     = string.Empty;
         StatusMessage    = string.Empty;
+        Workspace         = null;
+        LocalRootPath     = string.Empty;
+        ServerMirrorPath  = string.Empty;
 
-        // Восстанавливаем из store, если уже подключали ранее
-        if (_workspaceStore.IsAttached && _workspaceStore.WorkspaceId.HasValue)
+        try
         {
-            LocalRootPath    = _workspaceStore.LocalRootPath;
-            ServerMirrorPath = _workspaceStore.ServerMirrorPath;
+            var restored = await _syncService.RestoreByProjectAsync(projectId, ct);
+            if (restored is null)
+            {
+                StatusMessage = "Рабочее пространство не подключено.";
+                return;
+            }
 
-            // До первого снапшота подтягиваем актуальную ревизию с сервера,
-            // чтобы избежать workspace.stale_client_revision (400)
-            // после перезапуска приложения.
-            var freshDto = await _syncService.RefreshFromServerAsync(
-                _workspaceStore.WorkspaceId.Value, ct);
+            Workspace = restored;
+            LocalRootPath = restored.ClientRootPath;
+            ServerMirrorPath = restored.ServerMirrorPath;
 
+            // После восстановления подтягиваем актуальную серверную ревизию,
+            // чтобы следующий snapshot шёл от свежего состояния backend.
+            var freshDto = await _syncService.RefreshFromServerAsync(restored.Id, ct);
             if (freshDto is not null)
+            {
                 Workspace = freshDto;
+                LocalRootPath = freshDto.ClientRootPath;
+                ServerMirrorPath = freshDto.ServerMirrorPath;
+            }
 
+            StatusMessage = "Рабочее пространство восстановлено.";
             StartAutoSync();
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex)
+        {
+            HasError = true;
+            ErrorMessage = ex.Message;
         }
     }
 
@@ -144,7 +179,7 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject, IDisposab
         var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(
             new FolderPickerOpenOptions
             {
-                Title            = "Select local project folder",
+                    Title            = "Выберите локальную папку проекта",
                 AllowMultiple    = false,
                 SuggestedStartLocation = await topLevel.StorageProvider
                     .TryGetFolderFromPathAsync(
@@ -157,7 +192,7 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject, IDisposab
 
         var path = folders[0].Path.LocalPath;
         LocalRootPath = path;
-        _serverMirrorPathOverride = null;
+        ServerMirrorPathOverride = null;
         OnPropertyChanged(nameof(ServerMirrorPath));
     }
 
@@ -168,7 +203,7 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject, IDisposab
         if (string.IsNullOrWhiteSpace(LocalRootPath))
         {
             HasError     = true;
-            ErrorMessage = "Please select or enter a local project folder path.";
+            ErrorMessage = "Выберите или введите путь к локальной папке проекта.";
             return;
         }
 
@@ -215,7 +250,7 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject, IDisposab
         _autoSyncTimer = new Timer(
             _ => _ = ExecuteSnapshotAsync(_cts.Token),
             null,
-            dueTime: TimeSpan.Zero,
+            dueTime: TimeSpan.FromSeconds(2),
             period:  TimeSpan.FromMilliseconds(AutoSyncIntervalMs));
     }
 
@@ -242,9 +277,9 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject, IDisposab
             }
 
             StatusMessage =
-                $"Синхронизовано — ревизия {result.ServerRevision}. " +
+                $"Синхронизировано — ревизия {result.ServerRevision}. " +
                 $"+{result.FilesAdded} ~{result.FilesUpdated} -{result.FilesRemoved}" +
-                (result.ConflictingPaths.Count > 0
+                (result.ConflictingPaths?.Count > 0
                     ? $" | конфликтов: {result.ConflictingPaths.Count}"
                     : string.Empty);
         }
@@ -255,6 +290,51 @@ public sealed partial class WorkspaceSyncViewModel : ObservableObject, IDisposab
             ErrorMessage = ex.Message;
         }
         finally { IsSyncing = false; }
+    }
+    
+    /// <summary>Detach: останавливает синк и вызывает DELETE /api/workspaces/{id}</summary>
+    [RelayCommand(IncludeCancelCommand = true)]
+    private async Task DetachAsync(CancellationToken ct)
+    {
+        if (!_workspaceStore.IsAttached || !_workspaceStore.WorkspaceId.HasValue) return;
+
+        IsLoading = true;
+        HasError  = false;
+        try
+        {
+            // Останавливаем таймер ДО запроса — иначе тик уйдёт параллельно с DELETE
+            _autoSyncTimer?.Dispose();
+            _autoSyncTimer = null;
+            _cts.Cancel();
+
+            var success = await _syncService.DetachAsync(
+                _workspaceStore.WorkspaceId.Value, ct);
+
+            if (!success)
+            {
+                HasError     = true;
+                ErrorMessage = "Не удалось отключить рабочее пространство.";
+                return;
+            }
+
+            // _workspaceStore.Clear() уже вызван внутри _syncService.DetachAsync
+            // Сбрасываем только UI-состояние ViewModel
+            Workspace                 = null;
+            LocalRootPath             = string.Empty;
+            ServerMirrorPathOverride = null;
+            StatusMessage             = "Рабочее пространство отключено.";
+
+            OnPropertyChanged(nameof(IsAttached));
+            OnPropertyChanged(nameof(IsNotAttached));
+            OnPropertyChanged(nameof(ServerMirrorPath));
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex)
+        {
+            HasError     = true;
+            ErrorMessage = ex.Message;
+        }
+        finally { IsLoading = false; }
     }
 
     // ── Dispose ────────────────────────────────────────────────────────────────
