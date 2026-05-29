@@ -1,7 +1,3 @@
-/// <summary>
-/// Тип операции над файлом в ChangeSet.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
 namespace ContourAI.Entities.Workspace;
 
 public enum FileChangeType

@@ -1,11 +1,3 @@
-/// <summary>
-/// ViewModel экрана документов проекта.
-/// Загружает список, загружает файл через диалог выбора, удаляет, фильтрует по статусу.
-/// UploadCommand принимает TopLevel? из code-behind (DocumentsView.axaml.cs).
-/// SetFilterCommand принимает int индекс фильтра из XAML CommandParameter.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

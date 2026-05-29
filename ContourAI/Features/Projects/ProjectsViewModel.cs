@@ -1,14 +1,3 @@
-/// <summary>
-/// ViewModel экрана списка проектов.
-/// Загружает проекты через ProjectsService.
-/// После создания/удаления проекта поднимает ProjectsChanged —
-/// AuthenticatedShellViewModel подписывается и перестраивает RecentProjects.
-///
-/// InjectCard — публичный метод для вставки карточки из Shell без перезагрузки.
-/// OnProjectRenameRequested — PATCH /api/projects/{id}/settings (name + defaults).
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Collections.ObjectModel;
 using System.Threading;

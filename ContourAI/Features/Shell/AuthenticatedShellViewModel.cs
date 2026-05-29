@@ -1,25 +1,3 @@
-/// <summary>
-/// ViewModel авторизованного shell-экрана.
-/// Управляет навигацией: Projects, Chat, Documents.
-/// Предоставляет RecentGlobalChats и RecentProjects для SidebarView.
-///
-/// Live-обновление Sidebar:
-///   - Chat.ThreadsChanged    → RebuildRecentGlobalChats()
-///   - Projects.ProjectsChanged → RebuildRecentProjects()
-///   - CollectionChanged на обеих коллекциях — резервный путь.
-///
-/// Кнопки «+» в Sidebar:
-///   AddNewGlobalChatCommand  — POST /api/chat/threads/global, вставка в коллекцию напрямую.
-///   AddNewProjectCommand     — POST /api/projects,           вставка в коллекцию напрямую.
-///
-/// Inline rename из Sidebar:
-///   RenameChatFromSidebar    — получает (item, newTitle) через событие, PUT /api/chat/threads/{id}.
-///   RenameProjectFromSidebar — получает (card, newName)  через событие, PATCH /api/projects/{id}/settings.
-///
-/// Начальная гидратация Sidebar выполняется в ApplyAuthAsync после загрузки данных.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;

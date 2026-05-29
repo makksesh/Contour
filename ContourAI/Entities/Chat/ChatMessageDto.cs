@@ -1,8 +1,3 @@
-/// <summary>
-/// DTO сообщения чата (ответ сервера).
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 
 namespace ContourAI.Entities.Chat;

@@ -1,9 +1,3 @@
-/// <summary>
-/// Хранит контекст выбранного проекта.
-/// Все экраны (Documents, Indexing, RAG Search) читают SelectedProjectId отсюда.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;

@@ -1,23 +1,3 @@
-/// <summary>
-/// ViewModel рабочего пространства проекта.
-/// Открывается по клику на проект из SidebarView.
-/// Вкладки: Settings, Folder, Documents, Chat, Sync, RagSearch.
-///
-/// Chat-вкладка (lazy):
-///   При первом переключении на WorkspaceTab.Chat вызывается InitializeChatAsync:
-///   - GET /api/chat/projects/{id}/threads
-///   - Нет тредов → HasProjectChat = false (показывается кнопка "Начать чат")
-///   - Есть треды  → берётся первый, создаётся ChatViewModel, загружается история
-///   - StartChatCommand → POST /api/chat/threads → InitializeChatAsync повторно
-///
-/// RagSearch-вкладка (lazy):
-///   При первом переключении вызывается RagSearchViewModel.SetProject(projectId).
-///   Дальнейшая ленивая инициализация не нужна — VM безсостоятельна до первой команды SearchCommand.
-///
-/// При создании нового проекта (CreateProjectAsync) чат создаётся автоматически.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Linq;
 using System.Threading;

@@ -1,9 +1,3 @@
-/// <summary>
-/// Запрос на обновление настроек проекта.
-/// PATCH /api/projects/{projectId}/settings → 204 No Content.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 
 namespace ContourAI.Entities.Projects;

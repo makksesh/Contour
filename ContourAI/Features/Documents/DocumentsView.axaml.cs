@@ -1,11 +1,3 @@
-/// <summary>
-/// Code-behind экрана документов.
-/// Уплоад вайла требует TopLevel (Avalonia StorageProvider),
-/// поэтому кнопка UploadButton обрабатывается через Click в code-behind,
-/// а не через Command-биндинг (Command не передаёт TopLevel автоматически).
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;

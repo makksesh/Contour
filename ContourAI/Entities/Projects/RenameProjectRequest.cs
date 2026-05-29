@@ -1,10 +1,3 @@
-/// <summary>
-/// Запрос переименования проекта.
-/// Используется внутри клиента: перед отправкой на сервер Shell читает
-/// текущие настройки проекта и формирует полный UpdateProjectSettingsRequest.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 namespace ContourAI.Entities.Projects;
 
 /// <summary>

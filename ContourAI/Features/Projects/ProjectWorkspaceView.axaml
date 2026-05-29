@@ -1,9 +1,3 @@
-<!--
-  ProjectWorkspaceView — workspace проекта.
-  Вкладки: Settings, Documents, Chat, Sync, RagSearch.
-  Sync: WorkspaceSyncView / AgentTasksView / ChangeSetReviewView (внутренная навигация).
-  Проект: DevAssistant / ContourAI.
--->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:ContourAI.Features.Projects"

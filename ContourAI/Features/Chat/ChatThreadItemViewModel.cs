@@ -1,9 +1,3 @@
-/// <summary>
-/// ViewModel одного треда в списке (левая панель чата и Sidebar).
-/// Поддерживает инлайн-редактирование названия через IsEditing / EditTitle / CommitRenameCommand.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;

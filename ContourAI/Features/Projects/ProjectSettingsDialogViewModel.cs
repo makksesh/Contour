@@ -1,14 +1,3 @@
-/// <summary>
-/// ViewModel диалога настроек проекта.
-/// Загружает текущие значения из ProjectDto, сохраняет через ProjectsService.
-/// UpdateSettingsAsync: принимает 200 OK и 204 NoContent как успех
-/// (разные версии backend могут возвращать разные коды).
-/// Удаление проекта: по нажатию Delete Project показывается
-/// встроенный confirm-блок (без диалога), по повторному нажатию
-/// вызывается DELETE /api/projects/{id}.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;

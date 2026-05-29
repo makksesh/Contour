@@ -1,10 +1,3 @@
-/// <summary>
-/// Сканирует локальную ФС, вычисляет SHA-256 для каждого файла и отправляет
-/// snapshot на сервер. Поддерживает FileSystemWatcher с debounce для автосинка.
-/// Исключает .git, bin, obj, node_modules, venv, dist и т.д.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Collections.Generic;
 using System.IO;

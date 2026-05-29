@@ -1,15 +1,3 @@
-/// <summary>
-/// Сервис управления session-lifecycle: refresh токена и logout с очисткой состояния.
-/// Использует AuthSessionStore как единый источник истины о текущей сессии.
-///
-/// ВАЖНО: HandleUnauthorized() НЕ поднимает SessionExpired.
-/// Он только очищает токены — вызывающий код сам решает, показывать ли ошибку.
-/// SessionExpired поднимается ТОЛЬКО из TryRefreshAsync (refresh провалился)
-/// и LogoutAsync (явный logout пользователя).
-/// Это предотвращает принудительный logout при бизнес-ошибках сервера (401 на /folders и т.п.).
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Net;
 using System.Net.Http;

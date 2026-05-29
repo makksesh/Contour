@@ -1,8 +1,3 @@
-/// <summary>
-/// Code-behind для SidebarView.
-/// Используется Avalonia 12.x для загрузки XAML виджета боковой навигации.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Markup.Xaml;

@@ -1,9 +1,3 @@
-/// <summary>
-/// Singleton-хранилище состояния активного Workspace.
-/// Аналог ProjectContextStore — хранит WorkspaceId, пути и ревизию.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;

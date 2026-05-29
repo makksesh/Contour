@@ -1,8 +1,3 @@
-/// <summary>
-/// DTO документа проекта.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 
 namespace ContourAI.Entities.Documents;

@@ -1,12 +1,3 @@
-/// <summary>
-/// Сервис индексирования документов.
-/// POST /api/indexing/queue         — поставить документ в очередь.
-/// GET  /api/indexing/status/{documentId} — текущая задача. 204 = нет задачи.
-/// GET  /api/indexing/queue         — весь список задач.
-/// POST /api/indexing/requeue       — перепоставить задачу по taskId.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Collections.Generic;
 using System.Net;

@@ -1,10 +1,3 @@
-/// <summary>
-/// ViewModel одного документа в списке вкладки Documents.
-/// Хранит DocumentDto + статус задачи IndexingTaskDto (если есть).
-/// IsDeleting — блокирует кнопку Delete во время запроса.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using ContourAI.Entities.Documents;

@@ -1,7 +1,3 @@
-/// <summary>
-/// Статус жизненного цикла workspace.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
 namespace ContourAI.Entities.Workspace;
 
 public enum WorkspaceStatus

@@ -1,8 +1,3 @@
-/// <summary>
-/// Статус задачи индексирования.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 namespace ContourAI.Entities.Indexing;
 
 public enum IndexingTaskStatus

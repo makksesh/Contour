@@ -1,9 +1,3 @@
-/// <summary>
-/// Глобальное состояние подключения UI-клиента.
-/// Хранит IP сервера без порта в памяти приложения и предоставляет общий доступ для разных экранов.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;

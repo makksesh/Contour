@@ -1,7 +1,3 @@
-/// <summary>
-/// Статус жизненного цикла ChangeSet.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
 namespace ContourAI.Entities.Workspace;
 
 public enum ChangeSetStatus

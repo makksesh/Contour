@@ -1,12 +1,3 @@
-/// <summary>
-/// Фабрика авторизованных HttpClient.
-/// ВАЖНО: HttpClient — singleton на весь lifetime фабрики.
-/// .NET рекомендует переиспользовать HttpClient: создание нового экземпляра
-/// при каждом запросе исчерпывает пул сокетов (SocketException) со временем.
-/// Токен обновляется через DefaultRequestHeaders перед каждым использованием.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;

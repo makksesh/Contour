@@ -1,8 +1,3 @@
-/// <summary>
-/// Code-behind для TopbarView.
-/// Используется Avalonia 12.x для загрузки XAML верхней панели authenticated shell.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 

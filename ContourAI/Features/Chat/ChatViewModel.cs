@@ -1,14 +1,3 @@
-/// <summary>
-/// ViewModel экрана чата.
-/// Поддерживает глобальный и проектный режим.
-/// Отправка сообщений — SSE-стриминг через ChatService.StreamAsync.
-/// После создания треда или отправки сообщения поднимает ThreadsChanged
-/// — Sidebar подписывается для live-обновления.
-/// InjectThread — публичный метод для вставки треда из Shell (HydrateSidebarAsync,
-/// AddNewGlobalChatAsync) без перезагрузки всего списка.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -82,7 +71,7 @@ public sealed partial class ChatViewModel : ObservableObject
     private readonly Guid? _projectId;
 
     public bool RagBadgeVisible => _projectId.HasValue && IsRagEnabled;
-    public string RagBadgeText  => $"🔍 RAG активен · {RagTopK} чанков";
+    public string RagBadgeText  => $"RAG активен · {RagTopK} чанков";
 
     public ChatViewModel(
         ChatService         chatService,

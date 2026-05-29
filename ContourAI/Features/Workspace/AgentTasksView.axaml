@@ -1,9 +1,3 @@
-<!--
-  AgentTasksView — панель управления AgentTask.
-  Сверху: TextBox для промпта + кнопка Run.
-  Список задач: статус, CanReview → кнопка Review, CanRollback → кнопка Rollback.
-  Проект: DevAssistant / ContourAI.
--->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:ContourAI.Features.Workspace"

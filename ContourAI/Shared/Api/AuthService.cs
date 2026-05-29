@@ -1,9 +1,3 @@
-/// <summary>
-/// Auth Service для регистрации, логина, рефреша, логаута и получения текущего пользователя.
-/// Формирует базовый адрес API из in-memory настроек подключения.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;

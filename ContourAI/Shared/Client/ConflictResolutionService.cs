@@ -1,10 +1,3 @@
-/// <summary>
-/// Разрешает конфликты файлов при применении ChangeSet.
-/// Если UserPromptDelegate не задан — используется политика KeepLocal (headless fallback).
-/// UI-слой инжектирует делегат для отображения диалога пользователю.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Threading;
 using System.Threading.Tasks;

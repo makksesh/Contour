@@ -1,8 +1,3 @@
-/// <summary>
-/// Полный DTO проекта, включая AccessMode и FolderCount.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 
 namespace ContourAI.Entities.Projects;

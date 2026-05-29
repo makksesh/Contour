@@ -1,20 +1,3 @@
-/// <summary>
-/// Сервис для работы с чатами.
-/// Эндпоинты совпадают с рабочим сервером:
-///   GET    /api/chat/projects/{projectId}/threads
-///   GET    /api/chat/threads
-///   GET    /api/chat/threads/{id}/history
-///   POST   /api/chat/threads            — проектный тред
-///   POST   /api/chat/threads/global     — глобальный тред
-///   POST   /api/chat/threads/{id}/stream
-///   POST   /api/chat/threads/{id}/send
-///   PUT    /api/chat/threads/{id}
-///   POST   /api/chat/threads/{id}/attach
-///   DELETE /api/chat/threads/{id}/attach
-///   DELETE /api/chat/threads/{id}
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Collections.Generic;
 using System.IO;

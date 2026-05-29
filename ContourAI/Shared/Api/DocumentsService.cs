@@ -1,14 +1,3 @@
-/// <summary>
-/// Сервис для работы с документами: список, загрузка файла, удаление.
-/// POST /api/documents/upload  — multipart/form-data (file + projectId).
-/// GET  /api/documents/projects/{projectId}
-/// GET  /api/documents/{documentId}
-/// DELETE /api/documents/{documentId}
-/// Использует AuthorizedHttpClientFactory.
-/// ВАЖНО: НЕ использовать using при вызове CreateAuthorized() — HttpClient singleton.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Collections.Generic;
 using System.IO;

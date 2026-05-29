@@ -1,12 +1,3 @@
-/// <summary>
-/// HTTP-сервис для Workspace Sync API (/api/workspaces/*).
-/// Следует паттерну ProjectsService:
-///   - AuthorizedHttpClientFactory + HandleAuth()
-///   - static JsonSerializerOptions с JsonStringEnumConverter
-///   - НЕ оборачивать CreateAuthorized() в using
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Collections.Generic;
 using System.Net;

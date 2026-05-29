@@ -1,9 +1,3 @@
-/// <summary>
-/// Хранилище состояния чата.
-/// Хранит выбранный тред и активный scope (Global/Project).
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.ComponentModel;
 using ContourAI.Entities.Chat;

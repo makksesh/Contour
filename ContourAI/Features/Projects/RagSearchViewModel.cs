@@ -1,15 +1,3 @@
-/// <summary>
-/// ViewModel вкладки «RAG Search» в ProjectWorkspaceView.
-///
-/// Отвечает за:
-///   - Хранение текущего projectId (SetProject).
-///   - SearchCommand → POST /api/rag/search → заполняет Results.
-///   - Отображение состояний: IsLoading, IsEmpty, HasError.
-///
-/// Зависимости: RagService.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;

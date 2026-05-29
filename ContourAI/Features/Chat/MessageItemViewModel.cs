@@ -1,8 +1,3 @@
-/// <summary>
-/// Обёртка над ChatMessageViewModel для обратной совместимости.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using ContourAI.Entities.Chat;
 

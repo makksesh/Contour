@@ -22,9 +22,6 @@
                    FontSize="12"
                    FontWeight="Medium"
                    Classes="secondary" />
-        <TextBlock Text="Вход в ContourAI"
-                   FontSize="15"
-                   Classes="secondary" />
       </StackPanel>
 
       <Border Grid.Row="1"
@@ -37,7 +34,7 @@
             <TextBlock Text="IP сервера"
                        FontWeight="SemiBold"
                        Classes="on-light" />
-            <TextBox PlaceholderText="Например: 192.168.3.50"
+            <TextBox PlaceholderText="Например: 192.168.x.x"
                      Text="{Binding ServerIp, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      Classes="auth-input" />
             <TextBlock Text="Указывается только IP или имя хоста, без порта. Настройка сохраняется в памяти приложения."

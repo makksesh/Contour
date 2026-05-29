@@ -1,9 +1,3 @@
-<!--
-  RagSearchView — вкладка «RAG Search» в ProjectWorkspaceView.
-  Отображает поисковую строку, TopK и список RagChunkItemViewModel.
-  DataContext: RagSearchViewModel.
-  Проект: DevAssistant / ContourAI.
--->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:ContourAI.Features.Projects"
@@ -74,12 +68,7 @@
 
     <!-- ─── Панель поиска ─────────────────────────────────────────── -->
     <StackPanel Grid.Row="0" Spacing="8" Margin="0 0 0 14">
-
-      <!--
-        DockPanel: кнопка «Top-K» и «Найти» привязаны право,
-        TextBox занимает всё оставшееся пространство.
-        LastChildFill=True — дефолт DockPanel, но указываем явно.
-      -->
+      
       <DockPanel LastChildFill="True">
 
         <NumericUpDown DockPanel.Dock="Right"

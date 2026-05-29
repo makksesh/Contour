@@ -1,14 +1,3 @@
-/// <summary>
-/// Главная точка входа Avalonia 12.x приложения.
-/// Регистрирует DI-контейнер с поддержкой:
-///   Фаза 3 — session/auth lifecycle
-///   Фаза 4 — Projects
-///   Фаза 5 — Chat (Global + Project)
-///   Фаза 6 — Documents
-///   Фаза 8 — RAG Search
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using Avalonia;
 using Microsoft.Extensions.DependencyInjection;

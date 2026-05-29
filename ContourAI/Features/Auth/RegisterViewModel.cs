@@ -1,9 +1,3 @@
-/// <summary>
-/// ViewModel экрана регистрации.
-/// Использует общий IP сервера из памяти приложения и выполняет регистрацию пользователя.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Threading.Tasks;
 using System.Windows.Input;

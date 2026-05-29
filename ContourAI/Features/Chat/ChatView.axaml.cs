@@ -1,11 +1,3 @@
-/// <summary>
-/// Code-behind для ChatView.
-/// Автоскролл вниз при добавлении нового сообщения через Messages.CollectionChanged.
-/// PointerPressed → vm.RaiseSelected(), кнопка × → vm.RaiseDeleteRequested().
-/// Enter → отправка, Shift+Enter → новая строка.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System.Collections.Specialized;
 using Avalonia.Controls;
 using Avalonia.Input;

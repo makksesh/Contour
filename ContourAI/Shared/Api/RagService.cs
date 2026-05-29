@@ -1,12 +1,3 @@
-/// <summary>
-/// Сервис явного RAG-поиска по прикреплённым файлам проекта.
-/// POST /api/rag/search  { projectId, query, topK? } → RagChunkDto[]
-/// Используется вкладкой RagSearch для отображения релевантных чанков.
-/// Чат проекта использует RAG автоматически на сервере — этот сервис
-/// для явного пользовательского поиска.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Collections.Generic;
 using System.Net;

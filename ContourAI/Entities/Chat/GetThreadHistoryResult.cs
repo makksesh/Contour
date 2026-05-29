@@ -1,8 +1,3 @@
-/// <summary>
-/// Результат запроса истории треда.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System.Collections.Generic;
 
 namespace ContourAI.Entities.Chat;

@@ -1,10 +1,3 @@
-/// <summary>
-/// Централизованное хранилище текущей пользовательской сессии.
-/// Содержит AccessToken, RefreshToken, данные пользователя и флаг IsAuthenticated.
-/// Все экраны, которым нужен токен, читают его отсюда — не хранят у себя.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;

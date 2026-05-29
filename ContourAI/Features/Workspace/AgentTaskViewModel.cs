@@ -1,9 +1,3 @@
-/// <summary>
-/// ViewModel одного AgentTask (строка в списке).
-/// Хранит данные задачи и команду перехода к ChangeSet Review.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;

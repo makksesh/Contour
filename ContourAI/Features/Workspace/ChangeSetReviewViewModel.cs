@@ -1,16 +1,3 @@
-/// <summary>
-/// ViewModel для ревью и применения ChangeSet.
-/// Показывает список файловых изменений с контентом, позволяет применить/отклонить каждый.
-///
-/// Поток:
-///   1) LoadAsync(workspaceId, changeSetId) — GET /api/workspaces/{id}/pending-changes → detail
-///   2) Пользователь смотрит FileChanges, выбирает файл → PreviewContent
-///   3) ApplyAllCommand   → ChangeSetApplyService.ApplyChangeSetAsync → report → GoBack
-///   4) RejectAllCommand  → (локально помечаем rejected) → сообщаем серверу
-///
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;

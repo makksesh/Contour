@@ -1,8 +1,3 @@
-/// <summary>
-/// Главное окно приложения.
-/// Отображает текущий auth-экран через ContentControl и DataTemplates Avalonia.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 

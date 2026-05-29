@@ -1,14 +1,3 @@
-/// <summary>
-/// ViewModel панели «Agent Tasks».
-/// Позволяет: ввести prompt → TriggerCommand → список задач → polling статуса → открыть ревью.
-///
-/// Polling:
-///   Каждые 3 секунды обновляет статус задач в состоянии Pending/Running/GeneratingFiles.
-///   Остановка при NavigateToReviewRequested или смене проекта.
-///
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -133,12 +122,9 @@ public sealed partial class AgentTasksViewModel : ObservableObject
             if (pending is null) return;
 
             PendingCount = pending.ChangeSets.Count;
-
-            // Refresh existing tasks and add new ones (from pending change sets)
-            // For a full list we'd need a dedicated GET /agent-tasks endpoint;
-            // here we show tasks derived from pending ChangeSets.
+            
             Tasks.Clear();
-            // pending change sets carry AgentTaskId — group into pseudo-AgentTaskDto
+
             foreach (var cs in pending.ChangeSets)
             {
                 var pseudoDto = new AgentTaskDto(

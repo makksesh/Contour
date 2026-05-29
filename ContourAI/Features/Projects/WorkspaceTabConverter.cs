@@ -1,11 +1,3 @@
-/// <summary>
-/// Конвертеры для вкладок ProjectWorkspaceView.
-/// IsSettings, IsFolder, IsDocuments, IsChat, IsSync, IsRagSearch — преобразуют int в bool.
-/// IsNotNull    — true если значение не null.
-/// IsTaskFailed — true если IndexingTaskStatus == Failed.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Globalization;
 using Avalonia.Data.Converters;

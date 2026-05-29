@@ -1,9 +1,3 @@
-/// <summary>
-/// Базовая ViewModel для экранов авторизации.
-/// Содержит общие уведомления об изменении свойств для Avalonia 12.x.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;

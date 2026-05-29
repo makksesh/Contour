@@ -1,8 +1,3 @@
-/// <summary>
-/// Главное приложение ContourAI UI.
-/// Подключает главное окно и корневую ViewModel из DI-контейнера для первой фазы UI.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;

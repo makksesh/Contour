@@ -1,15 +1,3 @@
-/// <summary>
-/// ViewModel вкладки «Синх» в ProjectWorkspaceView.
-/// Позволяет: Attach workspace → авто-синхронизация → просматривать статус → открывать AgentTasks.
-///
-/// Поток:
-///   1) IsAttached=false → пользователь вводит LocalRootPath + ServerMirrorPath → AttachCommand
-///   2) IsAttached=true  → авто-снэпшот каждые 15 сек (без участия пользователя)
-///   3) NavigateToAgentTasksRequested → родитель показывает AgentTasksView
-///
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.IO;
 using System.Threading;

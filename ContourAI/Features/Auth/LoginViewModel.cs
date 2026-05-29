@@ -1,9 +1,3 @@
-/// <summary>
-/// ViewModel экрана входа.
-/// Поддерживает редактирование IP сервера, логин пользователя и навигацию на экран регистрации.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Threading.Tasks;
 using System.Windows.Input;

@@ -1,9 +1,3 @@
-/// <summary>
-/// Статус документа на сервере.
-/// JSON: "Uploaded" / "Pending" / "Processing" / "Indexed" / "Failed".
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 namespace ContourAI.Entities.Documents;
 
 public enum DocumentStatus

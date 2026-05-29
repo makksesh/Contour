@@ -1,9 +1,3 @@
-/// <summary>
-/// DTO-контракты для Workspace Sync API (/api/workspaces/*).
-/// Зеркалят Application.Workspace.DTOs из LocalServerAI.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Collections.Generic;
 

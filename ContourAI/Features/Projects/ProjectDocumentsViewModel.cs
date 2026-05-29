@@ -1,21 +1,3 @@
-/// <summary>
-/// ViewModel вкладки Documents в ProjectWorkspaceView.
-///
-/// Сценарий:
-/// 1. Открытие — LoadAsync(): GET /api/documents/projects/{id}
-///    + GET /api/indexing/status/{docId} для каждого документа.
-/// 2. Загрузка файла — UploadCommand:
-///    POST /api/documents/upload → сразу POST /api/indexing/queue.
-/// 3. Удаление — DeleteCommand(item):
-///    DELETE /api/documents/{id} → убираем из коллекции.
-/// 4. Requeue — RequeueCommand(item): POST /api/indexing/requeue.
-/// 5. Refresh — RefreshCommand: повторный полный опрос.
-///
-/// Файл выбирается через Avalonia OpenFileDialog (вызывается PickFileAsync,
-/// который подписывает View-слой).
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;

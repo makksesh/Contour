@@ -1,9 +1,3 @@
-/// <summary>
-/// ViewModel карточки документа.
-/// Отображает имя, тип, размер, статус, ошибку (если есть).
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;

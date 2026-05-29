@@ -1,10 +1,3 @@
-<!--
-  WorkspaceSyncView — вкладка Sync рабочего пространства.
-  Состояния:
-    IsNotAttached → форма Attach (пути + кнопка)
-    IsAttached    → статус + индикатор авто-синхронизации + кнопка Agent Tasks
-  Проект: DevAssistant / ContourAI.
--->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:ContourAI.Features.Workspace"

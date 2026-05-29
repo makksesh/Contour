@@ -1,8 +1,3 @@
-/// <summary>
-/// Конвертеры для WorkspaceSyncView и AgentTasksView.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Globalization;
 using Avalonia.Data.Converters;

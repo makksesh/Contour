@@ -1,12 +1,3 @@
-<!--
-  SidebarView — переработанный боковой бар.
-  Разделён на 3 части: 45% недавние глобальные чаты | 45% недавние проекты | 10% кнопка Настройки.
-  Логотип и информация о сервере убраны.
-  Кнопки «+» рядом с заголовками секций — создают новый чат / проект.
-  Кнопки редактирования «✎» — инлайн-переименование (ToggleEditCommand).
-  Скролл внутри каждой секции если элементы не помещаются.
-  Проект: DevAssistant / ContourAI.
--->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"

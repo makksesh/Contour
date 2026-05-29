@@ -1,12 +1,3 @@
-/// <summary>
-/// Сервис для работы с проектами: список, создание, получение, удаление,
-/// обновление настроек, управление папкой.
-/// Использует AuthorizedHttpClientFactory — токен не передаётся вручную.
-/// ВАЖНО: НЕ использовать using при вызове CreateAuthorized() — HttpClient singleton.
-/// UpdateSettingsAsync считает 200 OK и 204 NoContent успехом.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Collections.Generic;
 using System.Net;

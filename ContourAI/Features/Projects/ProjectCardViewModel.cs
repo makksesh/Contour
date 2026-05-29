@@ -1,10 +1,3 @@
-/// <summary>
-/// ViewModel карточки проекта в списке и Sidebar.
-/// Поддерживает инлайн-редактирование названия через IsEditing / EditName / ToggleEditCommand.
-/// Содержит команды Delete и OpenSettings.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;

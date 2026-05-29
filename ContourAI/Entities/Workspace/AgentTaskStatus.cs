@@ -1,7 +1,3 @@
-/// <summary>
-/// Статус жизненного цикла AgentTask.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
 namespace ContourAI.Entities.Workspace;
 
 public enum AgentTaskStatus

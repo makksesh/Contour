@@ -1,8 +1,3 @@
-/// <summary>
-/// DTO задачи индексирования.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 
 namespace ContourAI.Entities.Indexing;

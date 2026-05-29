@@ -1,11 +1,3 @@
-/// <summary>
-/// DTO одного чанка, возвращаемого RAG-поиском.
-/// POST /api/rag/search → RagChunkDto[].
-/// Score    — косинусное сходство [0..1].
-/// LineStart/LineEnd — диапазон строк чанка в исходном файле (могут быть null).
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 
 namespace ContourAI.Entities.Rag;

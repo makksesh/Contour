@@ -1,10 +1,3 @@
-/// <summary>
-/// ViewModel диалога создания нового проекта.
-/// Поддерживает Name, Description, AccessMode (Private/Shared).
-/// Вызывает ProjectsService.CreateProjectAsync и поднимает ProjectCreated / Cancelled.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;

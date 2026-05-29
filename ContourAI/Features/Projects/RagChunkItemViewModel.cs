@@ -1,15 +1,3 @@
-/// <summary>
-/// ViewModel одного чанка в списке результатов RAG-поиска.
-///
-/// Создаётся из RagChunkDto и предоставляет подготовленные для View свойства:
-///   - LocationLabel  — «имяфайла : строка N» или просто имя файла
-///   - ScoreLabel     — процент релевантности, например «87%»
-///   - ContentPreview — первые 400 символов текста чанка
-///   - IsExpanded     — показывать полный текст по кнопке «Развернуть»
-///
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;

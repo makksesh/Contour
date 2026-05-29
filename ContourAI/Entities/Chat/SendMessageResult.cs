@@ -1,8 +1,3 @@
-/// <summary>
-/// Результат синхронной отправки сообщения.
-/// Проект: DevAssistant / ContourAI.
-/// </summary>
-
 namespace ContourAI.Entities.Chat;
 
 /// <param name="UserMessage">Сохранённое сообщение пользователя.</param>
