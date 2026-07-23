@@ -373,8 +373,9 @@ public sealed class MarkdownView : UserControl
             if (MatchDelimited(text, index, "**", out var boldContent, out var boldEnd))
             {
                 FlushBuffer();
-                var bold = new Bold();
-                bold.Inlines = ParseInlines(boldContent);
+                var bold = new Span { FontWeight = FontWeight.Bold, Foreground = PrimaryTextBrush };
+                foreach (var inline in ParseInlines(boldContent))
+                    bold.Inlines.Add(inline);
                 target.Add(bold);
                 index = boldEnd;
                 continue;
@@ -393,8 +394,9 @@ public sealed class MarkdownView : UserControl
             if (MatchDelimited(text, index, "*", out var italicContent, out var italicEnd))
             {
                 FlushBuffer();
-                var italic = new Italic();
-                italic.Inlines = ParseInlines(italicContent);
+                var italic = new Span { FontStyle = FontStyle.Italic, Foreground = PrimaryTextBrush };
+                foreach (var inline in ParseInlines(italicContent))
+                    italic.Inlines.Add(inline);
                 target.Add(italic);
                 index = italicEnd;
                 continue;
